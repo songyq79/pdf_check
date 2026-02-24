@@ -1,0 +1,22 @@
+# 核心依赖 - 用于测试智能评价功能（使用最新版本以获取预编译包）
+
+# FastAPI核心
+fastapi
+uvicorn[standard]
+python-multipart
+
+# 数据验证（使用最新版本）
+pydantic>=2.9.0
+pydantic-settings
+
+# Word文档处理
+python-docx
+
+# HTTP请求（百炼API）
+requests
+
+# 工具库
+python-dotenv
+
+# 日志
+loguru

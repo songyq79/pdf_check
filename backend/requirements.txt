@@ -1,0 +1,58 @@
+# FastAPI核心
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+
+# 数据验证
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Word文档处理
+python-docx==1.1.0
+lxml==4.9.3
+
+# 错别字检测
+pycorrector==1.1.3
+pypinyin==0.50.0
+
+# HTTP请求（百炼API）
+requests==2.31.0
+urllib3==2.1.0
+dashscope>=1.14.0  # 阿里云百炼官方SDK - 文本生成
+
+# 阿里云百炼SDK - 文件上传
+alibabacloud-bailian20231229>=1.0.0
+alibabacloud-credentials>=0.3.0
+alibabacloud-tea-openapi>=0.3.0
+alibabacloud-tea-util>=0.3.0
+
+# 数据分析和图表
+matplotlib==3.8.2
+numpy==1.26.2
+pandas==2.1.4
+
+# 异步任务队列
+celery==5.3.4
+redis==5.0.1
+
+# 数据库
+sqlalchemy==2.0.23
+pymysql==1.1.0
+alembic==1.12.1
+
+# 工具库
+python-dotenv==1.0.0
+
+# 日志
+loguru==0.7.2
+
+# 文件处理
+Pillow==10.1.0
+
+# 开发工具
+pytest==7.4.3
+pytest-asyncio==0.21.1
+httpx==0.25.2
+black==23.12.0
+flake8==6.1.0
+isort==5.13.2
