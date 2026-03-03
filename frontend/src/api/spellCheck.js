@@ -7,7 +7,7 @@ const spellCheckAPI = {
    */
   upload(formData) {
     return request({
-      url: '/api/v1/spell-check/upload',
+      url: '/api/v1/proofread/upload',
       method: 'post',
       data: formData,
       headers: { 'Content-Type': 'multipart/form-data' },
@@ -22,7 +22,7 @@ const spellCheckAPI = {
    */
   getStatus(taskId) {
     return request({
-      url: `/api/v1/spell-check/status/${taskId}`,
+      url: `/api/v1/proofread/status/${taskId}`,
       method: 'get',
     })
   },
@@ -33,7 +33,7 @@ const spellCheckAPI = {
    */
   download(taskId) {
     const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
-    const url = `${baseURL}/api/v1/spell-check/download/${taskId}`
+    const url = `${baseURL}/api/v1/proofread/download/${taskId}`
     const a = document.createElement('a')
     a.href = url
     a.target = '_blank'

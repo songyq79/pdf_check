@@ -19,6 +19,7 @@ import store from './store'
 // 导入全局样式
 import '@/assets/styles/global.css'
 import '@/assets/styles/responsive.css'
+import '@/assets/styles/theme.css'
 
 // 注册ECharts组件
 use([

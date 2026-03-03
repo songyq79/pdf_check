@@ -82,7 +82,7 @@ copy .env.example .env  # Windows
 # BAILIAN_API_KEY=your_api_key_here
 
 # 后端启动服务
- python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+ python -m uvicorn my_app.main:my_app --reload --host 0.0.0.0 --port 8000
 ```
 
 后端将运行在 http://localhost:8000
@@ -196,3 +196,28 @@ MIT License
 ---
 
 **注意**：本项目调用阿里云百炼大模型API，需要自行申请API Key并承担相应费用。
+
+
+后端启动：
+# 终端1
+redis-server
+
+# 终端2
+cd backend
+celery -A app.workers.celery_app worker -Q proofread --concurrency=4 --loglevel=info
+
+# 终端3
+cd backend
+celery -A app.workers.celery_app worker -Q evaluation --concurrency=4 --loglevel=info
+
+# 终端4
+cd backend
+uvicorn app.main:app --reload
+```
+
+Worker 启动成功的标志是终端里出现：
+```
+[tasks]
+  . app.workers.proofread_tasks.run_proofread
+  . app.workers.evaluation_tasks.run_evaluation
+ready.

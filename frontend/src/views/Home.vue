@@ -1,61 +1,79 @@
 <template>
-  <div class="page-container">
-    <!-- 欢迎标题 -->
-    <div class="welcome-section">
-      <h1 class="welcome-title">欢迎使用论文评价检验系统</h1>
-      <p class="welcome-description">
-        为您的学术论文提供专业的智能评价、错别字检查和格式规范化服务
+  <div class="modern-page-container">
+    <!-- 欢迎区域 -->
+    <section class="modern-welcome-section">
+      <h1 class="modern-welcome-title">欢迎使用<br>论文评价检验系统</h1>
+      <p class="modern-welcome-subtitle">为您的学术论文提供专业的质量检测与智能评价</p>
+      <p class="modern-welcome-description">
+        请拉起袖子准备迎战吧！错别字、语法、段落逻辑，统统交给我们。
+        无需烦恼，只需上传文档，坐等专业反馈与自动修正。
       </p>
-    </div>
+    </section>
 
     <!-- 功能卡片 -->
-    <div class="feature-cards">
-      <el-card class="feature-card" shadow="hover" @click="navigateTo('/evaluation')">
-        <div class="feature-icon evaluation-icon">
-          <el-icon :size="48"><Edit /></el-icon>
+    <div class="modern-features-grid">
+      <div class="modern-feature-card" @click="navigateTo('/evaluation')">
+        <div class="modern-feature-icon icon-gradient-blue">
+          <el-icon :size="36"><Edit /></el-icon>
         </div>
-        <h3 class="feature-title">智能评价</h3>
-        <p class="feature-description">
-          AI驱动的多维度论文评价，从学术规范性、逻辑创新性、语言质量、文献引用四个维度全面分析
+        <h3 class="modern-feature-title">智能评价</h3>
+        <p class="modern-feature-description">
+          从四个维度进行全面评价：从学术规范性、逻辑与创新性、语言质量、文献引用规范性等多个角度，提供详细的评价报告和改进建议。
         </p>
-        <el-button type="primary" class="feature-button">
-          立即使用
-        </el-button>
-      </el-card>
+        <el-button type="primary" class="modern-feature-button" size="large">立即使用</el-button>
+      </div>
 
-      <el-card class="feature-card" shadow="hover" @click="navigateTo('/spell-check')">
-        <div class="feature-icon spellcheck-icon">
-          <el-icon :size="48"><DocumentChecked /></el-icon>
+      <div class="modern-feature-card" @click="navigateTo('/spell-check')">
+        <div class="modern-feature-icon icon-gradient-red">
+          <el-icon :size="36"><DocumentChecked /></el-icon>
         </div>
-        <h3 class="feature-title">错别字检查</h3>
-        <p class="feature-description">
-          智能检测论文中的错别字、标点符号错误，生成详细的修订报告
+        <h3 class="modern-feature-title">错别字检查</h3>
+        <p class="modern-feature-description">
+          利用先进的 AI 技术，对论文进行逐段校对，标记并修正文字错误、语法问题、标点符号使用不当等问题，确保文字表达准确无误。
         </p>
-        <el-button type="success" class="feature-button">
-          立即使用
-        </el-button>
-      </el-card>
+        <el-button type="success" class="modern-feature-button" size="large">立即使用</el-button>
+      </div>
 
-      <el-card class="feature-card" shadow="hover" @click="navigateTo('/formatting')">
-        <div class="feature-icon formatting-icon">
-          <el-icon :size="48"><Document /></el-icon>
+      <div class="modern-feature-card" @click="navigateTo('/formatting')">
+        <div class="modern-feature-icon icon-gradient-cyan">
+          <el-icon :size="36"><Document /></el-icon>
         </div>
-        <h3 class="feature-title">模板排版</h3>
-        <p class="feature-description">
-          一键应用标准学术论文模板，自动规范化文档格式、标题、引用等
+        <h3 class="modern-feature-title">模板排版</h3>
+        <p class="modern-feature-description">
+          提供多种学术论文模板（如清华、北大、IEEE、APA 等格式），自动识别文档结构，一键应用专业排版样式，让您的论文符合投稿要求。
         </p>
-        <el-button type="warning" class="feature-button">
-          立即使用
-        </el-button>
-      </el-card>
+        <el-button type="warning" class="modern-feature-button" size="large">立即使用</el-button>
+      </div>
     </div>
 
+    <!-- 数据统计 -->
+    <section class="modern-stats-section">
+      <div class="modern-stats-grid">
+        <div class="modern-stat-item">
+          <div class="modern-stat-value">98.5%</div>
+          <div class="modern-stat-label">准确率</div>
+        </div>
+        <div class="modern-stat-item">
+          <div class="modern-stat-value">500+</div>
+          <div class="modern-stat-label">服务用户</div>
+        </div>
+        <div class="modern-stat-item">
+          <div class="modern-stat-value">200万+</div>
+          <div class="modern-stat-label">处理字数</div>
+        </div>
+        <div class="modern-stat-item">
+          <div class="modern-stat-value">24/7</div>
+          <div class="modern-stat-label">在线服务</div>
+        </div>
+      </div>
+    </section>
+
     <!-- 最近记录 -->
-    <div v-if="historyStore.hasRecords" class="recent-section">
-      <div class="section-header">
-        <h2 class="section-title">
+    <section v-if="historyStore.hasRecords" class="modern-history-section">
+      <div class="modern-section-header">
+        <h2 class="modern-section-title">
           <el-icon><Clock /></el-icon>
-          <span>最近记录</span>
+          <span style="margin-left: 8px;">最近记录</span>
         </h2>
         <el-button type="primary" link @click="navigateTo('/history')">
           查看全部
@@ -63,36 +81,50 @@
         </el-button>
       </div>
 
-      <el-card>
-        <el-timeline>
-          <el-timeline-item
-            v-for="record in historyStore.recentRecords"
-            :key="record.id"
-            :timestamp="formatDate(record.timestamp)"
-            placement="top"
-          >
-            <el-card class="record-card" @click="handleViewRecord(record)">
-              <div class="record-header">
-                <el-tag :type="getRecordTypeTag(record.type)">
-                  {{ getRecordTypeName(record.type) }}
-                </el-tag>
-                <span class="record-title">{{ getRecordTitle(record) }}</span>
-              </div>
-              <div v-if="record.type === 'evaluation'" class="record-score">
-                综合评分：<span class="score-value">{{ record.result.overall_score }}</span>分
-              </div>
-            </el-card>
-          </el-timeline-item>
-        </el-timeline>
-      </el-card>
-    </div>
+      <el-table :data="historyStore.recentRecords" style="width: 100%">
+        <el-table-column label="文件名" min-width="200">
+          <template #default="{ row }">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span>📄</span>
+              <span>{{ getRecordTitle(row) }}</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="类型" width="120">
+          <template #default="{ row }">
+            <el-tag :type="getRecordTypeTag(row.type)">
+              {{ getRecordTypeName(row.type) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="100">
+          <template #default>
+            <el-tag type="success">已完成</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="时间" width="150">
+          <template #default="{ row }">
+            {{ formatDate(row.timestamp) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="120">
+          <template #default="{ row }">
+            <el-button type="primary" size="small" @click="handleViewRecord(row)">
+              查看详情
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </section>
 
     <!-- 空状态提示 -->
-    <div v-else class="empty-state">
-      <el-icon class="empty-icon"><FolderOpened /></el-icon>
-      <div class="empty-text">暂无历史记录</div>
-      <div class="empty-hint">开始使用功能后，记录将显示在这里</div>
-    </div>
+    <section v-else class="modern-history-section">
+      <div class="empty-state">
+        <el-icon class="empty-icon" :size="80"><FolderOpened /></el-icon>
+        <div class="empty-text">暂无历史记录</div>
+        <div class="empty-hint">开始使用功能后，记录将显示在这里</div>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -108,10 +140,14 @@ import {
 } from '@element-plus/icons-vue'
 import { useHistoryStore } from '@/store/modules/history'
 import { useEvaluationStore } from '@/store/modules/evaluation'
+import { useSpellCheckStore } from '@/store/modules/spellCheck'
+import { useFormattingStore } from '@/store/modules/formatting'
 
 const router = useRouter()
 const historyStore = useHistoryStore()
 const evaluationStore = useEvaluationStore()
+const spellCheckStore = useSpellCheckStore()
+const formattingStore = useFormattingStore()
 
 /**
  * 导航到指定路由
@@ -125,10 +161,14 @@ function navigateTo(path) {
  */
 function handleViewRecord(record) {
   if (record.type === 'evaluation') {
-    // 加载记录到评价store
-    evaluationStore.currentResult = record.result
-    evaluationStore.evaluationStatus = 'completed'
+    evaluationStore.setPendingResult(record.result)
     router.push('/evaluation')
+  } else if (record.type === 'spellcheck') {
+    spellCheckStore.setPendingResult(record.result)
+    router.push('/spell-check')
+  } else if (record.type === 'formatting') {
+    formattingStore.setPendingResult(record.result)
+    router.push('/formatting')
   }
 }
 
@@ -181,146 +221,13 @@ function formatDate(timestamp) {
 </script>
 
 <style scoped>
-.welcome-section {
-  text-align: center;
-  padding: 40px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 12px;
-  margin-bottom: 30px;
-}
-
-.welcome-title {
-  font-size: 32px;
-  font-weight: bold;
-  margin-bottom: 15px;
-}
-
-.welcome-description {
-  font-size: 16px;
-  opacity: 0.95;
-}
-
-.feature-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-  margin-bottom: 40px;
-}
-
-.feature-card {
-  cursor: pointer;
-  text-align: center;
-  transition: all 0.3s;
-  padding: 20px;
-}
-
-.feature-card:hover {
-  transform: translateY(-5px);
-}
-
-.feature-icon {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 20px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.evaluation-icon {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.spellcheck-icon {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-}
-
-.formatting-icon {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-}
-
-.feature-title {
-  font-size: 20px;
-  font-weight: bold;
-  color: #303133;
-  margin-bottom: 12px;
-}
-
-.feature-description {
-  font-size: 14px;
-  color: #606266;
-  line-height: 1.6;
-  margin-bottom: 20px;
-  min-height: 60px;
-}
-
-.feature-button {
-  width: 100%;
-}
-
-.recent-section {
-  margin-top: 40px;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.section-title {
-  font-size: 20px;
-  font-weight: bold;
-  color: #303133;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.record-card {
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.record-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.record-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-.record-title {
-  font-size: 15px;
-  font-weight: 500;
-  color: #303133;
-}
-
-.record-score {
-  font-size: 14px;
-  color: #606266;
-}
-
-.record-score .score-value {
-  font-size: 18px;
-  font-weight: bold;
-  color: #409eff;
-}
-
+/* 空状态样式 */
 .empty-state {
   text-align: center;
-  padding: 80px 20px;
+  padding: 60px 20px;
 }
 
 .empty-icon {
-  font-size: 80px;
   color: #dcdfe6;
   margin-bottom: 20px;
 }
@@ -334,5 +241,55 @@ function formatDate(timestamp) {
 .empty-hint {
   font-size: 14px;
   color: #c0c4cc;
+}
+
+/* 响应式优化 */
+@media (max-width: 1024px) {
+  .modern-features-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .modern-welcome-section {
+    padding: 40px 15px;
+  }
+
+  .modern-welcome-title {
+    font-size: 32px;
+  }
+
+  .modern-welcome-subtitle {
+    font-size: 18px;
+  }
+
+  .modern-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .modern-stat-value {
+    font-size: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modern-feature-card {
+    padding: 24px;
+  }
+
+  .modern-feature-icon {
+    width: 64px;
+    height: 64px;
+  }
+
+  .modern-feature-title {
+    font-size: 18px;
+  }
+
+  .modern-feature-description {
+    font-size: 13px;
+    min-height: auto;
+  }
 }
 </style>

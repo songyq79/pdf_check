@@ -9,7 +9,7 @@
     <el-card class="mb-20">
       <el-form :inline="true" :model="filterForm">
         <el-form-item label="类型">
-          <el-select v-model="filterForm.type" placeholder="全部类型" clearable>
+          <el-select v-model="filterForm.type" placeholder="全部类型" clearable style="width: 150px;">
             <el-option label="全部类型" value="" />
             <el-option label="智能评价" value="evaluation" />
             <el-option label="错别字检查" value="spellcheck" />
@@ -124,13 +124,23 @@ import {
 } from '@element-plus/icons-vue'
 import { useHistoryStore } from '@/store/modules/history'
 import { useEvaluationStore } from '@/store/modules/evaluation'
+import { useSpellCheckStore } from '@/store/modules/spellCheck'
+import { useFormattingStore } from '@/store/modules/formatting'
 
 const router = useRouter()
 const historyStore = useHistoryStore()
 const evaluationStore = useEvaluationStore()
+const spellCheckStore = useSpellCheckStore()
+const formattingStore = useFormattingStore()
 
 // 筛选表单
 const filterForm = ref({
+  type: '',
+  dateRange: null
+})
+
+// 当前应用的筛选条件
+const appliedFilter = ref({
   type: '',
   dateRange: null
 })
@@ -142,13 +152,14 @@ const filteredRecords = computed(() => {
   let records = [...historyStore.records]
 
   // 按类型筛选
-  if (filterForm.value.type) {
-    records = records.filter(r => r.type === filterForm.value.type)
+  if (appliedFilter.value.type) {
+    records = records.filter(r => r.type === appliedFilter.value.type)
   }
 
   // 按日期范围筛选
-  if (filterForm.value.dateRange && filterForm.value.dateRange.length === 2) {
-    const [startDate, endDate] = filterForm.value.dateRange
+  if (appliedFilter.value.dateRange && appliedFilter.value.dateRange.length === 2) {
+    const startDate = Number(appliedFilter.value.dateRange[0])
+    const endDate = Number(appliedFilter.value.dateRange[1]) + 86399999 // 加到当天23:59:59.999
     records = records.filter(
       r => r.timestamp >= startDate && r.timestamp <= endDate
     )
@@ -161,8 +172,10 @@ const filteredRecords = computed(() => {
  * 应用筛选
  */
 function handleFilter() {
-  // 筛选逻辑在computed中自动执行
-  ElMessage.success('筛选成功')
+  appliedFilter.value = {
+    type: filterForm.value.type,
+    dateRange: filterForm.value.dateRange
+  }
 }
 
 /**
@@ -170,6 +183,10 @@ function handleFilter() {
  */
 function handleReset() {
   filterForm.value = {
+    type: '',
+    dateRange: null
+  }
+  appliedFilter.value = {
     type: '',
     dateRange: null
   }
@@ -200,11 +217,14 @@ function handleClearAll() {
  */
 function handleView(record) {
   if (record.type === 'evaluation') {
-    evaluationStore.currentResult = record.result
-    evaluationStore.evaluationStatus = 'completed'
+    evaluationStore.setPendingResult(record.result)
     router.push('/evaluation')
-  } else {
-    ElMessage.info('该功能即将上线')
+  } else if (record.type === 'spellcheck') {
+    spellCheckStore.setPendingResult(record.result)
+    router.push('/spell-check')
+  } else if (record.type === 'formatting') {
+    formattingStore.setPendingResult(record.result)
+    router.push('/formatting')
   }
 }
 

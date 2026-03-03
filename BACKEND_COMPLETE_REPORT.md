@@ -142,7 +142,7 @@ copy .env.example .env
 # BAILIAN_API_KEY=your_actual_api_key_here
 
 # 6. 启动服务
-python -m app.main
+python -m my_app.main
 ```
 
 ### 方式二：使用启动脚本（Linux/Mac）

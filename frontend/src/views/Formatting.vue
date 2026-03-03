@@ -5,10 +5,8 @@
       选择标准学术论文模板，一键将文档字体、行距、标题层级统一调整为规范格式。
     </div>
 
-    <!-- 选择模板 + 上传（空闲态） -->
-    <div v-if="phase === 'idle'">
-
-      <!-- 模板选择 -->
+    <!-- 空闲：选择模板 + 上传 -->
+    <div v-if="store.isIdle">
       <el-card class="mb-20">
         <template #header>
           <div class="card-header">
@@ -46,7 +44,6 @@
         </el-radio-group>
       </el-card>
 
-      <!-- 文件上传 -->
       <FileUpload
         accept=".docx"
         :max-size="20"
@@ -57,57 +54,75 @@
     </div>
 
     <!-- 处理中 -->
-    <div v-else-if="phase === 'processing'">
+    <div v-else-if="store.isProcessing">
       <el-card>
-        <LoadingSpinner :size="60" :text="statusText" />
+        <LoadingSpinner :size="60" :text="store.statusText" />
         <div class="mt-20">
-          <el-progress :percentage="progress" :stroke-width="10" status="striped" striped-flow />
+          <el-progress :percentage="store.progress" :stroke-width="10" status="striped" striped-flow />
         </div>
         <div class="file-info mt-10">
           <el-icon><Document /></el-icon>
-          <span>{{ currentFilename }}</span>
+          <span>{{ store.currentFilename }}</span>
           <el-divider direction="vertical" />
           <el-icon><Stamp /></el-icon>
-          <span>{{ selectedTemplateName }}</span>
+          <span>{{ store.selectedTemplateName }}</span>
+        </div>
+        <div class="mt-20" style="text-align:center;">
+          <el-button @click="handleCancel">
+            <el-icon><CircleClose /></el-icon>
+            <span>取消排版</span>
+          </el-button>
         </div>
       </el-card>
     </div>
 
     <!-- 完成 -->
-    <div v-else-if="phase === 'completed'">
+    <div v-else-if="store.isCompleted">
+      <!-- 降级模式警告 -->
+      <el-alert
+        v-if="store.warning"
+        type="warning"
+        :title="store.warning"
+        :closable="false"
+        show-icon
+        class="mb-20"
+      >
+        <template #default>
+          <div style="font-size: 13px; line-height: 1.6;">
+            系统已自动从文档中提取文本内容进行排版，但可能丢失了部分格式、图片、表格等内容。
+            <br>
+            建议：在 Word 中打开文档，选择"另存为"，保存为新的 .docx 文件后重新上传。
+          </div>
+        </template>
+      </el-alert>
+      
       <el-card class="mb-20">
         <el-result
           icon="success"
           title="排版完成"
-          :sub-title="`已应用模板：${selectedTemplateName}`"
+          :sub-title="`已应用模板：${store.selectedTemplateName}`"
         >
           <template #extra>
             <div class="result-meta">
               <el-descriptions :column="2" border size="small">
-                <el-descriptions-item label="原文件">{{ currentFilename }}</el-descriptions-item>
-                <el-descriptions-item label="模板">{{ selectedTemplateName }}</el-descriptions-item>
-                <el-descriptions-item label="段落数">{{ formatResult.paragraphs }}</el-descriptions-item>
-                <el-descriptions-item label="章节数">{{ formatResult.sections }}</el-descriptions-item>
-                <el-descriptions-item label="样式应用">{{ formatResult.applied }} 处</el-descriptions-item>
-                <el-descriptions-item label="耗时">{{ formatResult.time }}s</el-descriptions-item>
+                <el-descriptions-item label="原文件">{{ store.currentFilename }}</el-descriptions-item>
+                <el-descriptions-item label="模板">{{ store.selectedTemplateName }}</el-descriptions-item>
+                <el-descriptions-item label="段落数">{{ store.formatResult.paragraphs }}</el-descriptions-item>
+                <el-descriptions-item label="章节数">{{ store.formatResult.sections }}</el-descriptions-item>
+                <el-descriptions-item label="样式应用">{{ store.formatResult.applied }} 处</el-descriptions-item>
+                <el-descriptions-item label="耗时">{{ store.formatResult.time }}s</el-descriptions-item>
               </el-descriptions>
             </div>
           </template>
         </el-result>
       </el-card>
 
-      <el-alert
-        title="格式化说明"
-        type="success"
-        :closable="false"
-        show-icon
-        class="mb-20"
-      >
+      <el-alert title="格式化说明" type="success" :closable="false" show-icon class="mb-20">
         系统已按所选模板统一调整页面边距、字体、字号、行距及标题层级。下载后直接使用 Word 打开即可。
       </el-alert>
 
       <div class="button-group">
-        <el-button size="large" @click="handleReset">
+        <el-button size="large" @click="store.reset()">
           <el-icon><RefreshLeft /></el-icon>
           重新排版
         </el-button>
@@ -119,10 +134,10 @@
     </div>
 
     <!-- 失败 -->
-    <div v-else-if="phase === 'failed'">
-      <el-result icon="error" title="排版失败" :sub-title="errorMsg">
+    <div v-else-if="store.isFailed">
+      <el-result icon="error" title="排版失败" :sub-title="store.errorMsg">
         <template #extra>
-          <el-button type="primary" @click="handleReset">重新上传</el-button>
+          <el-button type="primary" @click="store.reset()">重新上传</el-button>
         </template>
       </el-result>
     </div>
@@ -130,50 +145,53 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { useRoute } from 'vue-router'
 import {
   List, Loading, Document, Stamp,
-  RefreshLeft, Download,
+  RefreshLeft, Download, CircleClose,
 } from '@element-plus/icons-vue'
 import FileUpload from '@/components/common/FileUpload.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import formattingAPI from '@/api/formatting'
+import { useFormattingStore } from '@/store/modules/formatting'
+import { useHistoryStore } from '@/store/modules/history'
 
-// ── 状态 ──────────────────────────────────────────────────
-const phase = ref('idle')           // idle | processing | completed | failed
-const progress = ref(0)
-const currentFilename = ref('')
-const currentTaskId = ref(null)
-const errorMsg = ref('')
+const store = useFormattingStore()
+const historyStore = useHistoryStore()
+const route = useRoute()
 
 const templates = ref([])
 const templatesLoading = ref(true)
-const selectedTemplateId = ref('')
+const selectedTemplateId = ref(store.selectedTemplateId || '')
 
-const formatResult = ref({
-  paragraphs: 0, sections: 0, applied: 0, time: 0,
+// 加载待展示结果或保持当前状态
+onMounted(() => {
+  loadTemplates()
+  store.loadPendingOrKeep()
+  store.resumeIfProcessing()
+  
+  // 若 store 中有模板选中记录则还原
+  if (store.selectedTemplateId) {
+    selectedTemplateId.value = store.selectedTemplateId
+  }
+  
+  // 移除自动重置逻辑，用户需要主动点击"重新排版"按钮才会重置
+  // 这样刷新页面、切换菜单后都能保持结果显示
+})
+onBeforeUnmount(() => store.stopPolling())
+
+// 监听路由变化，当从其他页面返回时恢复状态
+watch(() => route.path, (newPath) => {
+  if (newPath === '/formatting') {
+    // 如果是处理中状态，恢复轮询
+    if (store.isProcessing) {
+      store.resumeIfProcessing()
+    }
+  }
 })
 
-let pollTimer = null
-
-// ── 计算属性 ───────────────────────────────────────────────
-const selectedTemplateName = computed(() => {
-  const t = templates.value.find(t => t.id === selectedTemplateId.value)
-  return t ? t.name : ''
-})
-
-const statusText = computed(() => {
-  if (progress.value < 20) return '正在上传文件...'
-  if (progress.value < 50) return '正在识别文档结构...'
-  return '正在应用模板样式，请稍候...'
-})
-
-// ── 生命周期 ───────────────────────────────────────────────
-onMounted(loadTemplates)
-onBeforeUnmount(stopPolling)
-
-// ── 模板加载 ───────────────────────────────────────────────
 async function loadTemplates() {
   templatesLoading.value = true
   try {
@@ -185,101 +203,55 @@ async function loadTemplates() {
       school_or_journal: t.school_or_journal,
       description: t.description,
     }))
-    if (templates.value.length > 0) {
+    if (templates.value.length > 0 && !selectedTemplateId.value) {
       selectedTemplateId.value = templates.value[0].id
     }
-  } catch (e) {
+  } catch {
     ElMessage.warning('模板列表加载失败，请刷新重试')
   } finally {
     templatesLoading.value = false
   }
 }
 
-// ── 文件上传 + 提交格式化 ──────────────────────────────────
 async function handleFileSelected(file) {
   if (!selectedTemplateId.value) {
     ElMessage.warning('请先选择模板')
     return
   }
-  phase.value = 'processing'
-  progress.value = 5
-  currentFilename.value = file.name
-  errorMsg.value = ''
 
-  try {
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('template_id', selectedTemplateId.value)
+  const duplicate = historyStore.records.find(
+    r => r.type === 'formatting' && r.result?.file_name === file.name
+  )
+  if (duplicate) {
+    try {
+      await ElMessageBox.confirm(
+        `"${file.name}" 已有排版记录，重复上传将重新生成文档，是否继续？`,
+        '重复文档',
+        { confirmButtonText: '继续排版', cancelButtonText: '取消', type: 'warning' }
+      )
+    } catch {
+      return
+    }
+  }
 
-    const res = await formattingAPI.format(formData)
-    currentTaskId.value = res.task_id
-    progress.value = 20
-
-    startPolling(res.task_id)
-  } catch (err) {
-    phase.value = 'failed'
-    errorMsg.value = err?.response?.data?.detail || '提交失败，请重试'
-    ElMessage.error(errorMsg.value)
+  const templateName = templates.value.find(t => t.id === selectedTemplateId.value)?.name || ''
+  await store.uploadAndFormat(file, selectedTemplateId.value, templateName)
+  if (store.isFailed) {
+    ElMessage.error(store.errorMsg || '提交失败，请重试')
   }
 }
 
-// ── 状态轮询 ───────────────────────────────────────────────
-function startPolling(taskId) {
-  stopPolling()
-  pollTimer = setInterval(async () => {
-    try {
-      const res = await formattingAPI.getStatus(taskId)
-
-      if (res.status === 'processing') {
-        progress.value = Math.min(85, progress.value + 8)
-      } else if (res.status === 'completed') {
-        stopPolling()
-        const r = res.result || {}
-        formatResult.value = {
-          paragraphs: r.sections ?? 0,
-          sections: r.sections ?? 0,
-          applied: r.sections ?? 0,
-          time: res.end_time
-            ? ((new Date(res.end_time) - new Date(res.start_time)) / 1000).toFixed(1)
-            : (r.time_elapsed ?? 0),
-        }
-        progress.value = 100
-        phase.value = 'completed'
-        ElMessage.success('排版完成！')
-      } else if (res.status === 'failed') {
-        stopPolling()
-        phase.value = 'failed'
-        errorMsg.value = res.error || '排版失败'
-        ElMessage.error(errorMsg.value)
-      }
-    } catch (e) {
-      // 网络抖动，继续轮询
-    }
-  }, 3000)
+function handleCancel() {
+  store.cancel()
+  ElMessage.info('已取消排版')
 }
 
-function stopPolling() {
-  if (pollTimer) { clearInterval(pollTimer); pollTimer = null }
-}
-
-// ── 下载 ──────────────────────────────────────────────────
 function handleDownload() {
-  if (!currentTaskId.value) return
-  formattingAPI.download(currentTaskId.value)
+  if (!store.currentTaskId) return
+  formattingAPI.download(store.currentTaskId)
   ElMessage.success('开始下载排版文档')
 }
 
-// ── 重置 ──────────────────────────────────────────────────
-function handleReset() {
-  stopPolling()
-  phase.value = 'idle'
-  progress.value = 0
-  currentFilename.value = ''
-  currentTaskId.value = null
-  formatResult.value = { paragraphs: 0, sections: 0, applied: 0, time: 0 }
-}
-
-// ── 辅助 ──────────────────────────────────────────────────
 function categoryLabel(cat) {
   return { universities: '高校', journals: '期刊', custom: '自定义' }[cat] ?? cat
 }
@@ -289,67 +261,19 @@ function categoryColor(cat) {
 </script>
 
 <style scoped>
-.template-group {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 100%;
-}
-.template-radio {
-  width: 100%;
-  height: auto;
-  padding: 14px 16px;
-  margin-right: 0 !important;
-}
+.template-group { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+.template-radio { width: 100%; height: auto; padding: 14px 16px; margin-right: 0 !important; }
 .template-option { text-align: left; }
-.template-name {
-  font-size: 15px;
-  font-weight: 600;
-  color: #303133;
-  margin-bottom: 6px;
-}
-.template-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
-}
+.template-name { font-size: 15px; font-weight: 600; color: #303133; margin-bottom: 6px; }
+.template-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
 .template-school { font-size: 12px; color: #606266; }
 .template-desc { font-size: 12px; color: #909399; line-height: 1.5; }
-
-.card-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 16px;
-  font-weight: bold;
-}
-.loading-tip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #909399;
-  padding: 20px 0;
-}
-.tip-text {
-  text-align: center;
-  color: #909399;
-  font-size: 13px;
-  margin-top: 8px;
-}
-.file-info {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #909399;
-  font-size: 13px;
-}
+.card-header { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: bold; }
+.loading-tip { display: flex; align-items: center; gap: 8px; color: #909399; padding: 20px 0; }
+.tip-text { text-align: center; color: #909399; font-size: 13px; margin-top: 8px; }
+.file-info { display: flex; align-items: center; gap: 6px; color: #909399; font-size: 13px; }
 .result-meta { width: 100%; margin-top: 16px; }
-.button-group {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
+.button-group { display: flex; gap: 12px; flex-wrap: wrap; }
 .mt-10 { margin-top: 10px; }
 .mt-20 { margin-top: 20px; }
 .mb-20 { margin-bottom: 20px; }

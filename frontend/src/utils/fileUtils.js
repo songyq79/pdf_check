@@ -29,6 +29,14 @@ export function validateFile(file, options = {}) {
     }
   }
 
+  // 检查空文件
+  if (file.size === 0) {
+    return {
+      valid: false,
+      error: '文件内容为空，请检查后重新上传'
+    }
+  }
+
   // 检查文件大小
   if (file.size > maxSize) {
     const maxSizeMB = (maxSize / (1024 * 1024)).toFixed(0)
