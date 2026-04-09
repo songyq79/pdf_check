@@ -1,0 +1,23 @@
+{
+  "template_id": "core_journal_v1",
+  "name": "中文核心期刊投稿模板",
+  "category": "journals",
+  "school_or_journal": "中文核心期刊（通用）",
+  "description": "适用于中文核心期刊（北大核心、CSSCI、CSCD等）的通用投稿格式模板。页面A4，四边距均为2.5cm；正文宋体10.5pt（五号），1.3倍行距；文章标题黑体16pt居中，作者宋体10.5pt居中，摘要关键词楷体10.5pt，一级标题黑体10.5pt末尾加全角句号，二级标题宋体10.5pt加粗。",
+  "version": "1.0",
+  "author": "system",
+  "created_at": "2026-02-24T00:00:00",
+  "updated_at": "2026-02-24T00:00:00",
+  "usage_count": 1,
+  "is_public": true,
+  "tags": [
+    "核心期刊",
+    "学术论文",
+    "投稿",
+    "北大核心",
+    "CSSCI",
+    "CSCD"
+  ],
+  "file_path": "E:\\python\\pdf_check\\backend\\templates\\builtin\\中文核心期刊投稿模板.docx",
+  "preview_image": null
+}

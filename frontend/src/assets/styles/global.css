@@ -1,3 +1,6 @@
+/* Google Fonts Import */
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap');
+
 /* 全局样式 */
 
 * {
@@ -15,7 +18,6 @@ body {
   font-size: 14px;
   line-height: 1.6;
   color: #303133;
-  background-color: #f5f7fa;
 }
 
 #app {
@@ -46,18 +48,19 @@ body {
 .page-container {
   padding: 20px;
   min-height: calc(100vh - 60px);
+  background: #f9f9f9;
 }
 
 .page-title {
   font-size: 24px;
   font-weight: bold;
-  color: #303133;
+  color: #ffffff;
   margin-bottom: 20px;
 }
 
 .page-description {
   font-size: 14px;
-  color: #606266;
+  color: rgba(255, 255, 255, 0.85);
   margin-bottom: 20px;
   line-height: 1.8;
 }
@@ -93,7 +96,7 @@ body {
 .score-display {
   text-align: center;
   padding: 30px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #006C49 0%, #004d35 100%);
   color: white;
   border-radius: 12px;
   margin-bottom: 20px;
@@ -142,7 +145,7 @@ body {
 .dimension-card .dimension-score {
   font-size: 24px;
   font-weight: bold;
-  color: #409eff;
+  color: #006C49;
 }
 
 /* 列表样式 */
@@ -213,7 +216,7 @@ body {
 }
 
 .text-primary {
-  color: #409eff;
+  color: #006C49;
 }
 
 .text-success {

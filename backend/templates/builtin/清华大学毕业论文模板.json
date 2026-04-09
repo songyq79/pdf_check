@@ -1,0 +1,22 @@
+{
+  "template_id": "tsinghua_v1",
+  "name": "清华大学毕业论文模板",
+  "category": "universities",
+  "school_or_journal": "清华大学",
+  "description": "清华大学研究生/本科生毕业论文标准格式模板，参照清华大学学位论文撰写规范。页面A4，上2.5cm下2.5cm左3cm右2cm；正文宋体12pt（小四），1.5倍行距；一级标题黑体16pt居中，二级标题黑体14pt，三级标题黑体12pt。",
+  "version": "1.0",
+  "author": "system",
+  "created_at": "2026-02-24T00:00:00",
+  "updated_at": "2026-02-24T00:00:00",
+  "usage_count": 16,
+  "is_public": true,
+  "tags": [
+    "清华大学",
+    "毕业论文",
+    "学位论文",
+    "本科",
+    "硕士"
+  ],
+  "file_path": "E:\\python\\pdf_check\\backend\\templates\\builtin\\清华大学毕业论文模板.docx",
+  "preview_image": null
+}

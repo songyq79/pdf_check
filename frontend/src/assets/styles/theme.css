@@ -1,0 +1,269 @@
+/* 新主题样式 - 渐变背景和现代化设计 */
+
+/* 全局渐变背景 */
+body {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-attachment: fixed;
+}
+
+/* 毛玻璃效果卡片 */
+.glass-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+/* 渐变按钮 */
+.gradient-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.gradient-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+}
+
+/* 功能图标渐变 */
+.icon-gradient-blue {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.icon-gradient-red {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.icon-gradient-cyan {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+/* 页面容器优化 */
+.modern-page-container {
+  padding: 20px;
+  min-height: calc(100vh - 60px);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* 欢迎区域样式 */
+.modern-welcome-section {
+  text-align: center;
+  color: white;
+  padding: 80px 20px 60px;
+  margin-bottom: 50px;
+}
+
+.modern-welcome-title {
+  font-size: 52px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  line-height: 1.2;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  letter-spacing: -0.5px;
+}
+
+.modern-welcome-subtitle {
+  font-size: 22px;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 16px;
+  font-weight: 400;
+}
+
+.modern-welcome-description {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 750px;
+  margin: 0 auto;
+  line-height: 1.8;
+}
+
+/* 功能卡片网格 */
+.modern-features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 40px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.modern-feature-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 40px 32px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.modern-feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.modern-feature-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+  color: white;
+  font-size: 36px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.modern-feature-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 16px;
+  line-height: 1.3;
+}
+
+.modern-feature-description {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.8;
+  margin-bottom: 28px;
+  min-height: 84px;
+  text-align: center;
+}
+
+.modern-feature-button {
+  width: 100%;
+  padding: 14px 24px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+/* 数据统计区域 */
+.modern-stats-section {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 40px;
+  margin-bottom: 40px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.modern-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 40px;
+  text-align: center;
+}
+
+.modern-stat-item {
+  padding: 20px;
+}
+
+.modern-stat-value {
+  font-size: 42px;
+  font-weight: 700;
+  color: #667eea;
+  margin-bottom: 8px;
+}
+
+.modern-stat-label {
+  font-size: 14px;
+  color: #666;
+}
+
+/* 历史记录区域 */
+.modern-history-section {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.modern-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.modern-section-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+/* 响应式优化 */
+@media (max-width: 1024px) {
+  .modern-features-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .modern-welcome-title {
+    font-size: 32px;
+  }
+
+  .modern-welcome-subtitle {
+    font-size: 18px;
+  }
+
+  .modern-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .modern-stat-value {
+    font-size: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modern-page-container {
+    padding: 10px;
+  }
+
+  .modern-welcome-section {
+    padding: 40px 15px;
+  }
+
+  .modern-welcome-title {
+    font-size: 28px;
+  }
+
+  .modern-feature-card {
+    padding: 24px;
+  }
+
+  .modern-stats-section {
+    padding: 24px;
+  }
+
+  .modern-history-section {
+    padding: 20px;
+  }
+}

@@ -1,0 +1,121 @@
+/* 响应式样式 */
+
+/* 平板设备 (768px - 1024px) */
+@media screen and (max-width: 1024px) {
+  .page-container {
+    padding: 15px;
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .card-container {
+    gap: 15px;
+  }
+
+  .score-display .score-value {
+    font-size: 40px;
+  }
+}
+
+/* 移动设备 (< 768px) */
+@media screen and (max-width: 768px) {
+  .page-container {
+    padding: 10px;
+    min-height: calc(100vh - 50px);
+  }
+
+  .page-title {
+    font-size: 18px;
+    margin-bottom: 15px;
+  }
+
+  .page-description {
+    font-size: 13px;
+    margin-bottom: 15px;
+  }
+
+  .card-container {
+    gap: 10px;
+  }
+
+  .upload-area {
+    padding: 30px 20px;
+  }
+
+  .score-display {
+    padding: 20px;
+  }
+
+  .score-display .score-value {
+    font-size: 36px;
+  }
+
+  .score-display .score-label {
+    font-size: 14px;
+  }
+
+  .dimension-card {
+    padding: 15px;
+  }
+
+  .dimension-card .dimension-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dimension-card .dimension-score {
+    margin-top: 10px;
+  }
+
+  .button-group {
+    flex-direction: column;
+  }
+
+  .button-group .el-button {
+    width: 100%;
+  }
+
+  /* 导航菜单移动端适配 */
+  .el-menu--horizontal {
+    flex-wrap: wrap;
+  }
+
+  .el-menu--horizontal .el-menu-item {
+    font-size: 13px;
+    padding: 0 15px;
+  }
+}
+
+/* 小屏移动设备 (< 480px) */
+@media screen and (max-width: 480px) {
+  html,
+  body {
+    font-size: 13px;
+  }
+
+  .page-container {
+    padding: 8px;
+  }
+
+  .page-title {
+    font-size: 16px;
+  }
+
+  .upload-area {
+    padding: 20px 15px;
+  }
+
+  .score-display .score-value {
+    font-size: 32px;
+  }
+
+  .dimension-card .dimension-name {
+    font-size: 14px;
+  }
+
+  .dimension-card .dimension-score {
+    font-size: 20px;
+  }
+}
