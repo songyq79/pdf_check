@@ -34,7 +34,19 @@ class ExternalSource(ABC):
     """所有外部学术源的统一接口。"""
 
     source_name: str = "base"
-    _sem_lock = asyncio.Semaphore(3)
+    # 每个事件循环维护独立信号量：Celery 任务每次 new_event_loop，
+    # 类级 asyncio.Semaphore 会绑定到创建时的循环，跨循环使用会抛
+    # "bound to a different event loop"。按循环惰性创建可避免此问题。
+    _sems: dict = {}
+
+    @classmethod
+    def _get_sem(cls) -> asyncio.Semaphore:
+        loop = asyncio.get_event_loop()
+        sem = cls._sems.get(loop)
+        if sem is None:
+            sem = asyncio.Semaphore(3)
+            cls._sems[loop] = sem
+        return sem
 
     def __init__(self, cache_ttl: int = 604800):
         self.cache_ttl = cache_ttl
@@ -91,7 +103,7 @@ class ExternalSource(ABC):
             logger.debug(f"[{self.source_name}] cache hit: {query[:40]}")
             return cached
 
-        async with ExternalSource._sem_lock:
+        async with ExternalSource._get_sem():
             try:
                 papers = await self._do_search(query, limit)
             except Exception as e:
