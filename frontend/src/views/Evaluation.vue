@@ -149,6 +149,46 @@
         />
       </div>
 
+      <!-- 投稿指导 -->
+      <el-card class="mb-20">
+        <div class="journal-header">
+          <div class="journal-title">📮 投稿指导<span class="journal-free">免费</span></div>
+          <el-button
+            v-if="!journals.length"
+            type="primary"
+            plain
+            :loading="journalLoading"
+            @click="loadJournals"
+          >获取匹配期刊推荐</el-button>
+        </div>
+        <div v-if="journals.length" class="journal-list">
+          <div v-for="j in journals" :key="j.id" class="journal-card">
+            <div class="journal-name">{{ j.name_zh || j.name_en }}</div>
+            <div class="journal-meta">
+              <el-tag size="small" type="info" effect="plain" v-if="j.jcr_rank">{{ j.jcr_rank }}</el-tag>
+              <span v-if="j.impact_factor">IF {{ j.impact_factor }}</span>
+              <span v-if="j.acceptance_rate">录用率 {{ Math.round(j.acceptance_rate * 100) }}%</span>
+              <span v-if="j.review_days_avg">审稿约 {{ j.review_days_avg }} 天</span>
+            </div>
+            <div class="journal-match">
+              契合度
+              <el-progress
+                :percentage="j.match_score * 10"
+                :stroke-width="6"
+                :color="matchColor(j.match_score)"
+                style="width:120px; display:inline-block; vertical-align:middle; margin:0 6px;"
+                :show-text="false"
+              />
+              <strong :style="{ color: matchColor(j.match_score) }">{{ j.match_score }}/10</strong>
+            </div>
+            <div class="journal-reason">{{ j.reason }}</div>
+          </div>
+        </div>
+        <div v-else-if="journalLoaded" class="journal-empty">
+          暂无匹配期刊（期刊库可能尚未导入，请联系管理员运行 seed_journals）。
+        </div>
+      </el-card>
+
       <!-- 操作按钮 -->
       <div class="button-group">
         <el-button type="primary" size="large" @click="handleReset">
@@ -170,7 +210,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Reading, RefreshLeft, Download, CircleClose } from '@element-plus/icons-vue'
 import { useEvaluationStore } from '@/store/modules/evaluation'
@@ -288,6 +328,36 @@ async function handleFileSelected(file) {
   }
 }
 
+// 投稿指导
+const journals = ref([])
+const journalLoading = ref(false)
+const journalLoaded = ref(false)
+
+function matchColor(score) {
+  if (score >= 8) return '#008000'
+  if (score >= 6) return '#0064c8'
+  if (score >= 4) return '#ffa500'
+  return '#ff0000'
+}
+
+async function loadJournals() {
+  const taskId = evaluationStore.currentTaskId
+  if (!taskId) {
+    ElMessage.warning('未找到评价任务，无法推荐期刊')
+    return
+  }
+  journalLoading.value = true
+  try {
+    const resp = await evaluationAPI.getJournalRecommendations(taskId)
+    journals.value = resp.journals || []
+    journalLoaded.value = true
+  } catch (e) {
+    ElMessage.error(e._userMessage || '获取期刊推荐失败')
+  } finally {
+    journalLoading.value = false
+  }
+}
+
 function handleDownloadReport() {
   const reportId = evaluationStore.currentResult?.report_id
   if (!reportId) {
@@ -304,6 +374,8 @@ function handleCancel() {
 }
 
 function handleReset() {
+  journals.value = []
+  journalLoaded.value = false
   evaluationStore.reset()
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
@@ -418,4 +490,29 @@ function formatDate(dateString) {
 :deep(.el-progress-bar__inner) {
   background: rgb(0, 108, 73);
 }
+
+/* 投稿指导 */
+.journal-header {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+}
+.journal-title { font-size: 16px; font-weight: 600; color: rgb(18,18,18); }
+.journal-free {
+  font-size: 11px; color: #006C49; background: rgba(79,251,182,0.12);
+  border-radius: 100px; padding: 2px 8px; margin-left: 8px;
+}
+.journal-list {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px; margin-top: 16px;
+}
+.journal-card {
+  border: 1px solid rgba(229,231,235,0.7); border-radius: 16px; padding: 14px;
+}
+.journal-name { font-size: 15px; font-weight: 600; color: rgb(31,41,55); margin-bottom: 8px; }
+.journal-meta {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  font-size: 12px; color: rgb(107,114,128); margin-bottom: 8px;
+}
+.journal-match { font-size: 13px; color: rgb(75,85,99); margin-bottom: 6px; }
+.journal-reason { font-size: 12px; color: rgb(107,114,128); line-height: 1.5; }
+.journal-empty { font-size: 13px; color: rgb(156,163,175); margin-top: 12px; }
 </style>

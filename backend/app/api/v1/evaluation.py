@@ -28,6 +28,8 @@ from app.services.docx_normalizer import clean_control_chars, normalize_docx
 from app.services.billing_service import consume_quota
 from app.workers.celery_app import celery_app
 from app.workers.evaluation_tasks import run_evaluation
+from app.core.evaluator.journal_matcher import JournalMatcher
+from app.services.task_store import get_task_result_from_db
 
 router = APIRouter()
 
@@ -654,3 +656,39 @@ def download_report(report_id: str):
         filename=f"论文评价报告_{datetime.now().strftime('%Y%m%d_%H%M%S')}.docx",
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     )
+
+
+# ── 投稿指导（Phase 1 P0.3，基于已有评价结果，0 配额）─────────
+
+def _load_eval_result(task_id: str) -> dict:
+    """优先 Redis(Celery)，缺失回退 MySQL。"""
+    r = celery_app.AsyncResult(task_id)
+    if r.state == "SUCCESS" and isinstance(r.result, dict):
+        return r.result
+    db_row = get_task_result_from_db(task_id)
+    if db_row and db_row.get("result"):
+        return db_row["result"]
+    return None
+
+
+@router.get("/journal-recommendations/{task_id}", summary="基于评价结果推荐期刊（免费）")
+def journal_recommendations(task_id: str, db: Session = Depends(get_db)):
+    eval_result = _load_eval_result(task_id)
+    if eval_result is None:
+        raise HTTPException(404, "评价结果不存在或尚未完成")
+    journals = JournalMatcher().get_recommendations(db, eval_result)
+    return {
+        "task_id": task_id,
+        "based_on_score": eval_result.get("overall_score"),
+        "paper_type": eval_result.get("paper_type"),
+        "count": len(journals),
+        "journals": journals,
+    }
+
+
+@router.get("/journal-details/{journal_id}", summary="期刊详情")
+def journal_details(journal_id: int, db: Session = Depends(get_db)):
+    detail = JournalMatcher().get_detail(db, journal_id)
+    if not detail:
+        raise HTTPException(404, "期刊不存在")
+    return detail

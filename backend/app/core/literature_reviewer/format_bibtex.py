@@ -29,7 +29,8 @@ class BibTeXFormatter:
     def parse_string(self, content: str) -> List[Dict]:
         """解析 BibTeX 文本，提取条目。"""
         entries = []
-        pattern = r"@(\w+)\s*\{\s*([^,\s]+)\s*,(.*?)\n\}"
+        # 条目以 } 收尾，后跟下一个 @ 或文末（兼容单行/多行 .bib）
+        pattern = r"@(\w+)\s*\{\s*([^,\s]+)\s*,(.*?)\}\s*(?=@|\Z)"
         for match in re.finditer(pattern, content, re.DOTALL | re.IGNORECASE):
             entry_type = match.group(1).lower()
             citation_key = match.group(2).strip()

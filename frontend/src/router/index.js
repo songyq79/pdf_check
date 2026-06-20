@@ -20,6 +20,12 @@ const routes = [
     meta: { title: '选题评估', requiresAuth: true }
   },
   {
+    path: '/literature-review',
+    name: 'LiteratureReview',
+    component: () => import('@/views/LiteratureReview.vue'),
+    meta: { title: '文献综述', requiresAuth: true }
+  },
+  {
     path: '/spell-check',
     name: 'SpellCheck',
     component: () => import('@/views/SpellCheck.vue'),

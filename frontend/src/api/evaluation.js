@@ -43,6 +43,17 @@ const evaluationAPI = {
   },
 
   /**
+   * 基于评价结果获取期刊投稿推荐（免费）
+   * @param {string} taskId
+   */
+  getJournalRecommendations(taskId) {
+    return request({
+      url: `/api/v1/evaluation/journal-recommendations/${taskId}`,
+      method: 'get',
+    })
+  },
+
+  /**
    * 下载评价报告
    * @param {string} reportId
    */

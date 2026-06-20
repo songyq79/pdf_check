@@ -15,6 +15,9 @@
           <router-link to="/topic-evaluation" class="nav-item" :class="{ active: $route.path === '/topic-evaluation' }">
             选题评估
           </router-link>
+          <router-link to="/literature-review" class="nav-item" :class="{ active: $route.path === '/literature-review' }">
+            文献综述
+          </router-link>
           <router-link to="/spell-check" class="nav-item" :class="{ active: $route.path === '/spell-check' }">
             错别字检查
           </router-link>

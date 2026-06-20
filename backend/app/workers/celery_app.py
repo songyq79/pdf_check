@@ -21,7 +21,7 @@ celery_app = Celery(
         "app.workers.formatter_tasks",
         "app.workers.plagiarism_tasks",
         "app.workers.topic_evaluation_tasks",
-        # 注意：literature_review_tasks 待 Loop 5 创建任务文件后再加入 include
+        "app.workers.literature_review_tasks",
     ],
 )
 
