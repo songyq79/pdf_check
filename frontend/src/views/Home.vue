@@ -11,6 +11,7 @@
         </div>
         <h1 class="hero-title">欢迎使用<br>论文评价<span class="accent">检验系统</span></h1>
         <p class="hero-desc">为您的学术论文提供专业的质量检测与智能评价。错别字、语法、段落逻辑，统统交给我们。无需烦恼，只需上传文档，等待专业反馈与自动修正。</p>
+        <router-link to="/institutions" class="b2b-entry">🏫 高校/机构版 — 为全校师生统一开通 →</router-link>
       </div>
     </section>
 
@@ -369,6 +370,19 @@ body.home-page {
   text-transform: uppercase;
   z-index: 1;
 }
+
+.b2b-entry {
+  display: inline-block;
+  margin-top: 18px;
+  font-size: 14px;
+  color: #006C49;
+  text-decoration: none;
+  background: rgba(0, 108, 73, 0.07);
+  border-radius: 100px;
+  padding: 8px 18px;
+  transition: background 0.2s;
+}
+.b2b-entry:hover { background: rgba(0, 108, 73, 0.14); }
 
 .new-badge {
   position: absolute;

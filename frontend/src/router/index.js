@@ -38,6 +38,18 @@ const routes = [
     meta: { title: '实验评审', requiresAuth: true }
   },
   {
+    path: '/institution',
+    name: 'InstitutionDashboard',
+    component: () => import('@/views/InstitutionDashboard.vue'),
+    meta: { title: '机构管理', requiresAuth: true }
+  },
+  {
+    path: '/institutions',
+    name: 'InstitutionIntro',
+    component: () => import('@/views/InstitutionIntro.vue'),
+    meta: { title: '高校版' }
+  },
+  {
     path: '/spell-check',
     name: 'SpellCheck',
     component: () => import('@/views/SpellCheck.vue'),

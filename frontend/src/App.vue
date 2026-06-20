@@ -50,7 +50,8 @@
                 <el-dropdown-menu>
                   <el-dropdown-item command="user-center">用户中心</el-dropdown-item>
                   <el-dropdown-item command="history">历史记录</el-dropdown-item>
-                  <el-dropdown-item command="pricing">购买套餐</el-dropdown-item>
+                  <el-dropdown-item v-if="authStore.userType !== 'institution_student'" command="pricing">购买套餐</el-dropdown-item>
+                  <el-dropdown-item v-if="authStore.isInstAdmin" command="institution">机构管理</el-dropdown-item>
                   <el-dropdown-item v-if="authStore.isAdmin" command="admin">管理后台</el-dropdown-item>
                   <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
                 </el-dropdown-menu>
@@ -120,6 +121,8 @@ function handleUserCommand(cmd) {
     router.push('/')
   } else if (cmd === 'admin') {
     router.push('/admin')
+  } else if (cmd === 'institution') {
+    router.push('/institution')
   } else if (cmd === 'user-center') {
     router.push('/user-center')
   } else if (cmd === 'history') {

@@ -50,6 +50,9 @@ class UserOut(BaseModel):
     phone: Optional[str] = None
     wechat_openid: Optional[str] = None
     nickname: Optional[str] = None
+    # Phase 2 多租户：前端据此判断机构管理员/学生入口
+    user_type: Optional[str] = "individual"
+    institution_id: Optional[int] = None
     created_at: datetime
 
     class Config:

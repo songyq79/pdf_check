@@ -151,3 +151,15 @@ try:
     logger.info("✅ ExperimentEvaluation 路由加载成功")
 except Exception as e:
     logger.error(f"❌ ExperimentEvaluation 路由加载失败: {e}")
+
+# ── 12. 机构管理（Phase 2 · B端）──────────────────────────
+try:
+    from app.api.v1 import institution
+    api_router.include_router(
+        institution.router,
+        prefix="/institution",
+        tags=["机构管理"],
+    )
+    logger.info("✅ Institution 路由加载成功")
+except Exception as e:
+    logger.error(f"❌ Institution 路由加载失败: {e}")

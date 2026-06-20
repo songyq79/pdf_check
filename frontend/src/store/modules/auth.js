@@ -14,6 +14,10 @@ export const useAuthStore = defineStore('auth', () => {
   const username = computed(() => user.value?.username || '')
   const isAdmin = computed(() => user.value?.is_admin || false)
   const isApproved = computed(() => user.value?.is_approved || false)
+  const userType = computed(() => user.value?.user_type || 'individual')
+  const isInstAdmin = computed(() =>
+    user.value?.is_admin ||
+    ['institution_admin', 'super_admin'].includes(user.value?.user_type))
 
   /**
    * 登录：保存 token，拉取用户信息
@@ -70,5 +74,5 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('access_token')
   }
 
-  return { token, user, isLoggedIn, username, isAdmin, isApproved, loginAction, loginWithToken, fetchMe, logout }
+  return { token, user, isLoggedIn, username, isAdmin, isApproved, userType, isInstAdmin, loginAction, loginWithToken, fetchMe, logout }
 })
