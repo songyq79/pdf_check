@@ -80,6 +80,20 @@ def check_quota(db: Session, user_id: int) -> dict:
     if user and user.is_admin:
         return {"allowed": True, "source": "admin", "detail": "管理员无限额度"}
 
+    # 机构用户：走机构配额池（个人用户 institution_id 为空，不进此分支，C端零影响）
+    if user and getattr(user, "institution_id", None):
+        from app.models.institution import Institution
+        inst = db.query(Institution).filter(
+            Institution.id == user.institution_id,
+            Institution.is_active == True,
+        ).first()
+        if inst:
+            remaining = max(0, (inst.quota_total or 0) - (inst.quota_used or 0))
+            if remaining > 0:
+                return {"allowed": True, "source": "institution", "detail": f"机构剩余 {remaining} 次"}
+            return {"allowed": False, "source": None, "detail": "机构配额已用完，请联系机构管理员"}
+        # 机构不存在/已停用 → 落回个人配额（安全兜底）
+
     # 懒加载免费试用
     _lazy_ensure_free_trial(db, user_id)
 
@@ -151,6 +165,29 @@ def consume_quota(db: Session, user_id: int, action: str, task_id: str = None, c
         db.refresh(record)
         return record
 
+    # 机构配额池：原子扣减 quota_used（不足则 rowcount=0）
+    if source == "institution":
+        from app.models.user import User as _User
+        u = db.query(_User).filter(_User.id == user_id).first()
+        iid = u.institution_id if u else None
+        result = db.execute(
+            text(
+                "UPDATE institutions SET quota_used = quota_used + :cost "
+                "WHERE id = :iid AND quota_total - quota_used >= :cost"
+            ),
+            {"cost": cost, "iid": iid},
+        )
+        if result.rowcount == 0:
+            raise ValueError("机构配额不足")
+        record = UsageRecord(
+            user_id=user_id, action=action,
+            consumed_from="institution", task_id=task_id,
+        )
+        db.add(record)
+        db.commit()
+        logger.info(f"用户 {user_id} 消耗机构配额 {cost} 次，动作: {action}")
+        return record
+
     # 原子扣减额度（包月也扣次数）；cost 次一次性扣，remaining 不足则 rowcount=0
     result = db.execute(
         text(
@@ -170,6 +207,29 @@ def consume_quota(db: Session, user_id: int, action: str, task_id: str = None, c
     db.commit()
     logger.info(f"用户 {user_id} 消耗 {source} 额度，动作: {action}")
     return record
+
+
+def get_total_remaining(db: Session, user_id: int) -> int:
+    """
+    返回用户当前可用总次数（供 cost>1 接口预检用，正确处理机构/个人）：
+    - 管理员：返回极大值（无限）
+    - 机构用户：机构配额池剩余
+    - 个人用户：各来源余额之和
+    """
+    from app.models.user import User
+    user = db.query(User).filter(User.id == user_id).first()
+    if user and user.is_admin:
+        return 10 ** 9
+    if user and getattr(user, "institution_id", None):
+        from app.models.institution import Institution
+        inst = db.query(Institution).filter(
+            Institution.id == user.institution_id,
+            Institution.is_active == True,
+        ).first()
+        if inst:
+            return max(0, (inst.quota_total or 0) - (inst.quota_used or 0))
+    rows = db.query(QuotaBalance).filter(QuotaBalance.user_id == user_id).all()
+    return sum(b.remaining for b in rows)
 
 
 # ── 订单 ──────────────────────────────────────────────────────

@@ -15,7 +15,7 @@ from app.config import settings
 from app.models.user import get_db
 from app.models.billing import QuotaBalance
 from app.api.v1.deps import require_quota, QuotaContext
-from app.services.billing_service import consume_quota
+from app.services.billing_service import consume_quota, get_total_remaining
 from app.workers.celery_app import celery_app
 from app.workers.experiment_evaluation_tasks import run_experiment_evaluation
 
@@ -38,8 +38,7 @@ async def submit_experiment(
         raise HTTPException(503, "AI 服务未配置")
 
     if ctx.billing_on and ctx.quota_info.get("source") not in ("admin", "billing_off"):
-        balances = db.query(QuotaBalance).filter(QuotaBalance.user_id == ctx.user.id).all()
-        if sum(b.remaining for b in balances) < _QUOTA_COST:
+        if get_total_remaining(db, ctx.user.id) < _QUOTA_COST:
             raise HTTPException(
                 status_code=402,
                 detail={"code": "NO_QUOTA", "message": f"实验评审需要 {_QUOTA_COST} 次额度，请先充值",

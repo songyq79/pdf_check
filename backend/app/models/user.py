@@ -49,6 +49,9 @@ class User(Base):
     nickname = Column(String(50), nullable=True)
     avatar = Column(String(500), nullable=True)
     invited_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    # Phase 2 多租户：个人用户 institution_id 为空、user_type=individual（不影响 C端）
+    institution_id = Column(Integer, index=True, nullable=True)
+    user_type = Column(String(30), default="individual")  # individual/institution_student/institution_admin/super_admin
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
@@ -57,6 +60,7 @@ def init_db():
     import app.models.billing      # noqa: F401 — 确保计费表被创建
     import app.models.local_paper  # noqa: F401 — 确保本地论文表被创建
     import app.models.phase1       # noqa: F401 — Phase 1 选题评估/文献综述/期刊库
+    import app.models.institution  # noqa: F401 — Phase 2 机构/机构学生表
 
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
@@ -86,6 +90,17 @@ def init_db():
             db.commit()
         except Exception:
             db.rollback()  # 列已存在，忽略
+
+        # 增量迁移：users 表新增 Phase 2 多租户列（旧库升级，幂等）
+        for _ddl in (
+            "ALTER TABLE users ADD COLUMN institution_id INTEGER",
+            "ALTER TABLE users ADD COLUMN user_type VARCHAR(30) DEFAULT 'individual'",
+        ):
+            try:
+                db.execute(text(_ddl))
+                db.commit()
+            except Exception:
+                db.rollback()  # 列已存在，忽略
 
         # 初始化默认系统配置
         from app.models.billing import SystemConfig

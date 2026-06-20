@@ -16,7 +16,7 @@ from app.config import settings
 from app.models.user import get_db
 from app.models.billing import QuotaBalance
 from app.api.v1.deps import require_quota, QuotaContext
-from app.services.billing_service import consume_quota, check_quota
+from app.services.billing_service import consume_quota, check_quota, get_total_remaining
 from app.workers.celery_app import celery_app
 from app.workers.topic_evaluation_tasks import run_topic_evaluation
 
@@ -45,8 +45,7 @@ async def submit_topic(
 
     # cost>1 预检：总额度不足提前拒绝（与查重一致）
     if ctx.billing_on and ctx.quota_info.get("source") not in ("admin", "billing_off"):
-        balances = db.query(QuotaBalance).filter(QuotaBalance.user_id == ctx.user.id).all()
-        if sum(b.remaining for b in balances) < _QUOTA_COST:
+        if get_total_remaining(db, ctx.user.id) < _QUOTA_COST:
             raise HTTPException(
                 status_code=402,
                 detail={
