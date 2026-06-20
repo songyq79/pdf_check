@@ -26,6 +26,12 @@ const routes = [
     meta: { title: '文献综述', requiresAuth: true }
   },
   {
+    path: '/writing-assistant',
+    name: 'WritingAssistant',
+    component: () => import('@/views/WritingAssistant.vue'),
+    meta: { title: '写作辅助', requiresAuth: true }
+  },
+  {
     path: '/spell-check',
     name: 'SpellCheck',
     component: () => import('@/views/SpellCheck.vue'),

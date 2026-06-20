@@ -18,6 +18,9 @@
           <router-link to="/literature-review" class="nav-item" :class="{ active: $route.path === '/literature-review' }">
             文献综述
           </router-link>
+          <router-link to="/writing-assistant" class="nav-item" :class="{ active: $route.path === '/writing-assistant' }">
+            写作辅助
+          </router-link>
           <router-link to="/spell-check" class="nav-item" :class="{ active: $route.path === '/spell-check' }">
             错别字检查
           </router-link>

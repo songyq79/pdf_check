@@ -16,6 +16,24 @@
 
     <!-- 功能卡片 -->
     <section class="home-features">
+      <div class="feature-card" @click="navigateTo('/topic-evaluation')">
+        <span class="new-badge">新</span>
+        <div class="feature-icon-wrap" style="background:rgba(39,226,159,0.10);">
+          <span style="font-size: 32px;">🎯</span>
+        </div>
+        <h3 class="feature-title">选题评估</h3>
+        <p class="feature-desc">填写研究选题，AI 检索真实相关文献，从创新性、可行性、重要性三个维度评估，给出改进建议与相关文献，帮你在开题阶段把方向选对。</p>
+      </div>
+
+      <div class="feature-card" @click="navigateTo('/literature-review')">
+        <span class="new-badge">新</span>
+        <div class="feature-icon-wrap" style="background:rgba(39,226,159,0.10);">
+          <span style="font-size: 32px;">📚</span>
+        </div>
+        <h3 class="feature-title">文献综述</h3>
+        <p class="feature-desc">上传论文列表或输入关键词，自动补检文献、按主题聚类，生成可二次编辑的文献综述初稿与 GB/T 7714 参考文献。</p>
+      </div>
+
       <div class="feature-card" @click="navigateTo('/evaluation')">
         <div class="feature-icon-wrap" style="background:rgba(39,226,159,0.10);">
           <EvaluationIcon style="font-size: 36px; color: #006D4A" />
@@ -349,6 +367,21 @@ body.home-page {
   color: #006D4A;
   letter-spacing: 1px;
   text-transform: uppercase;
+  z-index: 1;
+}
+
+.new-badge {
+  position: absolute;
+  top: 17px;
+  right: 17px;
+  display: inline-flex;
+  align-items: center;
+  background: #006C49;
+  color: #fff;
+  border-radius: 9999px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
   z-index: 1;
 }
 

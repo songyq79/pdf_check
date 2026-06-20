@@ -127,3 +127,15 @@ try:
     logger.info("✅ LiteratureReview 路由加载成功")
 except Exception as e:
     logger.error(f"❌ LiteratureReview 路由加载失败: {e}")
+
+# ── 10. 高级写作辅助（Phase 2）────────────────────────────
+try:
+    from app.api.v1 import writing_assistant
+    api_router.include_router(
+        writing_assistant.router,
+        prefix="/writing-assistant",
+        tags=["写作辅助"],
+    )
+    logger.info("✅ WritingAssistant 路由加载成功")
+except Exception as e:
+    logger.error(f"❌ WritingAssistant 路由加载失败: {e}")
