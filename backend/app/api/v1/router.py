@@ -139,3 +139,15 @@ try:
     logger.info("✅ WritingAssistant 路由加载成功")
 except Exception as e:
     logger.error(f"❌ WritingAssistant 路由加载失败: {e}")
+
+# ── 11. 实验设计评审（Phase 2）────────────────────────────
+try:
+    from app.api.v1 import experiment_evaluation
+    api_router.include_router(
+        experiment_evaluation.router,
+        prefix="/experiment-evaluation",
+        tags=["实验设计评审"],
+    )
+    logger.info("✅ ExperimentEvaluation 路由加载成功")
+except Exception as e:
+    logger.error(f"❌ ExperimentEvaluation 路由加载失败: {e}")

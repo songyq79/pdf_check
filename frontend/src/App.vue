@@ -21,6 +21,9 @@
           <router-link to="/writing-assistant" class="nav-item" :class="{ active: $route.path === '/writing-assistant' }">
             写作辅助
           </router-link>
+          <router-link to="/experiment-review" class="nav-item" :class="{ active: $route.path === '/experiment-review' }">
+            实验评审
+          </router-link>
           <router-link to="/spell-check" class="nav-item" :class="{ active: $route.path === '/spell-check' }">
             错别字检查
           </router-link>

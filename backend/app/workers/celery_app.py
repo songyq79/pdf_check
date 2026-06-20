@@ -22,6 +22,7 @@ celery_app = Celery(
         "app.workers.plagiarism_tasks",
         "app.workers.topic_evaluation_tasks",
         "app.workers.literature_review_tasks",
+        "app.workers.experiment_evaluation_tasks",
     ],
 )
 
@@ -45,6 +46,7 @@ celery_app.conf.update(
         # Phase 1 新增队列路由
         "app.workers.topic_evaluation_tasks.*": {"queue": "topic_eval"},
         "app.workers.literature_review_tasks.*": {"queue": "lit_review"},
+        "app.workers.experiment_evaluation_tasks.*": {"queue": "experiment_eval"},
     },
 
     # 队列声明
@@ -57,6 +59,8 @@ celery_app.conf.update(
         # Phase 1 新增队列
         Queue("topic_eval"),
         Queue("lit_review"),
+        # Phase 2 新增队列
+        Queue("experiment_eval"),
     ),
     task_default_queue="default",
 

@@ -32,6 +32,12 @@ const routes = [
     meta: { title: '写作辅助', requiresAuth: true }
   },
   {
+    path: '/experiment-review',
+    name: 'ExperimentReview',
+    component: () => import('@/views/ExperimentReview.vue'),
+    meta: { title: '实验评审', requiresAuth: true }
+  },
+  {
     path: '/spell-check',
     name: 'SpellCheck',
     component: () => import('@/views/SpellCheck.vue'),
