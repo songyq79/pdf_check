@@ -8,7 +8,7 @@
  * @returns {Object} - ECharts配置对象
  */
 export function getRadarChartOption(dimensionScores = {}) {
-  const dimensions = ['学术规范性', '逻辑与创新性', '语言质量', '文献引用规范性']
+  const dimensions = ['选题意义', '写作安排', '逻辑构建', '专业能力', '学术规范']
   const values = dimensions.map(dim => dimensionScores[dim] || 0)
 
   return {
@@ -35,7 +35,7 @@ export function getRadarChartOption(dimensionScores = {}) {
       },
       splitArea: {
         areaStyle: {
-          color: ['rgba(64, 158, 255, 0.1)', 'rgba(64, 158, 255, 0.2)']
+          color: ['rgba(0, 108, 73, 0.06)', 'rgba(0, 108, 73, 0.12)']
         }
       }
     },
@@ -45,14 +45,14 @@ export function getRadarChartOption(dimensionScores = {}) {
         value: values,
         name: '评分',
         areaStyle: {
-          color: 'rgba(64, 158, 255, 0.3)'
+          color: 'rgba(0, 108, 73, 0.2)'
         },
         lineStyle: {
-          color: '#409EFF',
+          color: '#006C49',
           width: 2
         },
         itemStyle: {
-          color: '#409EFF'
+          color: '#006C49'
         }
       }]
     }]
@@ -98,7 +98,7 @@ export function getBarChartOption(dimensionScores = {}) {
       type: 'bar',
       data: values,
       itemStyle: {
-        color: '#409EFF'
+        color: '#006C49'
       },
       label: {
         show: true,
@@ -143,10 +143,10 @@ export function getTrendChartOption(historyData = []) {
       data: scores,
       smooth: true,
       itemStyle: {
-        color: '#409EFF'
+        color: '#006C49'
       },
       areaStyle: {
-        color: 'rgba(64, 158, 255, 0.2)'
+        color: 'rgba(0, 108, 73, 0.12)'
       }
     }]
   }

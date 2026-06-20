@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VRonly — 我的论文工作台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@1,600&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green:      #006C49;
+      --green-mid:  #00875C;
+      --green-pale: #E8F5EE;
+      --green-pale2:#F0FAF5;
+      --gold:       #C8962A;
+      --orange:     #E8840A;
+      --red:        #DC3545;
+      --purple:     #7C3AED;
+      --blue:       #2563EB;
+      --sidebar-bg: #FFFFFF;
+      --sidebar-w:  220px;
+      --body-bg:    #F4F7F5;
+      --card:       #FFFFFF;
+      --text:       #1A2E20;
+      --mid:        #3D5244;
+      --muted:      #7A8C82;
+      --border:     #E2EBE6;
+      --radius:     18px;
+      --radius-sm:  10px;
+      --shadow:     0 2px 16px rgba(0,60,40,0.07);
+      --font:       'Noto Sans SC', sans-serif;
+      --font-d:     'Newsreader', serif;
+    }
+
+    html, body { height: 100%; }
+    body { font-family: var(--font); background: var(--body-bg); color: var(--text); display: flex; font-size: 14px; }
+
+    /* ══ SIDEBAR ══ */
+    .sidebar {
+      width: var(--sidebar-w); min-height: 100vh;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; bottom: 0;
+      z-index: 50;
+    }
+    .sidebar-logo {
+      padding: 22px 18px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .logo-text {
+      font-family: var(--font-d); font-style: italic;
+      font-size: 20px; color: var(--text); font-weight: 600;
+    }
+    .logo-badge {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+      background: var(--green); color: #fff;
+      padding: 2px 7px; border-radius: 100px;
+    }
+
+    .nav-group { padding: 14px 10px 4px; }
+    .nav-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.10em;
+      text-transform: uppercase; color: var(--muted);
+      padding: 0 8px; margin-bottom: 6px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 9px;
+      padding: 9px 10px; border-radius: 10px;
+      color: var(--muted); font-size: 13.5px; font-weight: 500;
+      text-decoration: none; cursor: pointer;
+      transition: all 0.15s; margin-bottom: 2px;
+    }
+    .nav-item:hover { background: var(--green-pale); color: var(--green); }
+    .nav-item.active { background: var(--green-pale); color: var(--green); font-weight: 700; }
+    .nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+    .nav-new {
+      margin-left: auto; font-size: 10px; font-weight: 700;
+      background: var(--orange); color: #fff;
+      padding: 1px 6px; border-radius: 100px;
+    }
+
+    .sidebar-quota {
+      margin: 10px 10px 0;
+      background: var(--green-pale2); border-radius: var(--radius-sm);
+      padding: 14px; border: 1px solid rgba(0,108,73,0.12);
+    }
+    .sq-label { font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 8px; }
+    .sq-num { font-family: var(--font-d); font-size: 28px; font-weight: 600; color: var(--green); line-height: 1; margin-bottom: 4px; }
+    .sq-track { background: var(--border); border-radius: 100px; height: 6px; overflow: hidden; margin-bottom: 8px; }
+    .sq-fill { height: 100%; background: var(--green); border-radius: 100px; }
+    .sq-hint { font-size: 11px; color: var(--muted); }
+    .sq-btn {
+      display: block; text-align: center; margin-top: 10px;
+      background: var(--green); color: #fff; border-radius: 100px;
+      padding: 7px; font-size: 12px; font-weight: 700;
+      text-decoration: none; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .sq-btn:hover { background: var(--green-mid); }
+
+    .sidebar-bottom {
+      margin-top: auto; padding: 14px 10px;
+      border-top: 1px solid var(--border);
+    }
+    .user-card {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 8px; border-radius: 10px; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .user-card:hover { background: var(--green-pale); }
+    .user-avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--green) 0%, #00A870 100%);
+      color: #fff; font-size: 14px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .user-name { font-size: 13px; font-weight: 700; color: var(--text); }
+    .user-info { font-size: 11px; color: var(--muted); }
+    .user-settings { margin-left: auto; font-size: 16px; color: var(--muted); }
+
+    /* ══ MAIN ══ */
+    .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+    /* Topbar */
+    .topbar {
+      height: 58px; background: var(--card);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center;
+      padding: 0 28px; gap: 14px;
+      position: sticky; top: 0; z-index: 40;
+    }
+    .topbar-greeting { font-size: 15px; font-weight: 700; color: var(--text); flex: 1; }
+    .topbar-greeting span { color: var(--green); }
+    .topbar-notif {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--green-pale); display: flex; align-items: center;
+      justify-content: center; font-size: 15px; cursor: pointer; position: relative;
+    }
+    .notif-dot { position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--red); border: 1.5px solid #fff; }
+    .topbar-help {
+      font-size: 13px; color: var(--muted); cursor: pointer;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .topbar-help:hover { color: var(--green); }
+
+    /* Content */
+    .content { padding: 24px 28px; flex: 1; }
+
+    /* ── Hero banner ── */
+    .hero-banner {
+      background: linear-gradient(135deg, var(--green) 0%, #009962 50%, #00C47A 100%);
+      border-radius: var(--radius); padding: 32px 36px;
+      display: flex; align-items: center; gap: 24px;
+      margin-bottom: 20px; position: relative; overflow: hidden;
+      color: #fff;
+    }
+    .hero-banner::before {
+      content: ''; position: absolute; top: -60px; right: -60px;
+      width: 280px; height: 280px; border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+    }
+    .hero-banner::after {
+      content: ''; position: absolute; bottom: -80px; right: 120px;
+      width: 200px; height: 200px; border-radius: 50%;
+      background: rgba(255,255,255,0.04);
+    }
+    .hero-text { flex: 1; z-index: 1; }
+    .hero-tag {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      letter-spacing: 0.08em; background: rgba(255,255,255,0.20);
+      padding: 3px 10px; border-radius: 100px; margin-bottom: 10px;
+    }
+    .hero-title { font-family: var(--font-d); font-size: 26px; font-weight: 600; margin-bottom: 6px; line-height: 1.3; }
+    .hero-sub { font-size: 14px; opacity: 0.75; line-height: 1.5; max-width: 420px; }
+    .hero-progress { z-index: 1; min-width: 220px; }
+    .hp-label { font-size: 12px; opacity: 0.70; margin-bottom: 8px; font-weight: 600; }
+    .hp-steps { display: flex; gap: 6px; }
+    .hp-step {
+      flex: 1; height: 8px; border-radius: 100px;
+      background: rgba(255,255,255,0.20);
+      position: relative; overflow: hidden;
+    }
+    .hp-step.done { background: rgba(255,255,255,0.90); }
+    .hp-step.active::after {
+      content: ''; position: absolute; top: 0; left: 0;
+      height: 100%; width: 60%; background: rgba(255,255,255,0.70);
+      border-radius: 100px;
+    }
+    .hp-step-label { font-size: 10px; opacity: 0.60; margin-top: 5px; text-align: center; }
+    .hp-step-labels { display: flex; gap: 6px; }
+    .hp-step-label-item { flex: 1; text-align: center; font-size: 10px; opacity: 0.60; margin-top: 4px; }
+    .hero-emoji { font-size: 64px; opacity: 0.25; position: absolute; right: 36px; bottom: 16px; z-index: 0; }
+
+    /* ── Quick actions ── */
+    .section-label { font-size: 13px; font-weight: 700; color: var(--mid); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .section-label .count { font-size: 11px; background: var(--green-pale); color: var(--green); padding: 2px 8px; border-radius: 100px; font-weight: 600; }
+
+    .quick-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    .quick-card {
+      background: var(--card); border-radius: var(--radius);
+      border: 1px solid var(--border); padding: 20px 18px;
+      box-shadow: var(--shadow); cursor: pointer;
+      transition: all 0.2s; text-decoration: none;
+      display: flex; flex-direction: column; gap: 10px;
+      position: relative; overflow: hidden;
+    }
+    .quick-card:hover { transform: translateY(-4px); box-shadow: 0 8px 32px rgba(0,108,73,0.14); border-color: rgba(0,108,73,0.25); }
+    .quick-card.featured { border-color: rgba(0,108,73,0.30); background: linear-gradient(135deg, #FAFFFE 0%, var(--green-pale2) 100%); }
+    .qc-icon-wrap {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+    .qc-new-badge {
+      position: absolute; top: 12px; right: 12px;
+      font-size: 10px; font-weight: 700; color: var(--orange);
+      background: #FFF3CD; padding: 2px 7px; border-radius: 100px;
+    }
+    .qc-title { font-size: 14px; font-weight: 700; color: var(--text); }
+    .qc-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .qc-credits { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 4px; margin-top: auto; }
+    .qc-credits .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--border); }
+    .credits-cost { font-weight: 700; color: var(--green); }
+
+    /* second row quick cards (smaller) */
+    .quick-grid-sm { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    .quick-card-sm {
+      background: var(--card); border-radius: var(--radius-sm);
+      border: 1px solid var(--border); padding: 14px 16px;
+      box-shadow: var(--shadow); cursor: pointer;
+      transition: all 0.18s; display: flex; align-items: center; gap: 12px;
+    }
+    .quick-card-sm:hover { border-color: rgba(0,108,73,0.25); background: var(--green-pale2); }
+    .qcs-icon { font-size: 22px; }
+    .qcs-title { font-size: 13px; font-weight: 700; color: var(--text); }
+    .qcs-credits { font-size: 11px; color: var(--muted); }
+
+    /* ── Main content row ── */
+    .main-row { display: grid; grid-template-columns: 1fr 340px; gap: 16px; }
+
+    /* ── Paper history ── */
+    .panel {
+      background: var(--card); border-radius: var(--radius);
+      border: 1px solid var(--border); box-shadow: var(--shadow); overflow: hidden;
+    }
+    .panel-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+    }
+    .panel-title { font-size: 14px; font-weight: 700; color: var(--text); }
+    .panel-action { font-size: 12px; color: var(--green); cursor: pointer; font-weight: 600; }
+
+    /* Tabs */
+    .tab-row { display: flex; border-bottom: 1px solid var(--border); padding: 0 20px; }
+    .tab {
+      font-size: 13px; font-weight: 600; padding: 11px 14px;
+      cursor: pointer; border-bottom: 2px solid transparent;
+      color: var(--muted); transition: all 0.15s;
+    }
+    .tab.active { color: var(--green); border-bottom-color: var(--green); }
+
+    /* Paper items */
+    .paper-list { padding: 0 20px; }
+    .paper-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 0; border-bottom: 1px solid var(--border);
+    }
+    .paper-item:last-child { border-bottom: none; }
+    .pi-icon {
+      width: 40px; height: 40px; border-radius: 11px;
+      background: var(--green-pale); display: flex; align-items: center;
+      justify-content: center; font-size: 18px; flex-shrink: 0;
+    }
+    .pi-body { flex: 1; min-width: 0; }
+    .pi-title {
+      font-size: 13px; font-weight: 600; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+    .pi-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+    .pi-tag {
+      font-size: 11px; padding: 2px 8px; border-radius: 100px;
+      font-weight: 600;
+    }
+    .pi-tag.eval   { background: #E8F5EE; color: #006C49; }
+    .pi-tag.proof  { background: #E8F0FF; color: #2563EB; }
+    .pi-tag.format { background: #FFF3E0; color: #C25900; }
+    .pi-tag.plag   { background: #F3E8FF; color: #7C3AED; }
+    .pi-tag.topic  { background: #FFF8E1; color: #C8962A; }
+    .pi-tag.lit    { background: #E0F7FA; color: #0077A8; }
+    .pi-right { flex-shrink: 0; text-align: right; }
+    .pi-score { font-family: var(--font-d); font-size: 22px; font-weight: 600; color: var(--green); }
+    .pi-score.proc { font-family: var(--font); font-size: 12px; color: var(--orange); font-weight: 600; }
+    .pi-score.feasible { font-size: 12px; font-weight: 700; color: var(--green); }
+    .pi-date { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* status indicator */
+    .status-row { display: flex; align-items: center; gap: 5px; margin-top: 3px; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .status-dot.done { background: #16A34A; }
+    .status-dot.proc { background: var(--orange); animation: pulse 1.4s infinite; }
+    .status-dot.draft { background: var(--muted); }
+    .status-text { font-size: 11px; color: var(--muted); }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+
+    /* ── Right sidebar panels ── */
+    .right-col { display: flex; flex-direction: column; gap: 14px; }
+
+    /* Progress card */
+    .progress-card {
+      background: var(--card); border-radius: var(--radius);
+      border: 1px solid var(--border); box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .pc-head { padding: 16px 18px 12px; border-bottom: 1px solid var(--border); }
+    .pc-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+    .pc-sub { font-size: 11px; color: var(--muted); }
+    .pc-body { padding: 16px 18px; }
+    .paper-stages { display: flex; flex-direction: column; gap: 0; }
+    .stage-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 10px 0;
+      position: relative;
+    }
+    .stage-item:not(:last-child)::after {
+      content: ''; position: absolute; left: 14px; top: 36px;
+      width: 2px; height: calc(100% - 10px);
+      background: var(--border);
+    }
+    .stage-dot-wrap {
+      width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; position: relative; z-index: 1;
+    }
+    .stage-dot-wrap.done { background: var(--green); }
+    .stage-dot-wrap.active { background: var(--orange); box-shadow: 0 0 0 4px rgba(232,132,10,0.15); }
+    .stage-dot-wrap.todo { background: var(--border); }
+    .stage-body { flex: 1; }
+    .stage-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .stage-name.done { color: var(--green); }
+    .stage-name.active { color: var(--orange); }
+    .stage-name.todo { color: var(--muted); }
+    .stage-hint { font-size: 11px; color: var(--muted); line-height: 1.4; }
+    .stage-action {
+      font-size: 11px; font-weight: 700; color: var(--green);
+      background: var(--green-pale); padding: 3px 9px;
+      border-radius: 100px; cursor: pointer; flex-shrink: 0; margin-top: 2px;
+    }
+
+    /* Quota card */
+    .quota-card {
+      background: var(--card); border-radius: var(--radius);
+      border: 1px solid var(--border); box-shadow: var(--shadow); padding: 18px;
+    }
+    .qcard-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 14px; }
+    .qcard-items { display: flex; flex-direction: column; gap: 10px; }
+    .qi-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .qi-name { font-size: 12px; color: var(--mid); font-weight: 500; display: flex; align-items: center; gap: 5px; }
+    .qi-val { font-size: 12px; font-weight: 700; color: var(--text); }
+    .qi-bar { background: var(--border); border-radius: 100px; height: 4px; overflow: hidden; margin-top: 4px; }
+    .qi-fill { height: 100%; border-radius: 100px; background: var(--green); }
+
+    /* Tips card */
+    .tips-card {
+      background: linear-gradient(135deg, #FFF8F0 0%, #FFF3E0 100%);
+      border-radius: var(--radius); border: 1px solid rgba(232,132,10,0.18);
+      padding: 16px 18px;
+    }
+    .tips-title { font-size: 12px; font-weight: 700; color: var(--orange); margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+    .tip-item { display: flex; gap: 8px; margin-bottom: 8px; font-size: 12px; color: var(--mid); line-height: 1.5; }
+    .tip-item:last-child { margin-bottom: 0; }
+    .tip-item::before { content: '💡'; flex-shrink: 0; }
+
+    /* Achievement card */
+    .achieve-card {
+      background: var(--card); border-radius: var(--radius);
+      border: 1px solid var(--border); box-shadow: var(--shadow); padding: 18px;
+    }
+    .ach-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+    .ach-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .ach-item {
+      text-align: center; padding: 10px 6px;
+      border-radius: 10px; border: 1px solid var(--border);
+      background: var(--body-bg);
+    }
+    .ach-item.unlocked { background: var(--green-pale); border-color: rgba(0,108,73,0.20); }
+    .ach-emoji { font-size: 20px; margin-bottom: 4px; }
+    .ach-name { font-size: 10px; color: var(--muted); line-height: 1.3; }
+    .ach-item.unlocked .ach-name { color: var(--green); font-weight: 600; }
+    .ach-locked { filter: grayscale(1); opacity: 0.4; }
+  </style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-text">VRonly</span>
+    <span class="logo-badge">学生版</span>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-label">工作台</div>
+    <a class="nav-item active" href="#">
+      <span class="nav-icon">🏠</span> 我的主页
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">📄</span> 我的论文
+    </a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-label">AI 助手（新功能）</div>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">🎯</span> 选题评估
+      <span class="nav-new">NEW</span>
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">📚</span> 文献综述
+      <span class="nav-new">NEW</span>
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">✍️</span> 写作辅助
+      <span class="nav-new">NEW</span>
+    </a>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-label">论文工具</div>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">⭐</span> 智能评价
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">🔍</span> 论文校对
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">📐</span> 模板排版
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">🛡️</span> 论文查重
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">📰</span> 投稿指导
+    </a>
+  </div>
+
+  <!-- Quota widget -->
+  <div style="padding: 0 10px; margin-top: 10px;">
+    <div class="sidebar-quota">
+      <div class="sq-label">我的剩余额度</div>
+      <div class="sq-num">18 <span style="font-size:14px;font-weight:400;color:var(--muted);">次</span></div>
+      <div class="sq-track" style="margin-top:6px;">
+        <div class="sq-fill" style="width:36%;"></div>
+      </div>
+      <div class="sq-hint">本学期已用 32 / 50 次</div>
+      <a class="sq-btn" href="#">购买更多额度</a>
+    </div>
+  </div>
+
+  <!-- 邀请好友 -->
+  <div style="padding: 10px 10px 0;">
+    <div style="background:linear-gradient(135deg,#E8F5EE,#F0FAF5);border:1px solid rgba(0,108,73,0.15);border-radius:12px;padding:14px;">
+      <div style="font-size:12px;font-weight:700;color:#006C49;margin-bottom:4px;">🎁 邀请同学，双方各得 5 次</div>
+      <div style="font-size:11px;color:#5A7A6A;margin-bottom:10px;line-height:1.5;">把你的专属链接发给同系同学，双方注册后立即到账，无上限</div>
+      <div style="background:#fff;border:1px solid rgba(0,108,73,0.2);border-radius:8px;padding:7px 10px;font-size:11px;color:#006C49;font-family:monospace;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">vronly.com/r/LM2024BJ</div>
+      <button onclick="navigator.clipboard.writeText('https://vronly.com/r/LM2024BJ').then(()=>this.textContent='✅ 已复制').catch(()=>{})" style="width:100%;background:#006C49;color:#fff;border:none;border-radius:100px;padding:7px;font-size:12px;font-weight:700;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='#004D35'" onmouseout="this.style.background='#006C49'">复制邀请链接</button>
+    </div>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="user-card">
+      <div class="user-avatar">李</div>
+      <div>
+        <div class="user-name">李明</div>
+        <div class="user-info">计算机学院 · 2021级</div>
+      </div>
+      <div class="user-settings">⚙️</div>
+    </div>
+  </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<div class="main">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-greeting" style="flex:1;">
+      下午好，<span>李明</span> 👋　距毕业答辩还有 <strong style="color:var(--orange);">47 天</strong>
+    </div>
+    <div class="topbar-help">❓ 使用帮助</div>
+    <div class="topbar-notif">🔔<div class="notif-dot"></div></div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- Hero Banner：当前论文进度 -->
+    <div class="hero-banner">
+      <div class="hero-text">
+        <div class="hero-tag">📝 当前论文进度</div>
+        <div class="hero-title">《基于深度学习的中文情感分析》</div>
+        <div class="hero-sub">已完成评价与校对，建议接下来进行排版套模板，然后提交查重。</div>
+      </div>
+      <div class="hero-progress">
+        <div class="hp-label">完成进度 — 第 5 / 8 步</div>
+        <div class="hp-steps">
+          <div class="hp-step done"></div>
+          <div class="hp-step done"></div>
+          <div class="hp-step done"></div>
+          <div class="hp-step done"></div>
+          <div class="hp-step done"></div>
+          <div class="hp-step active"></div>
+          <div class="hp-step"></div>
+          <div class="hp-step"></div>
+        </div>
+        <div class="hp-step-labels">
+          <div class="hp-step-label-item" style="color:rgba(255,255,255,0.5);font-size:10px;">选题</div>
+          <div class="hp-step-label-item" style="color:rgba(255,255,255,0.5);font-size:10px;">文献</div>
+          <div class="hp-step-label-item" style="color:rgba(255,255,255,0.5);font-size:10px;">写作</div>
+          <div class="hp-step-label-item" style="color:rgba(255,255,255,0.5);font-size:10px;">评价</div>
+          <div class="hp-step-label-item" style="color:rgba(255,255,255,0.5);font-size:10px;">校对</div>
+          <div class="hp-step-label-item" style="color:rgba(255,255,255,0.90);font-size:10px;font-weight:700;">▶ 排版</div>
+          <div class="hp-step-label-item" style="color:rgba(255,255,255,0.5);font-size:10px;">查重</div>
+          <div class="hp-step-label-item" style="color:rgba(255,255,255,0.5);font-size:10px;">投稿</div>
+        </div>
+        <div style="margin-top:14px;">
+          <a href="#" style="display:inline-block;background:rgba(255,255,255,0.20);color:#fff;font-size:13px;font-weight:700;padding:8px 20px;border-radius:100px;text-decoration:none;transition:background 0.15s;">
+            去套排版模板 →
+          </a>
+        </div>
+      </div>
+      <div class="hero-emoji">📋</div>
+    </div>
+
+    <!-- Quick actions — 上排 NEW 功能 -->
+    <div class="section-label">
+      ✨ AI 新功能 — 论文全程助手
+      <span class="count">3 个新功能已上线</span>
+    </div>
+    <div class="quick-grid" style="grid-template-columns: repeat(3,1fr); margin-bottom:12px;">
+      <div class="quick-card featured">
+        <span class="qc-new-badge">NEW</span>
+        <div class="qc-icon-wrap" style="background:#FFF8E1;">🎯</div>
+        <div class="qc-title">选题评估</div>
+        <div class="qc-desc">输入研究方向，AI 评估创新性、可行性和重要性，生成评估报告，帮你选一个好题目。</div>
+        <div class="qc-credits"><span class="credits-cost">消耗 3 次</span><span class="dot"></span>生成 Word 报告</div>
+      </div>
+      <div class="quick-card featured">
+        <span class="qc-new-badge">NEW</span>
+        <div class="qc-icon-wrap" style="background:#E0F7FA;">📚</div>
+        <div class="qc-title">文献综述生成</div>
+        <div class="qc-desc">输入关键词，自动检索学术数据库，按主题分类，生成 2000-4000 字综述初稿。</div>
+        <div class="qc-credits"><span class="credits-cost">消耗 5 次</span><span class="dot"></span>含参考文献列表</div>
+      </div>
+      <div class="quick-card featured">
+        <span class="qc-new-badge">NEW</span>
+        <div class="qc-icon-wrap" style="background:#F3E8FF;">✍️</div>
+        <div class="qc-title">写作辅助</div>
+        <div class="qc-desc">段落扩写、逻辑优化、学术表达润色，支持粘贴片段即时改写，保留你的原始观点。</div>
+        <div class="qc-credits"><span class="credits-cost">消耗 2 次</span><span class="dot"></span>按段落计费</div>
+      </div>
+    </div>
+
+    <!-- Quick actions — 下排常用工具 -->
+    <div class="section-label" style="margin-bottom:10px;">📦 论文工具</div>
+    <div class="quick-grid-sm" style="margin-bottom:20px;">
+      <div class="quick-card-sm">
+        <div class="qcs-icon">⭐</div>
+        <div>
+          <div class="qcs-title">智能评价</div>
+          <div class="qcs-credits">消耗 1 次 · Word 报告</div>
+        </div>
+      </div>
+      <div class="quick-card-sm">
+        <div class="qcs-icon">🔍</div>
+        <div>
+          <div class="qcs-title">论文校对</div>
+          <div class="qcs-credits">消耗 1 次 · 修订标记</div>
+        </div>
+      </div>
+      <div class="quick-card-sm">
+        <div class="qcs-icon">📐</div>
+        <div>
+          <div class="qcs-title">模板排版</div>
+          <div class="qcs-credits">消耗 1 次 · 套用格式</div>
+        </div>
+      </div>
+      <div class="quick-card-sm">
+        <div class="qcs-icon">🛡️</div>
+        <div>
+          <div class="qcs-title">论文查重</div>
+          <div class="qcs-credits">中文1次 / 英文2次</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main row -->
+    <div class="main-row">
+
+      <!-- Left：论文历史 -->
+      <div class="panel">
+        <div class="tab-row">
+          <div class="tab active">全部记录</div>
+          <div class="tab">AI 助手</div>
+          <div class="tab">评价</div>
+          <div class="tab">校对</div>
+          <div class="tab">查重</div>
+        </div>
+        <div class="paper-list">
+          <!-- 处理中 -->
+          <div class="paper-item">
+            <div class="pi-icon" style="background:#FFF3E0;">✍️</div>
+            <div class="pi-body">
+              <div class="pi-title">基于深度学习的中文情感分析研究</div>
+              <div class="pi-tags">
+                <span class="pi-tag proof">校对中</span>
+                <span class="pi-tag format">待排版</span>
+              </div>
+              <div class="status-row">
+                <div class="status-dot proc"></div>
+                <div class="status-text">论文校对任务处理中，预计 3 分钟完成…</div>
+              </div>
+            </div>
+            <div class="pi-right">
+              <div class="pi-score proc">⏳ 处理中</div>
+              <div class="pi-date">今天 14:32</div>
+            </div>
+          </div>
+          <!-- 完成评价 -->
+          <div class="paper-item">
+            <div class="pi-icon">⭐</div>
+            <div class="pi-body">
+              <div class="pi-title">基于深度学习的中文情感分析研究</div>
+              <div class="pi-tags">
+                <span class="pi-tag eval">智能评价</span>
+              </div>
+              <div class="status-row">
+                <div class="status-dot done"></div>
+                <div class="status-text">评价完成 · 报告可下载</div>
+              </div>
+            </div>
+            <div class="pi-right">
+              <div class="pi-score">91.5</div>
+              <div class="pi-date">今天 11:08</div>
+            </div>
+          </div>
+          <!-- 选题评估 -->
+          <div class="paper-item">
+            <div class="pi-icon" style="background:#FFF8E1;">🎯</div>
+            <div class="pi-body">
+              <div class="pi-title">中文情感分析与深度学习研究选题</div>
+              <div class="pi-tags">
+                <span class="pi-tag topic">选题评估</span>
+              </div>
+              <div class="status-row">
+                <div class="status-dot done"></div>
+                <div class="status-text">创新性 8分 · 可行性 9分 · 重要性 7分</div>
+              </div>
+            </div>
+            <div class="pi-right">
+              <div class="pi-score feasible">高度可行 ✓</div>
+              <div class="pi-date">3天前</div>
+            </div>
+          </div>
+          <!-- 文献综述 -->
+          <div class="paper-item">
+            <div class="pi-icon" style="background:#E0F7FA;">📚</div>
+            <div class="pi-body">
+              <div class="pi-title">深度学习文本分类方法综述（3214字）</div>
+              <div class="pi-tags">
+                <span class="pi-tag lit">文献综述</span>
+              </div>
+              <div class="status-row">
+                <div class="status-dot done"></div>
+                <div class="status-text">检索到 24 篇文献 · 已生成综述初稿</div>
+              </div>
+            </div>
+            <div class="pi-right">
+              <div class="pi-score" style="font-size:16px;color:#0077A8;">24 篇</div>
+              <div class="pi-date">5天前</div>
+            </div>
+          </div>
+          <!-- 旧评价 -->
+          <div class="paper-item">
+            <div class="pi-icon">⭐</div>
+            <div class="pi-body">
+              <div class="pi-title">基于 BERT 的文本分类初稿（第一版）</div>
+              <div class="pi-tags">
+                <span class="pi-tag eval">智能评价</span>
+                <span class="pi-tag plag">查重</span>
+              </div>
+              <div class="status-row">
+                <div class="status-dot done"></div>
+                <div class="status-text">评价完成 · 查重相似度 4.2%</div>
+              </div>
+            </div>
+            <div class="pi-right">
+              <div class="pi-score">78.3</div>
+              <div class="pi-date">2周前</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right col -->
+      <div class="right-col">
+
+        <!-- 当前论文进度引导 -->
+        <div class="progress-card">
+          <div class="pc-head">
+            <div class="pc-title">📋 论文完成路线图</div>
+            <div class="pc-sub">《中文情感分析研究》</div>
+          </div>
+          <div class="pc-body">
+            <div class="paper-stages">
+              <div class="stage-item">
+                <div class="stage-dot-wrap done">✓</div>
+                <div class="stage-body">
+                  <div class="stage-name done">选题评估</div>
+                  <div class="stage-hint">创新性高，已确认方向</div>
+                </div>
+              </div>
+              <div class="stage-item">
+                <div class="stage-dot-wrap done">✓</div>
+                <div class="stage-body">
+                  <div class="stage-name done">文献综述</div>
+                  <div class="stage-hint">检索 24 篇，综述已完成</div>
+                </div>
+              </div>
+              <div class="stage-item">
+                <div class="stage-dot-wrap done">✓</div>
+                <div class="stage-body">
+                  <div class="stage-name done">论文写作</div>
+                  <div class="stage-hint">正文已提交，共 18,420 字</div>
+                </div>
+              </div>
+              <div class="stage-item">
+                <div class="stage-dot-wrap done">✓</div>
+                <div class="stage-body">
+                  <div class="stage-name done">智能评价</div>
+                  <div class="stage-hint">综合得分 91.5 分（优秀）</div>
+                </div>
+              </div>
+              <div class="stage-item">
+                <div class="stage-dot-wrap active">⏳</div>
+                <div class="stage-body">
+                  <div class="stage-name active">论文校对</div>
+                  <div class="stage-hint">AI 校对任务进行中…</div>
+                </div>
+              </div>
+              <div class="stage-item">
+                <div class="stage-dot-wrap todo">6</div>
+                <div class="stage-body">
+                  <div class="stage-name todo">模板排版</div>
+                  <div class="stage-hint">待校对完成后执行</div>
+                </div>
+                <div class="stage-action">去排版</div>
+              </div>
+              <div class="stage-item">
+                <div class="stage-dot-wrap todo">7</div>
+                <div class="stage-body">
+                  <div class="stage-name todo">论文查重</div>
+                  <div class="stage-hint">排版定稿后查重</div>
+                </div>
+              </div>
+              <div class="stage-item">
+                <div class="stage-dot-wrap todo">8</div>
+                <div class="stage-body">
+                  <div class="stage-name todo">投稿指导</div>
+                  <div class="stage-hint">匹配适合的期刊</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 我的额度 -->
+        <div class="quota-card">
+          <div class="qcard-title">🎫 我的额度明细</div>
+          <div class="qcard-items">
+            <div>
+              <div class="qi-row">
+                <div class="qi-name">⭐ 智能评价</div>
+                <div class="qi-val">5 次剩</div>
+              </div>
+              <div class="qi-bar"><div class="qi-fill" style="width:50%;"></div></div>
+            </div>
+            <div>
+              <div class="qi-row">
+                <div class="qi-name">🔍 论文校对</div>
+                <div class="qi-val">4 次剩</div>
+              </div>
+              <div class="qi-bar"><div class="qi-fill" style="width:40%;background:var(--blue);"></div></div>
+            </div>
+            <div>
+              <div class="qi-row">
+                <div class="qi-name">🎯 选题评估</div>
+                <div class="qi-val">3 次剩</div>
+              </div>
+              <div class="qi-bar"><div class="qi-fill" style="width:60%;background:var(--gold);"></div></div>
+            </div>
+            <div>
+              <div class="qi-row">
+                <div class="qi-name">📚 文献综述</div>
+                <div class="qi-val">2 次剩</div>
+              </div>
+              <div class="qi-bar"><div class="qi-fill" style="width:20%;background:#0077A8;"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tips -->
+        <div class="tips-card">
+          <div class="tips-title">💡 写作小贴士</div>
+          <div class="tip-item">评价分数 91.5 分，专业能力维度失分较多，建议加强方法论描述的严谨性。</div>
+          <div class="tip-item">距答辩 47 天，建议本周完成排版和查重，预留 2 周修改时间。</div>
+        </div>
+
+        <!-- 成就徽章 -->
+        <div class="achieve-card">
+          <div class="ach-title">🏅 我的成就</div>
+          <div class="ach-grid">
+            <div class="ach-item unlocked">
+              <div class="ach-emoji">🎯</div>
+              <div class="ach-name">选题达人</div>
+            </div>
+            <div class="ach-item unlocked">
+              <div class="ach-emoji">📚</div>
+              <div class="ach-name">文献猎手</div>
+            </div>
+            <div class="ach-item unlocked">
+              <div class="ach-emoji">⭐</div>
+              <div class="ach-name">优秀论文</div>
+            </div>
+            <div class="ach-item">
+              <div class="ach-emoji ach-locked">🛡️</div>
+              <div class="ach-name">查重通过</div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /right-col -->
+    </div><!-- /main-row -->
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+</body>
+</html>

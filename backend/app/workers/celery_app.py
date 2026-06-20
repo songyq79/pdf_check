@@ -5,19 +5,23 @@ Celery 应用工厂
 - 队列：proofread / evaluation / formatter / default
 """
 
+import sys
+from pathlib import Path
 from celery import Celery
 from kombu import Queue
 
-from app.config import settings
 
 celery_app = Celery(
     "paper_checker",
-    broker=settings.CELERY_BROKER_URL,
-    backend=settings.CELERY_RESULT_BACKEND,
+    broker="redis://:jzmNDJAF7b@localhost:26301/15",
+    backend= "redis://:jzmNDJAF7b@localhost:26301/15",
     include=[
         "app.workers.proofread_tasks",
         "app.workers.evaluation_tasks",
         "app.workers.formatter_tasks",
+        "app.workers.plagiarism_tasks",
+        "app.workers.topic_evaluation_tasks",
+        # 注意：literature_review_tasks 待 Loop 5 创建任务文件后再加入 include
     ],
 )
 
@@ -29,14 +33,18 @@ celery_app.conf.update(
     timezone="Asia/Shanghai",
     enable_utc=True,
 
-    # 结果保留 24 小时
-    result_expires=86400,
+    # 结果保留 7 天（原24小时太短，Redis重启或TTL到期会丢失任务结果）
+    result_expires=604800,
 
     # 路由
     task_routes={
         "app.workers.proofread_tasks.*":  {"queue": "proofread"},
         "app.workers.evaluation_tasks.*": {"queue": "evaluation"},
         "app.workers.formatter_tasks.*":  {"queue": "formatter"},
+        "app.workers.plagiarism_tasks.*": {"queue": "plagiarism"},
+        # Phase 1 新增队列路由
+        "app.workers.topic_evaluation_tasks.*": {"queue": "topic_eval"},
+        "app.workers.literature_review_tasks.*": {"queue": "lit_review"},
     },
 
     # 队列声明
@@ -44,7 +52,11 @@ celery_app.conf.update(
         Queue("proofread"),
         Queue("evaluation"),
         Queue("formatter"),
+        Queue("plagiarism"),
         Queue("default"),
+        # Phase 1 新增队列
+        Queue("topic_eval"),
+        Queue("lit_review"),
     ),
     task_default_queue="default",
 
@@ -63,4 +75,8 @@ celery_app.conf.update(
     # solo = 单线程（已废弃，仅适合调试）
     # threads = 多线程，Windows/Linux 均支持，适合 IO 密集型 AI 任务
     worker_pool="threads",
+
+    # 并发线程数：AI 调用是纯 IO 等待，可开较高并发
+    # 32vCPU + 128GB 服务器，IO密集型任务可设为 CPU核心数 × 4
+    worker_concurrency=128,
 )

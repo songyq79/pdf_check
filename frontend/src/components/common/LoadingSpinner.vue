@@ -34,7 +34,7 @@ defineProps({
 }
 
 .loading-icon {
-  color: #409eff;
+  color: rgb(0, 108, 73);
   animation: rotate 1.5s linear infinite;
 }
 
@@ -49,7 +49,7 @@ defineProps({
 
 .loading-text {
   margin-top: 15px;
-  color: #606266;
+  color: rgb(107, 114, 128);
   font-size: 14px;
 }
 </style>

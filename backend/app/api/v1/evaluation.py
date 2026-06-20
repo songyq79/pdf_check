@@ -14,12 +14,18 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 
 from docx import Document
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from loguru import logger
+from sqlalchemy.orm import Session
 
 from app.config import settings
+from app.models.user import get_db
+from app.api.v1.deps import require_quota, QuotaContext
 from app.services.file_service import save_upload_file, validate_file
+from app.services.pdf_extractor import PdfExtractionError, extract_text_from_pdf
+from app.services.docx_normalizer import clean_control_chars, normalize_docx
+from app.services.billing_service import consume_quota
 from app.workers.celery_app import celery_app
 from app.workers.evaluation_tasks import run_evaluation
 
@@ -102,12 +108,13 @@ def _extract_text_fallback(file_path: str) -> str:
             text_content = '\n'.join([elem.text for elem in text_elements if elem.text])
             
             if text_content.strip():
+                text_content = clean_control_chars(text_content)
                 logger.info(f"[evaluation] 降级提取成功: {len(text_content)} 字符")
                 return text_content
-                
+
     except Exception as e:
         logger.warning(f"[evaluation] 降级提取失败: {e}")
-    
+
     return ""
 
 
@@ -481,59 +488,88 @@ def _extract_structure(doc: Document) -> dict:
 # ─────────────────────────────────────────────────────────────
 
 @router.post("/upload", summary="上传论文并提交评价任务")
-async def evaluate_paper(file: UploadFile = File(...)):
-    """上传论文 → 提交 Celery 评价任务 → 立即返回 task_id"""
+async def evaluate_paper(
+    file: UploadFile = File(...),
+    paper_type: str = Form("humanities"),
+    ctx: QuotaContext = Depends(require_quota("evaluation")),
+    db: Session = Depends(get_db),
+):
+    """上传论文 → 提交 Celery 评价任务 → 立即返回 task_id
+    
+    paper_type: 论文类别
+      - humanities: 人文社科类（第Ⅰ类）
+      - science_engineering: 理工农医类（第Ⅱ类）
+      - arts: 艺术类（第Ⅲ类）
+    """
+    # 校验 paper_type
+    valid_types = ("humanities", "science_engineering", "arts")
+    if paper_type not in valid_types:
+        paper_type = "humanities"
+    
     if not settings.BAILIAN_API_KEY and not settings.DEEPSEEK_API_KEY:
         raise HTTPException(503, "AI 评价服务未配置：请在 .env 中配置 BAILIAN_API_KEY 或 DEEPSEEK_API_KEY")
 
-    validate_file(file, max_size_mb=settings.MAX_FILE_SIZE)
-
-    if not file.filename.lower().endswith(".docx"):
-        raise HTTPException(400, "仅支持 .docx 格式")
+    validate_file(file, allowed_types=[".docx", ".pdf"], max_size_mb=settings.MAX_FILE_SIZE)
 
     file_path = await save_upload_file(file, settings.UPLOAD_PATH)
     logger.info(f"[evaluation] 文件已保存: {file_path}")
 
     paper_struct = None
     fallback_mode = False
-    
-    try:
-        doc          = await asyncio.to_thread(Document, str(file_path))
-        paper_struct = await asyncio.to_thread(_extract_structure, doc)
-    except Exception as exc:
-        error_msg = str(exc)
-        logger.error(f"[evaluation] 文档解析失败: {error_msg}")
-        
-        # 判断是否是文档格式问题
-        if "no item named" in error_msg.lower() or "badzip" in error_msg.lower():
-            logger.warning(f"[evaluation] 检测到文档格式异常，尝试降级处理...")
-            
-            try:
-                # 尝试降级处理：提取文本 + 简化结构提取
-                text_content = await asyncio.to_thread(_extract_text_fallback, str(file_path))
-                
-                if text_content:
-                    paper_struct = await asyncio.to_thread(_extract_structure_from_text, text_content)
-                    fallback_mode = True
-                    logger.warning(f"[evaluation] 降级处理成功，已提取 {len(text_content)} 字符")
-                else:
-                    # 文本提取也失败
-                    logger.error(f"[evaluation] 降级处理失败：无法提取文本内容")
+
+    # PDF 分支:提取纯文本 → 复用 _extract_structure_from_text 降级函数
+    if file_path.suffix.lower() == ".pdf":
+        try:
+            text_content = await asyncio.to_thread(extract_text_from_pdf, file_path)
+            paper_struct = await asyncio.to_thread(_extract_structure_from_text, text_content)
+            fallback_mode = True
+            logger.info(f"[evaluation] PDF 解析完成,进入降级结构模式 ({len(text_content)} 字符)")
+        except PdfExtractionError as exc:
+            logger.warning(f"[evaluation] PDF 提取失败: {exc}")
+            raise HTTPException(400, str(exc))
+        except Exception as exc:
+            logger.error(f"[evaluation] PDF 处理异常: {exc}")
+            raise HTTPException(400, f"PDF 解析失败: {exc}")
+    else:
+        # 对 WPS 生成的 .docx 先归一化,避免 python-docx 因非标准 XML 报错
+        file_path = await asyncio.to_thread(normalize_docx, file_path)
+        try:
+            doc          = await asyncio.to_thread(Document, str(file_path))
+            paper_struct = await asyncio.to_thread(_extract_structure, doc)
+        except Exception as exc:
+            error_msg = str(exc)
+            logger.error(f"[evaluation] 文档解析失败: {error_msg}")
+
+            # 判断是否是文档格式问题
+            if "no item named" in error_msg.lower() or "badzip" in error_msg.lower():
+                logger.warning(f"[evaluation] 检测到文档格式异常，尝试降级处理...")
+
+                try:
+                    # 尝试降级处理：提取文本 + 简化结构提取
+                    text_content = await asyncio.to_thread(_extract_text_fallback, str(file_path))
+
+                    if text_content:
+                        paper_struct = await asyncio.to_thread(_extract_structure_from_text, text_content)
+                        fallback_mode = True
+                        logger.warning(f"[evaluation] 降级处理成功，已提取 {len(text_content)} 字符")
+                    else:
+                        # 文本提取也失败
+                        logger.error(f"[evaluation] 降级处理失败：无法提取文本内容")
+                        raise HTTPException(
+                            400,
+                            "文档格式异常且无法自动修复。建议：在 Word 中打开文档，选择'另存为'，保存为新的 .docx 文件后重试。"
+                        )
+
+                except HTTPException:
+                    raise
+                except Exception as fallback_error:
+                    logger.error(f"[evaluation] 降级处理失败: {fallback_error}")
                     raise HTTPException(
-                        400, 
+                        400,
                         "文档格式异常且无法自动修复。建议：在 Word 中打开文档，选择'另存为'，保存为新的 .docx 文件后重试。"
                     )
-                    
-            except HTTPException:
-                raise
-            except Exception as fallback_error:
-                logger.error(f"[evaluation] 降级处理失败: {fallback_error}")
-                raise HTTPException(
-                    400, 
-                    "文档格式异常且无法自动修复。建议：在 Word 中打开文档，选择'另存为'，保存为新的 .docx 文件后重试。"
-                )
-        else:
-            raise HTTPException(400, f"文档解析失败: {error_msg}")
+            else:
+                raise HTTPException(400, f"文档解析失败: {error_msg}")
 
     title = paper_struct["title"]
     logger.info(
@@ -545,11 +581,15 @@ async def evaluate_paper(file: UploadFile = File(...)):
 
     task_id = str(uuid.uuid4())
     celery_result = run_evaluation.apply_async(
-        args=[task_id, paper_struct, str(settings.OUTPUT_PATH)],
+        args=[task_id, paper_struct, str(settings.OUTPUT_PATH), paper_type],
         task_id=task_id,
     )
 
-    logger.info(f"[evaluation] 任务已入队 task_id={celery_result.id} title={title}")
+    logger.info(f"[evaluation] 任务已入队 task_id={celery_result.id} title={title} type={paper_type}")
+
+    # 扣减配额（任务提交成功后扣）
+    if ctx.billing_on:
+        consume_quota(db, ctx.user.id, "evaluation", task_id=celery_result.id)
 
     response = {
         "task_id":     celery_result.id,

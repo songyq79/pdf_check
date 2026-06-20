@@ -188,13 +188,13 @@ defineExpose({
 }
 
 .upload-area:hover:not(.disabled) {
-  border-color: #409eff;
-  background-color: #f5f7fa;
+  border-color: rgb(0, 108, 73);
+  background-color: rgba(79, 251, 182, 0.04);
 }
 
 .upload-area.dragging {
-  border-color: #409eff;
-  background-color: #ecf5ff;
+  border-color: rgb(0, 108, 73);
+  background-color: rgba(79, 251, 182, 0.08);
 }
 
 .upload-area.disabled {
@@ -203,12 +203,12 @@ defineExpose({
 }
 
 .upload-icon {
-  color: #409eff;
+  color: rgb(0, 108, 73);
   margin-bottom: 20px;
 }
 
 .upload-text {
-  color: #606266;
+  color: rgb(107, 114, 128);
 }
 
 .upload-primary-text {
@@ -218,7 +218,7 @@ defineExpose({
 
 .upload-secondary-text {
   font-size: 13px;
-  color: #909399;
+  color: rgb(107, 114, 128);
 }
 
 .file-preview {
@@ -232,7 +232,7 @@ defineExpose({
 }
 
 .file-icon {
-  color: #409eff;
+  color: rgb(0, 108, 73);
   flex-shrink: 0;
 }
 
@@ -244,7 +244,7 @@ defineExpose({
 .file-name {
   font-size: 15px;
   font-weight: 500;
-  color: #303133;
+  color: rgb(18, 18, 18);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -253,7 +253,7 @@ defineExpose({
 
 .file-meta {
   font-size: 13px;
-  color: #909399;
+  color: rgb(107, 114, 128);
   display: flex;
   gap: 10px;
 }

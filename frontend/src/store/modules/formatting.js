@@ -129,8 +129,13 @@ export const useFormattingStore = defineStore('formatting', () => {
       progress.value = 20
       startPolling(res.task_id)
     } catch (err) {
-      phase.value = 'failed'
-      errorMsg.value = err?.response?.data?.detail || '提交失败，请重试'
+      if (err?.response?.status === 402) {
+        phase.value = 'idle'
+      } else {
+        phase.value = 'failed'
+        errorMsg.value = err?.response?.data?.detail || '提交失败，请重试'
+      }
+      throw err
     }
   }
 

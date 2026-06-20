@@ -3,13 +3,8 @@
     <!-- 顶部导航栏 - 新设计 -->
     <header class="modern-header">
       <div class="header-container">
-        <div class="logo">
-          <span class="logo-text">
-            <span class="logo-vr">VR</span><span class="logo-only">only</span>
-          </span>
-          <span class="logo-subtitle">论文评价检验系统</span>
-        </div>
-        
+        <router-link to="/" class="logo">VRonly</router-link>
+
         <nav class="nav">
           <router-link to="/" class="nav-item" :class="{ active: $route.path === '/' }">
             首页
@@ -17,20 +12,46 @@
           <router-link to="/evaluation" class="nav-item" :class="{ active: $route.path === '/evaluation' }">
             智能评价
           </router-link>
+          <router-link to="/topic-evaluation" class="nav-item" :class="{ active: $route.path === '/topic-evaluation' }">
+            选题评估
+          </router-link>
           <router-link to="/spell-check" class="nav-item" :class="{ active: $route.path === '/spell-check' }">
             错别字检查
           </router-link>
           <router-link to="/formatting" class="nav-item" :class="{ active: $route.path === '/formatting' }">
             模板排版
           </router-link>
-          <router-link to="/history" class="nav-item" :class="{ active: $route.path === '/history' }">
-            历史记录
+          <router-link to="/plagiarism" class="nav-item" :class="{ active: $route.path === '/plagiarism' }">
+            论文查重
           </router-link>
-          
-          <div class="user-avatar">
-            <div class="user-avatar-icon"></div>
-          </div>
         </nav>
+
+        <!-- 登录状态区域 -->
+        <div class="auth-area">
+          <template v-if="authStore.isLoggedIn">
+            <el-dropdown @command="handleUserCommand">
+              <span class="user-info">
+                <div class="user-avatar">
+                  <div class="user-avatar-icon"></div>
+                </div>
+                <span class="user-name">{{ authStore.username }}</span>
+                <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+              </span>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="user-center">用户中心</el-dropdown-item>
+                  <el-dropdown-item command="history">历史记录</el-dropdown-item>
+                  <el-dropdown-item command="pricing">购买套餐</el-dropdown-item>
+                  <el-dropdown-item v-if="authStore.isAdmin" command="admin">管理后台</el-dropdown-item>
+                  <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </template>
+          <template v-else>
+            <button class="login-btn" @click="router.push('/login')">登录 / 注册</button>
+          </template>
+        </div>
       </div>
     </header>
 
@@ -49,14 +70,55 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onMounted, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { ArrowDown } from '@element-plus/icons-vue'
 import Footer from '@/components/common/Footer.vue'
+import { useAuthStore } from '@/store/modules/auth'
 
 const route = useRoute()
+const router = useRouter()
+const authStore = useAuthStore()
 
-// 当前激活的菜单项
 const activeMenu = computed(() => route.path)
+
+let checkUserStatusInterval = null
+
+// 应用启动时尝试恢复登录状态
+onMounted(() => {
+  authStore.fetchMe()
+
+  // 每30秒检查一次用户状态，防止被拒绝用户仍能使用系统
+  checkUserStatusInterval = setInterval(() => {
+    if (authStore.isLoggedIn) {
+      authStore.fetchMe()
+    }
+  }, 30000) // 30 秒检查一次
+})
+
+// 清理定时器
+onUnmounted(() => {
+  if (checkUserStatusInterval) {
+    clearInterval(checkUserStatusInterval)
+  }
+})
+
+function handleUserCommand(cmd) {
+  if (cmd === 'logout') {
+    authStore.logout()
+    ElMessage.success('已退出登录')
+    router.push('/')
+  } else if (cmd === 'admin') {
+    router.push('/admin')
+  } else if (cmd === 'user-center') {
+    router.push('/user-center')
+  } else if (cmd === 'history') {
+    router.push('/history')
+  } else if (cmd === 'pricing') {
+    router.push('/pricing')
+  }
+}
 </script>
 
 <style scoped>
@@ -68,119 +130,141 @@ const activeMenu = computed(() => route.path)
 
 .main-content {
   flex: 1;
+  margin-top: 80px;
 }
 
 /* 现代化导航栏 */
 .modern-header {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.70);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .header-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
+  width: 1000px;
+  height: 80px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  height: 70px;
+  justify-content: space-between;
+  padding: 0;
 }
 
 /* Logo 样式 */
 .logo {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.logo-text {
-  font-family: 'Arial', sans-serif;
-  font-size: 36px;
-  font-weight: 700;
-  letter-spacing: -1px;
-  line-height: 1;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.logo-vr {
-  font-weight: 700;
-}
-
-.logo-only {
-  font-weight: 700;
-}
-
-.logo-subtitle {
-  font-size: 16px;
-  color: #666;
-  font-weight: 500;
+  font-family: 'Newsreader', serif;
+  font-size: 24px;
+  font-weight: 400;
+  font-style: italic;
+  color: rgb(24, 24, 27);
+  text-decoration: none;
+  width: 90px;
+  flex-shrink: 0;
 }
 
 /* 导航菜单 */
 .nav {
   display: flex;
-  gap: 30px;
   align-items: center;
+  gap: 32px;
 }
 
 .nav-item {
-  color: #666;
+  font-size: 16px;
+  color: rgb(26, 28, 28);
   text-decoration: none;
-  font-size: 15px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  padding: 8px 0;
+  font-family: 'PingFang SC', 'Noto Sans SC', sans-serif;
+  line-height: 24px;
+  padding-bottom: 3px;
   position: relative;
+  font-weight: 400;
+  transition: color 0.18s ease;
+  white-space: nowrap;
 }
 
-.nav-item::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  transition: width 0.3s ease;
+.nav-item--muted {
+  color: rgb(113, 113, 122);
 }
 
 .nav-item:hover {
-  color: #667eea;
-}
-
-.nav-item:hover::after,
-.nav-item.active::after {
-  width: 100%;
+  color: rgb(16, 185, 129);
 }
 
 .nav-item.active {
-  color: #667eea;
-  font-weight: 600;
+  border-bottom: 1px solid rgb(16, 185, 129);
+  color: rgb(26, 28, 28);
+  font-weight: 400;
+}
+
+/* 登录区域 */
+.auth-area {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.login-btn {
+  background: rgb(18, 18, 18);
+  color: white;
+  border: none;
+  border-radius: 9999px;
+  height: 36px;
+  width: 92px;
+  font-size: 16px;
+  cursor: pointer;
+  font-family: 'PingFang SC', 'Noto Sans SC', sans-serif;
+  transition: opacity 0.18s ease;
+}
+
+.login-btn:hover {
+  opacity: 0.85;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: rgb(26, 28, 28);
+  font-size: 14px;
+}
+
+.user-info:hover {
+  color: rgb(16, 185, 129);
+}
+
+.user-name {
+  font-weight: 500;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* 用户头像 */
 .user-avatar {
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: rgb(18, 18, 18);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
   position: relative;
 }
 
 .user-avatar-icon {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   background: white;
   border-radius: 50%;
   display: flex;
@@ -190,26 +274,26 @@ const activeMenu = computed(() => route.path)
   position: relative;
 }
 
-/* 头部 */
+/* 头像人形图标 - 头部 */
 .user-avatar-icon::before {
   content: '';
   position: absolute;
-  top: 11px;
-  width: 14px;
-  height: 14px;
-  background: #667eea;
+  top: 9px;
+  width: 12px;
+  height: 12px;
+  background: rgb(18, 18, 18);
   border-radius: 50%;
 }
 
-/* 身体 */
+/* 头像人形图标 - 身体 */
 .user-avatar-icon::after {
   content: '';
   position: absolute;
-  bottom: 8px;
-  width: 24px;
-  height: 16px;
-  background: #667eea;
-  border-radius: 12px 12px 0 0;
+  bottom: 7px;
+  width: 20px;
+  height: 14px;
+  background: rgb(18, 18, 18);
+  border-radius: 10px 10px 0 0;
 }
 
 /* 路由切换动画 */
@@ -224,50 +308,42 @@ const activeMenu = computed(() => route.path)
 }
 
 /* 响应式 */
-@media (max-width: 768px) {
+@media (max-width: 1100px) {
   .header-container {
-    padding: 0 15px;
-    height: 60px;
-  }
-
-  .logo-text {
-    font-size: 28px;
-  }
-
-  .logo-subtitle {
-    font-size: 14px;
-  }
-
-  .nav {
-    gap: 15px;
-  }
-
-  .nav-item {
-    font-size: 14px;
-  }
-
-  .user-avatar {
-    width: 38px;
-    height: 38px;
-  }
-
-  .user-avatar-icon {
-    width: 34px;
-    height: 34px;
+    width: calc(100% - 80px);
   }
 }
 
-@media (max-width: 480px) {
-  .logo-subtitle {
-    display: none;
+@media (max-width: 680px) {
+  .modern-header {
+    height: 64px;
+  }
+
+  .header-container {
+    height: 64px;
+    width: calc(100% - 40px);
+  }
+
+  .main-content {
+    margin-top: 64px;
+  }
+
+  .logo {
+    font-size: 20px;
+    width: auto;
   }
 
   .nav {
-    gap: 10px;
+    gap: 16px;
   }
 
   .nav-item {
-    font-size: 13px;
+    font-size: 14px;
+  }
+
+  .login-btn {
+    font-size: 14px;
+    width: 80px;
   }
 }
 </style>

@@ -21,9 +21,9 @@
             <div class="feature">✓ 使用即扣</div>
             <div class="feature">✓ 无过期限制</div>
           </div>
-          <el-input-number v-model="perUseQuantity" :min="1" :max="100" style="width: 100%; margin-bottom: 15px;">
+          <el-input-number v-model="perUseQuantity" :min="1" :max="100" :precision="0" :step="1" :value-on-clear="1" style="width: 100%; margin-bottom: 15px;">
           </el-input-number>
-          <el-button type="primary" size="large" style="width: 100%;" @click="buyPerUse" :loading="buyLoading">
+          <el-button size="large" style="width: 100%; background: rgb(226, 226, 226); color: rgb(26, 28, 28); border: none; border-radius: 9999px; font-size: 16px;" @click="buyPerUse" :loading="buyLoading">
             购买 {{ perUseQuantity }} 次 (¥{{ perUsePrice }})
           </el-button>
         </div>
@@ -39,14 +39,14 @@
           </p>
         </div>
         <div class="card-content">
-          <p class="desc">全功能无限使用</p>
+          <p class="desc">每月 20 次使用额度</p>
           <div class="features">
-            <div class="feature">✓ 所有功能无限用</div>
+            <div class="feature">✓ 每月 20 次额度</div>
             <div class="feature">✓ 优先客服支持</div>
             <div class="feature">✓ 30天有效期</div>
             <div class="feature">✓ 支持续费累计</div>
           </div>
-          <el-button type="primary" size="large" style="width: 100%; background: linear-gradient(135deg, #006C49, #004d35); border: none;"
+          <el-button size="large" style="width: 100%; background: white; color: rgb(0, 108, 73); border: none; border-radius: 9999px; font-size: 16px;"
             @click="buyMonthly" :loading="buyLoading">
             立即订阅
           </el-button>
@@ -98,8 +98,11 @@
         <p class="order-info">订单号: {{ currentOrderNo }}</p>
         <img v-if="currentQrcode" :src="currentQrcode" :alt="'QR Code'" class="qrcode-img" />
         <p class="tips">请用 {{ selectedPayMethod === 'wechat' ? '微信' : '支付宝' }} 扫码支付</p>
-        <el-progress :percentage="paymentProgress" v-if="paymentProgress > 0"></el-progress>
-        <p v-if="paymentProgress > 0" class="progress-text">{{ paymentProgress }}% - 请稍候...</p>
+        <el-progress :percentage="paymentProgress" :show-text="false" v-if="paymentProgress > 0"></el-progress>
+        <p v-if="paymentProgress > 0" class="progress-text">
+          <el-icon class="is-loading"><Loading /></el-icon>
+          正在等待支付确认... {{ paymentProgress.toFixed(1) }}%
+        </p>
       </div>
       <template #footer>
         <el-button @click="qrcodeDialogVisible = false">关闭</el-button>
@@ -111,6 +114,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Loading } from '@element-plus/icons-vue'
 import { useBillingStore } from '@/store/modules/billing'
 import { useAuthStore } from '@/store/modules/auth'
 
@@ -129,11 +133,11 @@ const currentQrcode = ref('')
 const currentProductType = ref('')
 
 const pricePerUse = computed(() => {
-  return billingStore.pricing?.per_use_yuan || '3.00'
+  return billingStore.pricing?.per_use_yuan || '9.90'
 })
 
 const priceMonthly = computed(() => {
-  return billingStore.pricing?.monthly_yuan || '99.00'
+  return billingStore.pricing?.monthly_yuan || '69.90'
 })
 
 const perUsePrice = computed(() => {
@@ -161,6 +165,11 @@ const handleSelectPayMethod = async (method) => {
 const buyPerUse = () => {
   if (!authStore.isLoggedIn) {
     ElMessage.warning('请先登录')
+    return
+  }
+  if (!perUseQuantity.value || perUseQuantity.value < 1) {
+    perUseQuantity.value = 1
+    ElMessage.warning('购买次数最少为1次')
     return
   }
   currentProductType.value = 'per_use'
@@ -206,11 +215,20 @@ const confirmPayment = async () => {
   }
 }
 
-const pollPaymentStatus = async (orderNo) => {
+let pollTimer = null
+
+const pollPaymentStatus = (orderNo) => {
+  // 清除可能残留的旧轮询
+  if (pollTimer) {
+    clearInterval(pollTimer)
+    pollTimer = null
+  }
+  paymentProgress.value = 0
+
   let attempts = 0
   const maxAttempts = 120 // 2分钟（每次1秒）
 
-  const timer = setInterval(async () => {
+  pollTimer = setInterval(async () => {
     attempts++
     paymentProgress.value = Math.min((attempts / maxAttempts) * 100, 95)
 
@@ -219,7 +237,8 @@ const pollPaymentStatus = async (orderNo) => {
       const order = billingStore.orders.find(o => o.order_no === orderNo)
 
       if (order && order.status === 'paid') {
-        clearInterval(timer)
+        clearInterval(pollTimer)
+        pollTimer = null
         paymentProgress.value = 100
         ElMessage.success('支付成功！')
         setTimeout(() => {
@@ -230,7 +249,8 @@ const pollPaymentStatus = async (orderNo) => {
       }
 
       if (attempts >= maxAttempts) {
-        clearInterval(timer)
+        clearInterval(pollTimer)
+        pollTimer = null
         ElMessage.warning('支付超时，请手动检查订单状态')
       }
     } catch (e) {
@@ -242,9 +262,11 @@ const pollPaymentStatus = async (orderNo) => {
 
 <style scoped>
 .pricing-page {
-  padding: 60px 20px;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  min-height: calc(100vh - 60px);
+  padding: 48px 20px 80px;
+  background: transparent;
+  min-height: calc(100vh - 80px);
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
 .pricing-header {
@@ -254,12 +276,14 @@ const pollPaymentStatus = async (orderNo) => {
 
 .pricing-header h1 {
   font-size: 36px;
-  color: #333;
-  margin-bottom: 10px;
+  font-weight: 400;
+  color: rgb(26, 28, 28);
+  margin-bottom: 12px;
+  line-height: 36px;
 }
 
 .pricing-header p {
-  color: #666;
+  color: rgb(107, 114, 128);
   font-size: 16px;
 }
 
@@ -267,61 +291,79 @@ const pollPaymentStatus = async (orderNo) => {
   max-width: 1000px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 30px;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
 }
 
 .pricing-card {
-  background: white;
-  border-radius: 12px;
-  padding: 30px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s, box-shadow 0.3s;
+  background: rgb(243, 243, 244);
+  border-radius: 48px;
+  padding: 48px;
+  border: 1px solid rgba(186, 202, 191, 0.10);
+  box-shadow: none;
+  transition: transform 0.22s, box-shadow 0.22s;
   position: relative;
+  overflow: hidden;
 }
 
 .pricing-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  transform: translateY(-6px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.10);
 }
 
 .pricing-card.recommended {
-  border: 2px solid #006C49;
-  transform: scale(1.05);
+  background: rgb(0, 108, 73);
+  border: none;
+  box-shadow: 0 16px 48px rgba(0, 108, 73, 0.35);
+  transform: none;
+  color: white;
 }
 
 .pricing-card.recommended:hover {
-  transform: scale(1.05) translateY(-5px);
+  transform: translateY(-6px);
+  box-shadow: 0 20px 56px rgba(0, 108, 73, 0.40);
 }
 
 .ribbon {
   position: absolute;
   top: 20px;
-  right: -5px;
-  background: linear-gradient(135deg, #006C49 0%, #004d35 100%);
-  color: white;
-  padding: 6px 20px;
-  border-radius: 20px;
+  right: 20px;
+  background: transparent;
+  color: rgb(79, 251, 182);
+  padding: 0;
+  border-radius: 0;
   font-size: 12px;
-  font-weight: bold;
+  font-weight: 400;
+  letter-spacing: 1.2px;
 }
 
 .card-title {
-  text-align: center;
+  text-align: left;
   margin-bottom: 20px;
 }
 
 .card-title h3 {
-  font-size: 20px;
+  font-size: 36px;
+  font-weight: 400;
   margin-bottom: 10px;
-  color: #333;
+  color: rgb(26, 28, 28);
+  line-height: 40px;
+}
+
+.pricing-card.recommended .card-title h3 {
+  color: white;
 }
 
 .price {
-  font-size: 32px;
-  color: #006C49;
-  font-weight: bold;
-  margin: 0;
+  font-family: 'Newsreader', serif;
+  font-size: 48px;
+  color: rgb(26, 28, 28);
+  font-weight: 400;
+  margin: 24px 0;
+}
+
+.pricing-card.recommended .price {
+  color: white;
 }
 
 .currency {
@@ -334,20 +376,30 @@ const pollPaymentStatus = async (orderNo) => {
 }
 
 .unit {
-  font-size: 14px;
-  color: #999;
+  font-size: 20px;
+  color: rgb(59, 74, 65);
+}
+
+.pricing-card.recommended .unit {
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .card-content {
-  padding-top: 20px;
-  border-top: 1px solid #f0f0f0;
+  padding-top: 0;
+  border-top: none;
 }
 
 .desc {
-  text-align: center;
-  color: #666;
+  text-align: left;
+  color: rgb(59, 74, 65);
   margin-bottom: 20px;
-  font-size: 14px;
+  font-size: 16px;
+  font-family: 'Manrope', sans-serif;
+  line-height: 24px;
+}
+
+.pricing-card.recommended .desc {
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .features {
@@ -356,9 +408,13 @@ const pollPaymentStatus = async (orderNo) => {
 
 .feature {
   padding: 8px 0;
-  color: #666;
-  font-size: 14px;
-  line-height: 1.6;
+  color: rgb(26, 28, 28);
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.pricing-card.recommended .feature {
+  color: white;
 }
 
 .payment-methods {
@@ -372,20 +428,20 @@ const pollPaymentStatus = async (orderNo) => {
   display: flex;
   align-items: center;
   padding: 15px;
-  border: 2px solid #f0f0f0;
-  border-radius: 8px;
+  border: 2px solid rgba(229, 231, 235, 0.50);
+  border-radius: 16px;
   cursor: pointer;
   transition: all 0.3s;
 }
 
 .method-item:hover {
-  border-color: #006C49;
-  background: #f0faf7;
+  border-color: rgb(0, 108, 73);
+  background: rgba(79, 251, 182, 0.05);
 }
 
 .method-item.active {
-  border-color: #006C49;
-  background: #f0faf7;
+  border-color: rgb(0, 108, 73);
+  background: rgba(79, 251, 182, 0.05);
 }
 
 .method-item .icon {

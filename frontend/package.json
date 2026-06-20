@@ -4,18 +4,22 @@
   "description": "论文评价检验系统 - 前端",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build --mode production",
+    "build:dev": "vite build --mode development",
+    "build:prod": "vite build --mode production",
     "preview": "vite preview"
   },
   "dependencies": {
-    "vue": "^3.3.11",
-    "vue-router": "^4.2.5",
-    "pinia": "^2.1.7",
-    "axios": "^1.6.5",
-    "element-plus": "^2.5.2",
     "@element-plus/icons-vue": "^2.3.1",
+    "axios": "^1.6.5",
     "echarts": "^5.4.3",
-    "vue-echarts": "^6.6.8"
+    "element-plus": "^2.5.2",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
+    "pinia": "^2.1.7",
+    "vue": "^3.3.11",
+    "vue-echarts": "^6.6.8",
+    "vue-router": "^4.2.5"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.2",

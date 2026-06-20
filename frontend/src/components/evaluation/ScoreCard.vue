@@ -54,7 +54,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { Select, WarningFilled, Promotion, Trophy, Star, ChatDotSquare, Link } from '@element-plus/icons-vue'
+import { Select, WarningFilled, Promotion, Trophy, Star, ChatDotSquare, Link, EditPen, Document } from '@element-plus/icons-vue'
 
 const props = defineProps({
   // 维度名称
@@ -87,10 +87,11 @@ const props = defineProps({
 // 根据维度名称选择图标
 const iconComponent = computed(() => {
   const iconMap = {
-    '学术规范性': Trophy,
-    '逻辑与创新性': Star,
-    '语言质量': ChatDotSquare,
-    '文献引用规范性': Link
+    '选题意义': Star,
+    '写作安排': EditPen,
+    '逻辑构建': Document,
+    '专业能力': Trophy,
+    '学术规范': Link
   }
   return iconMap[props.dimensionName] || Trophy
 })
@@ -113,15 +114,17 @@ const iconComponent = computed(() => {
 .dimension-name {
   font-size: 18px;
   font-weight: bold;
-  color: #303133;
+  color: rgb(18, 18, 18);
   display: flex;
   align-items: center;
 }
 
 .dimension-score {
+  font-family: 'Newsreader', serif;
+  font-style: italic;
   font-size: 32px;
   font-weight: bold;
-  color: #409eff;
+  color: rgb(0, 108, 73);
 }
 
 .section {
@@ -135,7 +138,7 @@ const iconComponent = computed(() => {
 .section-title {
   font-size: 15px;
   font-weight: 600;
-  color: #606266;
+  color: rgb(107, 114, 128);
   margin-bottom: 10px;
   display: flex;
   align-items: center;
@@ -150,7 +153,7 @@ const iconComponent = computed(() => {
 
 .list-item {
   padding: 8px 0 8px 20px;
-  color: #606266;
+  color: rgb(107, 114, 128);
   font-size: 14px;
   line-height: 1.6;
   position: relative;
@@ -160,6 +163,6 @@ const iconComponent = computed(() => {
   content: '•';
   position: absolute;
   left: 8px;
-  color: #909399;
+  color: rgb(113, 113, 122);
 }
 </style>

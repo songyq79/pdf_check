@@ -46,9 +46,9 @@ class Settings(BaseSettings):
 
     # Redis配置
     REDIS_HOST: str = "localhost"
-    REDIS_PORT: int = 6379
-    REDIS_DB: int = 0
-    REDIS_PASSWORD: Optional[str] = None
+    REDIS_PORT: int = 26301
+    REDIS_DB: int = 15
+    REDIS_PASSWORD: Optional[str] = "jzmNDJAF7b"
 
     # 文件存储配置
     STORAGE_PATH: Path = Path(__file__).parent.parent / "storage"
@@ -78,6 +78,7 @@ class Settings(BaseSettings):
         "http://localhost:5173",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5173",
+        "https://papers.vronly-dh.com",
     ]
 
     # JWT配置（可选）
@@ -86,8 +87,8 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     # Celery配置
-    CELERY_BROKER_URL: str = "redis://localhost:6379/0"
-    CELERY_RESULT_BACKEND: str = "redis://localhost:6379/0"
+    CELERY_BROKER_URL: str = "redis://:jzmNDJAF7b@localhost:26301/15"
+    CELERY_RESULT_BACKEND: str = "redis://:jzmNDJAF7b@localhost:26301/15"
 
     # 日志配置
     LOG_LEVEL: str = "INFO"

@@ -1,5 +1,5 @@
 /* Google Fonts Import */
-@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&family=Noto+Sans+SC:wght@400;500;700&display=swap');
 
 /* 全局样式 */
 
@@ -12,12 +12,11 @@
 html,
 body {
   height: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
-    'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-    'Noto Color Emoji';
+  font-family: 'PingFang SC', 'Noto Sans SC', 'Hiragino Sans GB', 'Microsoft YaHei',
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 14px;
   line-height: 1.6;
-  color: #303133;
+  color: rgb(26, 28, 28);
 }
 
 #app {
@@ -46,23 +45,26 @@ body {
 
 /* 页面容器 */
 .page-container {
-  padding: 20px;
-  min-height: calc(100vh - 60px);
-  background: #f9f9f9;
+  padding: 48px 20px 80px;
+  min-height: calc(100vh - 80px);
+  max-width: 1000px;
+  margin: 0 auto;
+  background: transparent;
 }
 
 .page-title {
-  font-size: 24px;
-  font-weight: bold;
-  color: #ffffff;
-  margin-bottom: 20px;
+  font-size: 30px;
+  font-weight: 400;
+  color: rgb(18, 18, 18);
+  margin-bottom: 12px;
+  line-height: 36px;
 }
 
 .page-description {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.85);
-  margin-bottom: 20px;
-  line-height: 1.8;
+  font-size: 16px;
+  color: rgb(107, 114, 128);
+  margin-bottom: 32px;
+  line-height: 26px;
 }
 
 /* 卡片容器 */
@@ -73,33 +75,33 @@ body {
 
 /* 上传区域 */
 .upload-area {
-  border: 2px dashed #dcdfe6;
-  border-radius: 8px;
-  padding: 40px;
+  border: 2px dashed rgba(229, 231, 235, 0.8);
+  border-radius: 24px;
+  padding: 48px;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s;
-  background-color: #fff;
+  background-color: rgb(253, 253, 253);
 }
 
 .upload-area:hover {
-  border-color: #409eff;
-  background-color: #f5f7fa;
+  border-color: rgb(0, 108, 73);
+  background-color: rgba(79, 251, 182, 0.05);
 }
 
 .upload-area.dragging {
-  border-color: #409eff;
-  background-color: #ecf5ff;
+  border-color: rgb(0, 108, 73);
+  background-color: rgba(79, 251, 182, 0.05);
 }
 
 /* 评分展示 */
 .score-display {
   text-align: center;
-  padding: 30px;
-  background: linear-gradient(135deg, #006C49 0%, #004d35 100%);
+  padding: 36px;
+  background: rgb(0, 108, 73);
   color: white;
-  border-radius: 12px;
-  margin-bottom: 20px;
+  border-radius: 24px;
+  margin-bottom: 24px;
 }
 
 .score-display .score-value {
@@ -116,15 +118,16 @@ body {
 /* 维度卡片 */
 .dimension-card {
   background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(229, 231, 235, 0.50);
   transition: all 0.3s;
 }
 
 .dimension-card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-  transform: translateY(-2px);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.10);
+  transform: translateY(-4px);
 }
 
 .dimension-card .dimension-header {
@@ -139,7 +142,7 @@ body {
 .dimension-card .dimension-name {
   font-size: 16px;
   font-weight: bold;
-  color: #303133;
+  color: rgb(18, 18, 18);
 }
 
 .dimension-card .dimension-score {
@@ -160,12 +163,12 @@ body {
 
 .list-item .item-label {
   font-weight: 600;
-  color: #606266;
+  color: rgb(107, 114, 128);
   margin-bottom: 5px;
 }
 
 .list-item .item-content {
-  color: #909399;
+  color: rgb(107, 114, 128);
   font-size: 13px;
   line-height: 1.6;
 }
@@ -173,8 +176,8 @@ body {
 /* 空状态 */
 .empty-state {
   text-align: center;
-  padding: 60px 20px;
-  color: #909399;
+  padding: 80px 20px;
+  color: rgb(113, 113, 122);
 }
 
 .empty-state .empty-icon {
@@ -198,7 +201,7 @@ body {
 
 .loading-text {
   margin-top: 20px;
-  color: #606266;
+  color: rgb(107, 114, 128);
   font-size: 14px;
 }
 
@@ -219,6 +222,7 @@ body {
   color: #006C49;
 }
 
+
 .text-success {
   color: #67c23a;
 }
@@ -232,7 +236,7 @@ body {
 }
 
 .text-info {
-  color: #909399;
+  color: rgb(107, 114, 128);
 }
 
 .mb-10 {

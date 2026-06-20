@@ -46,6 +46,7 @@
           <template #header>
             <div class="card-header">
               <span>我的权益</span>
+              <el-button size="small" link @click="billingStore.loadQuota()">刷新</el-button>
             </div>
           </template>
 
@@ -87,9 +88,12 @@
             </div>
           </template>
 
-          <p class="invite-desc">邀请1位好友注册，你将获得 3 次使用额度</p>
+          <p class="invite-desc">
+            将邀请码分享给好友，好友<strong>首次注册时填写您的邀请码</strong>后，您将自动获得 3 次使用额度。
+            好友注册成功后，请点击"我的权益"的刷新按钮查看最新余额。
+          </p>
 
-          <el-table :data="billingStore.inviteCodes" stripe v-if="billingStore.inviteCodes.length > 0">
+          <el-table :data="pagedInviteCodes" stripe v-if="billingStore.inviteCodes.length > 0">
             <el-table-column prop="code" label="邀请码" width="120"></el-table-column>
             <el-table-column label="使用状态" width="100">
               <template #default="{ row }">
@@ -115,8 +119,16 @@
               </template>
             </el-table-column>
           </el-table>
+          <el-pagination
+            v-if="billingStore.inviteCodes.length > invitePageSize"
+            v-model:current-page="invitePage"
+            :page-size="invitePageSize"
+            :total="billingStore.inviteCodes.length"
+            layout="prev, pager, next"
+            class="order-pagination"
+          />
 
-          <el-empty v-else description="还没有生成邀请码"></el-empty>
+          <el-empty v-else-if="billingStore.inviteCodes.length === 0" description="还没有生成邀请码"></el-empty>
         </el-card>
       </div>
 
@@ -129,7 +141,7 @@
             </div>
           </template>
 
-          <el-table :data="orders" stripe v-if="orders.length > 0">
+          <el-table :data="pagedOrders" stripe v-if="orders.length > 0">
             <el-table-column prop="order_no" label="订单号" width="200" />
             <el-table-column label="套餐类型" width="120">
               <template #default="{ row }">
@@ -163,54 +175,32 @@
                 <template v-else-if="row.status === 'refund_pending'">
                   <el-tag type="warning">审核中</el-tag>
                 </template>
-                <template v-else-if="row.refund_reject_reason">
-                  <el-tooltip :content="`拒绝原因: ${row.refund_reject_reason}`" placement="top">
-                    <el-tag type="info">已拒绝</el-tag>
-                  </el-tooltip>
+                <template v-else-if="row.refund_reject_reason && row.status === 'paid'">
+                  <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+                    <el-tooltip :content="`拒绝原因: ${row.refund_reject_reason}`" placement="top">
+                      <el-tag type="danger" size="small">已拒绝</el-tag>
+                    </el-tooltip>
+                    <el-button type="primary" size="small" @click="handleShowRefundDialog(row)">
+                      重新申请
+                    </el-button>
+                  </div>
                 </template>
               </template>
             </el-table-column>
           </el-table>
 
-          <el-empty v-else description="暂无订单"></el-empty>
+          <el-pagination
+            v-if="orders.length > orderPageSize"
+            v-model:current-page="orderPage"
+            :page-size="orderPageSize"
+            :total="orders.length"
+            layout="prev, pager, next"
+            class="order-pagination"
+          />
+          <el-empty v-else-if="orders.length === 0" description="暂无订单"></el-empty>
         </el-card>
       </div>
 
-      <!-- 使用记录 -->
-      <div class="history-section">
-        <el-card>
-          <template #header>
-            <div class="card-header">
-              <span>使用记录（最近30条）</span>
-            </div>
-          </template>
-
-          <el-table :data="billingStore.usageHistory" stripe v-if="billingStore.usageHistory.length > 0">
-            <el-table-column label="功能" width="100">
-              <template #default="{ row }">
-                <el-tag>{{ formatActionLabel(row.action) }}</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="来源" width="80">
-              <template #default="{ row }">
-                <span>{{ formatSourceLabel(row.consumed_from) }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="任务ID" width="150">
-              <template #default="{ row }">
-                <code style="font-size: 12px">{{ row.task_id || '-' }}</code>
-              </template>
-            </el-table-column>
-            <el-table-column label="时间" width="160">
-              <template #default="{ row }">
-                {{ formatDate(row.created_at) }}
-              </template>
-            </el-table-column>
-          </el-table>
-
-          <el-empty v-else description="暂无使用记录"></el-empty>
-        </el-card>
-      </div>
     </div>
 
     <!-- 申请退款 dialog -->
@@ -250,7 +240,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useBillingStore } from '@/store/modules/billing'
@@ -260,7 +250,19 @@ const router = useRouter()
 const billingStore = useBillingStore()
 
 const inviteLoading = ref(false)
+const invitePage = ref(1)
+const invitePageSize = 5
+const pagedInviteCodes = computed(() => {
+  const start = (invitePage.value - 1) * invitePageSize
+  return billingStore.inviteCodes.slice(start, start + invitePageSize)
+})
 const orders = ref([])
+const orderPage = ref(1)
+const orderPageSize = 10
+const pagedOrders = computed(() => {
+  const start = (orderPage.value - 1) * orderPageSize
+  return orders.value.slice(start, start + orderPageSize)
+})
 const showRefundDialog = ref(false)
 const refundForm = ref({ reason: '' })
 const currentOrder = ref(null)
@@ -270,7 +272,6 @@ onMounted(() => {
   billingStore.loadPricing()
   billingStore.loadQuota()
   billingStore.loadInviteCodes()
-  billingStore.loadUsageHistory()
   loadOrders()
 })
 
@@ -285,7 +286,9 @@ async function loadOrders() {
 
 const formatDate = (date) => {
   if (!date) return '-'
-  const d = new Date(date)
+  // 后端存储 UTC 时间，字符串末尾无 'Z'，需手动补偿 +8 小时转为北京时间
+  const str = String(date)
+  const d = str.endsWith('Z') || str.includes('+') ? new Date(date) : new Date(date + 'Z')
   return d.toLocaleString('zh-CN')
 }
 
@@ -297,16 +300,6 @@ const formatSourceLabel = (source) => {
     subscription: '包月订阅',
   }
   return labels[source] || source
-}
-
-const formatActionLabel = (action) => {
-  const labels = {
-    evaluation: '论文评价',
-    plagiarism: '论文查重',
-    proofread: '文档校对',
-    formatter: '模板排版',
-  }
-  return labels[action] || action
 }
 
 const handleGenerateCode = async () => {
@@ -360,7 +353,7 @@ async function handleApplyRefund() {
 <style scoped>
 .user-center {
   padding: 30px 0;
-  background: #f5f7fa;
+  background: rgb(249, 249, 249);
   min-height: calc(100vh - 60px);
 }
 
@@ -372,32 +365,41 @@ async function handleApplyRefund() {
 
 h1 {
   margin-bottom: 30px;
-  color: #333;
+  color: rgb(18, 18, 18);
+  font-weight: 400;
 }
 
 .recharge-section,
 .quota-section,
 .invite-section,
-.history-section {
+.order-pagination {
+  margin-top: 16px;
+  justify-content: center;
+  --el-color-primary: rgb(0, 108, 73);
+  --el-color-primary-light-9: rgba(0, 108, 73, 0.1);
+}
+
+.orders-section {
   margin-bottom: 30px;
 }
 
 .recharge-card {
-  background: linear-gradient(135deg, #006C49 0%, #004d35 100%);
-  border: none;
-  border-radius: 12px;
+  background: white;
+  border: 1px solid rgba(229, 231, 235, 0.50);
+  border-radius: 32px;
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.06);
 }
 
 .recharge-card :deep(.el-card__header) {
   background: transparent;
   border: none;
-  color: white;
+  color: rgb(18, 18, 18);
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 500;
 }
 
 .recharge-card :deep(.el-card__body) {
-  color: white;
+  color: rgb(26, 28, 28);
 }
 
 .recharge-content {
@@ -406,7 +408,7 @@ h1 {
 
 .recharge-desc {
   text-align: center;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgb(107, 114, 128);
   margin-bottom: 25px;
   font-size: 14px;
 }
@@ -418,23 +420,29 @@ h1 {
 }
 
 .recharge-option {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 8px;
+  background: rgb(249, 249, 249);
+  border-radius: 16px;
   padding: 20px;
   text-align: center;
-  color: #333;
-  border: 2px solid transparent;
+  color: rgb(26, 28, 28);
+  border: 2px solid rgba(229, 231, 235, 0.50);
   transition: all 0.3s;
 }
 
 .recharge-option:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .recharge-option.recommended {
-  border-color: #006C49;
+  border-color: rgb(0, 108, 73);
   background: white;
+}
+
+.recharge-option :deep(.el-button) {
+  border-radius: 9999px;
+  width: 100%;
+  height: 32px;
 }
 
 .option-header {
@@ -447,41 +455,37 @@ h1 {
 .option-header h4 {
   margin: 0;
   font-size: 14px;
-  font-weight: bold;
-  color: #333;
+  font-weight: 500;
+  color: rgb(18, 18, 18);
 }
 
 .price {
   font-size: 14px;
-  color: #006C49;
+  color: rgb(0, 108, 73);
   font-weight: bold;
 }
 
 .option-desc {
   font-size: 12px;
-  color: #999;
+  color: rgb(107, 114, 128);
   margin-bottom: 15px;
 }
 
-.recharge-option :deep(.el-button) {
-  width: 100%;
-  height: 32px;
-}
-
 .quota-card {
-  background: linear-gradient(135deg, #006C49 0%, #004d35 100%);
-  border: none;
-  border-radius: 12px;
+  background: white;
+  border: 1px solid rgba(229, 231, 235, 0.50);
+  border-radius: 32px;
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.06);
 }
 
 .quota-card :deep(.el-card__header) {
   background: transparent;
   border: none;
-  color: white;
+  color: rgb(18, 18, 18);
 }
 
 .quota-card :deep(.el-card__body) {
-  color: white;
+  color: rgb(26, 28, 28);
 }
 
 .card-header {
@@ -495,12 +499,6 @@ h1 {
   margin-bottom: 20px;
 }
 
-.subscription-info :deep(.el-alert) {
-  background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(255, 255, 255, 0.5);
-  color: #333;
-}
-
 .subscription-info p {
   margin: 6px 0;
   font-size: 14px;
@@ -512,7 +510,7 @@ h1 {
   align-items: center;
   margin-bottom: 20px;
   padding: 20px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  border-bottom: 1px solid rgba(229, 231, 235, 0.60);
 }
 
 .credit-item {
@@ -522,12 +520,13 @@ h1 {
 
 .credit-item .label {
   font-size: 12px;
-  opacity: 0.8;
+  color: rgb(107, 114, 128);
 }
 
 .credit-item .value {
   font-size: 28px;
   font-weight: bold;
+  color: rgb(0, 108, 73);
   margin-top: 5px;
 }
 
@@ -544,17 +543,24 @@ h1 {
 }
 
 .source-label {
-  opacity: 0.8;
+  color: rgb(107, 114, 128);
   font-size: 13px;
 }
 
 .count {
   font-weight: bold;
+  color: rgb(18, 18, 18);
 }
 
 .invite-desc {
-  color: #666;
+  color: rgb(107, 114, 128);
   margin-bottom: 15px;
+}
+
+:deep(.el-card) {
+  border-radius: 32px;
+  border: 1px solid rgba(229, 231, 235, 0.50);
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.06);
 }
 
 :deep(.el-table) {
@@ -562,11 +568,11 @@ h1 {
 }
 
 :deep(.el-table thead) {
-  background: #f5f7fa;
+  background: rgb(249, 249, 249);
 }
 
 :deep(.el-table th) {
-  background-color: #f5f7fa;
+  background-color: rgb(249, 249, 249);
 }
 
 :deep(.el-empty) {
@@ -574,11 +580,11 @@ h1 {
 }
 
 code {
-  background: #f5f7fa;
+  background: rgb(249, 249, 249);
   padding: 2px 6px;
   border-radius: 3px;
   font-family: 'Courier New', monospace;
-  color: #666;
+  color: rgb(107, 114, 128);
 }
 
 .refund-dialog-content {
@@ -588,8 +594,8 @@ code {
 .order-info {
   margin-bottom: 20px;
   padding: 12px;
-  background: #f5f7fa;
-  border-radius: 6px;
+  background: rgb(249, 249, 249);
+  border-radius: 12px;
 }
 
 .info-row {
@@ -604,12 +610,12 @@ code {
 }
 
 .info-row .label {
-  color: #999;
+  color: rgb(107, 114, 128);
 }
 
 .info-row .value {
   font-weight: 500;
-  color: #333;
+  color: rgb(18, 18, 18);
 }
 
 /* 响应式 */

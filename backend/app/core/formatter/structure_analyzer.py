@@ -61,70 +61,65 @@ class StructureAnalyzer:
     5. AI辅助识别（可选）
     """
 
-    # 关键词配置
+    # 关键词配置（预编译正则，避免每个段落重复编译）
+    # 所有模式加 ^ 锚点，防止正文中包含这些词的句子被误判为章节标题
     KEYWORDS = {
-        SectionType.TITLE: [
-            r"^.{2,50}$",  # 标题通常在开头且长度适中
-        ],
         SectionType.ABSTRACT_CN: [
-            r"摘\s*要", r"内容摘要", r"中文摘要", r"论文摘要"
+            re.compile(r"^摘\s*要"), re.compile(r"^内容摘要"), re.compile(r"^中文摘要"), re.compile(r"^论文摘要")
         ],
         SectionType.ABSTRACT_EN: [
-            r"Abstract", r"ABSTRACT", r"Summary", r"SUMMARY"
+            re.compile(r"^Abstract", re.IGNORECASE), re.compile(r"^Summary", re.IGNORECASE)
         ],
         SectionType.KEYWORDS_CN: [
-            r"关键词", r"关键字", r"主题词"
+            re.compile(r"^关键词"), re.compile(r"^关键字"), re.compile(r"^主题词")
         ],
         SectionType.KEYWORDS_EN: [
-            r"Keywords?", r"Key\s+words?", r"Index\s+terms?"
+            re.compile(r"^Keywords?", re.IGNORECASE), re.compile(r"^Key\s+words?", re.IGNORECASE), re.compile(r"^Index\s+terms?", re.IGNORECASE)
         ],
         SectionType.TOC: [
-            r"目\s*录", r"Table\s+of\s+Contents", r"Contents"
+            re.compile(r"^目\s*录"), re.compile(r"^Table\s+of\s+Contents", re.IGNORECASE), re.compile(r"^Contents$", re.IGNORECASE)
         ],
         SectionType.CHAPTER: [
-            r"第.{1,3}章", r"Chapter\s+\d+", r"CHAPTER\s+\d+"
+            re.compile(r"^第.{1,3}章"), re.compile(r"^Chapter\s+\d+", re.IGNORECASE)
         ],
         SectionType.REFERENCE: [
-            r"参考文献", r"References?", r"Bibliography", r"引用文献"
+            re.compile(r"^参考文献"), re.compile(r"^References?$", re.IGNORECASE), re.compile(r"^Bibliography$", re.IGNORECASE), re.compile(r"^引用文献")
         ],
         SectionType.APPENDIX: [
-            r"附\s*录", r"Appendix", r"附件"
+            re.compile(r"^附\s*录"), re.compile(r"^Appendix", re.IGNORECASE), re.compile(r"^附件")
         ],
         SectionType.ACKNOWLEDGEMENT: [
-            r"致\s*谢", r"Acknowledgements?", r"谢辞"
+            re.compile(r"^致\s*谢"), re.compile(r"^Acknowledgements?", re.IGNORECASE), re.compile(r"^谢辞")
         ]
     }
 
-    # 编号模式
+    # 编号模式（预编译）
     PATTERNS = {
         SectionType.CHAPTER: [
-            r"^第[一二三四五六七八九十百千]+章",
-            r"^第\d+章",
-            r"^Chapter\s+\d+",
-            r"^CHAPTER\s+\d+"
+            re.compile(r"^第[一二三四五六七八九十百千]+章"),
+            re.compile(r"^第\d+章"),
+            re.compile(r"^Chapter\s+\d+", re.IGNORECASE),
         ],
         SectionType.SECTION_1: [
-            r"^\d+\s+",                    # "1 引言"
-            r"^\d+\.\s+",                  # "1. 引言"
-            r"^第[一二三四五六七八九十]+节",
+            re.compile(r"^\d+\s+"),                    # "1 引言"
+            re.compile(r"^\d+\.\s+"),                  # "1. 引言"
+            re.compile(r"^第[一二三四五六七八九十]+节"),
         ],
         SectionType.SECTION_2: [
-            r"^\d+\.\d+\s+",               # "1.1 背景"
-            r"^\d+\.\d+\.\s+",
+            re.compile(r"^\d+\.\d+\s+"),               # "1.1 背景"
+            re.compile(r"^\d+\.\d+\.\s+"),
         ],
         SectionType.SECTION_3: [
-            r"^\d+\.\d+\.\d+\s+",          # "1.1.1 问题"
-            r"^\d+\.\d+\.\d+\.\s+",
+            re.compile(r"^\d+\.\d+\.\d+\s+"),          # "1.1.1 问题"
+            re.compile(r"^\d+\.\d+\.\d+\.\s+"),
         ],
         SectionType.FIGURE: [
-            r"^图\s*\d+",
-            r"^Figure\s+\d+",
-            r"^Fig\.\s+\d+"
+            re.compile(r"^图\s*\d+"),
+            re.compile(r"^Figure\s+\d+", re.IGNORECASE),
         ],
         SectionType.TABLE: [
-            r"^表\s*\d+",
-            r"^Table\s+\d+",
-            r"^Tab\.\s+\d+"
+            re.compile(r"^表\s*\d+"),
+            re.compile(r"^Table\s+\d+", re.IGNORECASE),
         ]
     }
 
@@ -157,8 +152,8 @@ class StructureAnalyzer:
             if section_info:
                 self.sections.append(section_info)
 
-        hierarchy = self._build_hierarchy()
         self._refine_sections()
+        hierarchy = self._build_hierarchy()
         stats = self._calculate_statistics()
         quality = self._evaluate_quality()
 
@@ -222,10 +217,10 @@ class StructureAnalyzer:
         )
 
     def _match_keywords(self, text: str, index: int) -> Optional[SectionInfo]:
-        """关键词匹配"""
-        for section_type, keywords in self.KEYWORDS.items():
-            for keyword_pattern in keywords:
-                if re.search(keyword_pattern, text, re.IGNORECASE):
+        """关键词匹配（使用预编译正则）"""
+        for section_type, patterns in self.KEYWORDS.items():
+            for pattern in patterns:
+                if pattern.search(text):
                     return SectionInfo(
                         index=index,
                         type=section_type,
@@ -236,10 +231,10 @@ class StructureAnalyzer:
         return None
 
     def _match_patterns(self, text: str, index: int) -> Optional[SectionInfo]:
-        """编号模式匹配"""
+        """编号模式匹配（使用预编译正则）"""
         for section_type, patterns in self.PATTERNS.items():
             for pattern in patterns:
-                match = re.match(pattern, text)
+                match = pattern.match(text)
                 if match:
                     numbering = match.group(0).strip()
                     level = self._determine_level(section_type, numbering)
@@ -280,19 +275,54 @@ class StructureAnalyzer:
         if not paragraph.runs:
             return None
 
-        first_run = paragraph.runs[0]
-        is_bold = first_run.bold
-        font_size = first_run.font.size
+        # 取有效加粗值：优先 run 层显式设置，无则沿样式链查
+        explicit_bold = next((r.bold for r in paragraph.runs if r.bold is not None), None)
+        if explicit_bold is not None:
+            is_bold = explicit_bold
+        else:
+            is_bold = False
+            try:
+                style = paragraph.style
+                while style is not None:
+                    b = style.font.bold
+                    if b is not None:
+                        is_bold = bool(b)
+                        break
+                    style = getattr(style, 'base_style', None)
+            except Exception:
+                pass
 
-        if is_bold and font_size:
+        # 取有效字号：优先 run 层显式设置，无则沿样式链查
+        font_size = next((r.font.size for r in paragraph.runs if r.font.size is not None), None)
+        if font_size is None:
+            try:
+                style = paragraph.style
+                while style is not None:
+                    sz = style.font.size
+                    if sz is not None:
+                        font_size = sz
+                        break
+                    style = getattr(style, 'base_style', None)
+            except Exception:
+                pass
+
+        # 检查文本是否以句末标点结尾
+        ending_punctuation = r"[。.?？!！]$"
+        has_ending_punct = bool(re.search(ending_punctuation, text))
+
+        if font_size:
             size_pt = font_size.pt
-            if size_pt >= 22:
+            # TITLE：字号 >= 22pt 且加粗，或在文档前3段且字号 >= 16pt 且不以句末标点结尾
+            if size_pt >= 22 and is_bold:
                 return SectionInfo(index=index, type=SectionType.TITLE,
                                    text=text, level=0, confidence=0.75, method="format")
-            elif size_pt >= 16:
+            elif index <= 2 and size_pt >= 16 and not has_ending_punct:
+                return SectionInfo(index=index, type=SectionType.TITLE,
+                                   text=text, level=0, confidence=0.70, method="format")
+            elif is_bold and size_pt >= 16:
                 return SectionInfo(index=index, type=SectionType.CHAPTER,
                                    text=text, level=1, confidence=0.70, method="format")
-            elif size_pt >= 14:
+            elif is_bold and size_pt >= 14:
                 return SectionInfo(index=index, type=SectionType.SECTION_1,
                                    text=text, level=2, confidence=0.70, method="format")
         return None
@@ -389,10 +419,23 @@ class StructureAnalyzer:
 
     def _refine_sections(self):
         """优化和修正识别结果"""
+        ending_punctuation = r"[。.?？!！]$"
+
         for section in self.sections:
-            if section.type == SectionType.TITLE and len(section.text) > 100:
-                section.type = SectionType.BODY
-                section.confidence *= 0.5
+            if section.type == SectionType.TITLE:
+                # 超过 100 字的 TITLE 降为 BODY
+                if len(section.text) > 100:
+                    section.type = SectionType.BODY
+                    section.confidence *= 0.5
+                # 在文档第 3 段之后的 TITLE 降为 BODY
+                elif section.index > 2 and section.method == "format":
+                    section.type = SectionType.BODY
+                    section.confidence *= 0.4
+                # 以句末标点结尾的 TITLE 降为 BODY
+                elif re.search(ending_punctuation, section.text):
+                    section.type = SectionType.BODY
+                    section.confidence *= 0.3
+
             if section.type in [SectionType.ABSTRACT_CN, SectionType.ABSTRACT_EN]:
                 if len(section.text) < 20:
                     section.confidence *= 0.6

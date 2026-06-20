@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VRonly 高校版 — 智能论文全程管理平台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;1,400;1,600&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green: #006C49;
+      --green-light: #00875C;
+      --green-pale: #E8F5EE;
+      --green-pale2: #F0FAF5;
+      --gold: #C8962A;
+      --dark: #111B14;
+      --mid: #3D5244;
+      --text: #1A2E20;
+      --muted: #6B7E73;
+      --border: rgba(0,108,73,0.14);
+      --radius-card: 28px;
+      --radius-btn: 100px;
+      --shadow-card: 0 4px 32px rgba(0,108,73,0.10);
+      --shadow-hover: 0 12px 48px rgba(0,108,73,0.18);
+      --font-body: 'Noto Sans SC', sans-serif;
+      --font-display: 'Newsreader', serif;
+    }
+
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-body); color: var(--text); background: #fff; line-height: 1.6; }
+
+    /* ─── Header ─── */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 72px;
+      background: rgba(255,255,255,0.80);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(0,108,73,0.10);
+      display: flex; align-items: center;
+    }
+    .header-inner {
+      max-width: 1200px; margin: 0 auto; width: 100%;
+      padding: 0 32px;
+      display: flex; align-items: center; gap: 40px;
+    }
+    .logo {
+      font-family: var(--font-display);
+      font-style: italic; font-weight: 600;
+      font-size: 22px; color: var(--dark); text-decoration: none;
+      display: flex; align-items: center; gap: 8px;
+      flex-shrink: 0;
+    }
+    .logo-badge {
+      font-family: var(--font-body); font-style: normal;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+      background: var(--green); color: #fff;
+      padding: 2px 8px; border-radius: 100px;
+    }
+    nav { display: flex; gap: 32px; flex: 1; }
+    nav a {
+      font-size: 14px; font-weight: 500; color: var(--mid);
+      text-decoration: none; transition: color 0.2s;
+    }
+    nav a:hover { color: var(--green); }
+    .header-actions { display: flex; gap: 12px; align-items: center; flex-shrink: 0; }
+    .btn-outline {
+      font-size: 14px; font-weight: 600; color: var(--green);
+      padding: 8px 20px; border-radius: var(--radius-btn);
+      border: 1.5px solid var(--green); background: transparent;
+      cursor: pointer; text-decoration: none; transition: all 0.2s;
+    }
+    .btn-outline:hover { background: var(--green-pale); }
+    .btn-primary {
+      font-size: 14px; font-weight: 600; color: #fff;
+      padding: 8px 22px; border-radius: var(--radius-btn);
+      background: var(--green); border: none;
+      cursor: pointer; text-decoration: none; transition: all 0.2s;
+    }
+    .btn-primary:hover { background: var(--green-light); transform: translateY(-1px); }
+
+    /* ─── Hero ─── */
+    .hero {
+      padding: 160px 32px 100px;
+      background: linear-gradient(160deg, #F7FCF9 0%, #EEF8F3 40%, #E4F4EC 100%);
+      text-align: center; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; top: -120px; right: -120px;
+      width: 600px; height: 600px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,108,73,0.06) 0%, transparent 70%);
+    }
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 13px; font-weight: 600; color: var(--green);
+      background: rgba(0,108,73,0.10); padding: 6px 14px;
+      border-radius: 100px; margin-bottom: 24px;
+    }
+    .hero-tag::before { content: '🎓'; font-size: 14px; }
+    h1 {
+      font-family: var(--font-display); font-weight: 600;
+      font-size: clamp(42px, 6vw, 72px); line-height: 1.15;
+      color: var(--dark); margin-bottom: 20px;
+    }
+    h1 span { color: var(--green); }
+    .hero-sub {
+      font-size: 18px; color: var(--muted); max-width: 560px;
+      margin: 0 auto 40px; line-height: 1.7;
+    }
+    .hero-ctas {
+      display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+      margin-bottom: 56px;
+    }
+    .btn-hero-primary {
+      font-size: 16px; font-weight: 700; color: #fff;
+      padding: 14px 32px; border-radius: var(--radius-btn);
+      background: var(--green); border: none; cursor: pointer;
+      text-decoration: none; transition: all 0.2s;
+      box-shadow: 0 4px 20px rgba(0,108,73,0.30);
+    }
+    .btn-hero-primary:hover { background: var(--green-light); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,108,73,0.35); }
+    .btn-hero-secondary {
+      font-size: 16px; font-weight: 600; color: var(--green);
+      padding: 14px 32px; border-radius: var(--radius-btn);
+      background: #fff; border: 1.5px solid rgba(0,108,73,0.25);
+      cursor: pointer; text-decoration: none; transition: all 0.2s;
+    }
+    .btn-hero-secondary:hover { border-color: var(--green); background: var(--green-pale2); }
+
+    /* Trust logos */
+    .trust-bar {
+      display: flex; align-items: center; justify-content: center; gap: 0;
+      flex-wrap: wrap;
+    }
+    .trust-label { font-size: 13px; color: var(--muted); margin-right: 20px; }
+    .trust-logos { display: flex; gap: 28px; align-items: center; flex-wrap: wrap; justify-content: center; }
+    .trust-logo {
+      font-size: 13px; font-weight: 600; color: #8FA899;
+      background: rgba(255,255,255,0.7); padding: 6px 16px;
+      border-radius: 8px; border: 1px solid rgba(0,108,73,0.10);
+    }
+
+    /* ─── Stats bar ─── */
+    .stats-bar {
+      background: var(--dark); padding: 56px 32px;
+    }
+    .stats-inner {
+      max-width: 960px; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 0;
+    }
+    .stat-item {
+      text-align: center; padding: 0 20px;
+      border-right: 1px solid rgba(255,255,255,0.10);
+    }
+    .stat-item:last-child { border-right: none; }
+    .stat-num {
+      font-family: var(--font-display); font-size: 48px; font-weight: 600;
+      color: #fff; line-height: 1; margin-bottom: 8px;
+    }
+    .stat-num span { color: #5DD9A4; font-size: 32px; }
+    .stat-label { font-size: 13px; color: rgba(255,255,255,0.50); letter-spacing: 0.04em; }
+
+    /* ─── Section ─── */
+    section { padding: 96px 32px; }
+    .section-inner { max-width: 1160px; margin: 0 auto; }
+    .section-tag {
+      font-size: 12px; font-weight: 700; letter-spacing: 0.10em;
+      text-transform: uppercase; color: var(--green);
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-family: var(--font-display); font-weight: 600;
+      font-size: clamp(28px, 4vw, 44px); color: var(--dark);
+      margin-bottom: 16px; line-height: 1.2;
+    }
+    .section-desc { font-size: 16px; color: var(--muted); max-width: 560px; line-height: 1.7; margin-bottom: 56px; }
+
+    /* ─── Feature Cards (3-col) ─── */
+    .cards-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .feature-card {
+      background: #fff; border-radius: var(--radius-card);
+      border: 1px solid var(--border);
+      padding: 36px 32px;
+      box-shadow: var(--shadow-card);
+      transition: all 0.3s ease;
+    }
+    .feature-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-hover); }
+    .card-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      background: var(--green-pale); display: flex; align-items: center;
+      justify-content: center; font-size: 24px; margin-bottom: 20px;
+    }
+    .card-title { font-size: 17px; font-weight: 700; color: var(--dark); margin-bottom: 10px; }
+    .card-desc { font-size: 14px; color: var(--muted); line-height: 1.65; margin-bottom: 18px; }
+    .card-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pill {
+      font-size: 12px; font-weight: 600; color: var(--green);
+      background: var(--green-pale); padding: 4px 10px; border-radius: 100px;
+    }
+
+    /* ─── Workflow section ─── */
+    .workflow-bg { background: var(--green-pale2); }
+    .steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; position: relative; }
+    .steps::before {
+      content: '';
+      position: absolute; top: 28px; left: 10%; right: 10%;
+      height: 2px; background: linear-gradient(90deg, var(--green) 0%, rgba(0,108,73,0.2) 100%);
+      z-index: 0;
+    }
+    .step { text-align: center; padding: 0 12px; position: relative; z-index: 1; }
+    .step-num {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: var(--green); color: #fff;
+      font-family: var(--font-display); font-size: 22px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px; box-shadow: 0 4px 16px rgba(0,108,73,0.30);
+    }
+    .step-title { font-size: 14px; font-weight: 700; color: var(--dark); margin-bottom: 8px; }
+    .step-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+    /* ─── Dashboard Preview ─── */
+    .dashboard-preview {
+      background: #F2F8F5; border-radius: 20px; padding: 32px;
+      border: 1px solid var(--border); margin-top: 56px;
+    }
+    .dp-header {
+      display: flex; gap: 16px; align-items: center; margin-bottom: 24px;
+    }
+    .dp-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dp-dot.red { background: #FF5F57; }
+    .dp-dot.yellow { background: #FEBC2E; }
+    .dp-dot.green { background: #28C840; }
+    .dp-title { font-size: 13px; color: var(--muted); font-weight: 500; }
+    .dp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+    .dp-kpi {
+      background: #fff; border-radius: 14px; padding: 20px;
+      border: 1px solid rgba(0,108,73,0.10);
+    }
+    .dp-kpi-num {
+      font-family: var(--font-display); font-size: 28px; font-weight: 600;
+      color: var(--green); line-height: 1;
+    }
+    .dp-kpi-label { font-size: 12px; color: var(--muted); margin-top: 6px; }
+    .dp-table { background: #fff; border-radius: 14px; padding: 20px; border: 1px solid rgba(0,108,73,0.10); }
+    .dp-table-header {
+      display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      letter-spacing: 0.06em; text-transform: uppercase;
+      padding-bottom: 12px; border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+    .dp-table-row {
+      display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+      font-size: 13px; color: var(--text); padding: 10px 0;
+      border-bottom: 1px solid rgba(0,108,73,0.06);
+      align-items: center;
+    }
+    .dp-table-row:last-child { border-bottom: none; }
+    .status-badge {
+      font-size: 11px; font-weight: 600; padding: 3px 10px;
+      border-radius: 100px; display: inline-block;
+    }
+    .status-done { background: #D4F0E6; color: #006C49; }
+    .status-proc { background: #FFF3CD; color: #856404; }
+    .dp-progress { background: var(--green-pale); border-radius: 100px; height: 6px; overflow: hidden; }
+    .dp-progress-fill { height: 100%; background: var(--green); border-radius: 100px; }
+
+    /* ─── Pricing ─── */
+    .pricing-bg { background: var(--dark); }
+    .pricing-bg .section-title { color: #fff; }
+    .pricing-bg .section-desc { color: rgba(255,255,255,0.55); }
+    .pricing-bg .section-tag { color: #5DD9A4; }
+    .cards-pricing { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .price-card {
+      background: rgba(255,255,255,0.05); border-radius: 32px;
+      border: 1px solid rgba(255,255,255,0.10);
+      padding: 40px 36px; position: relative; overflow: hidden;
+      transition: all 0.3s;
+    }
+    .price-card:hover { border-color: rgba(0,108,73,0.5); transform: translateY(-4px); }
+    .price-card.popular {
+      background: var(--green); border-color: var(--green);
+    }
+    .price-card.popular * { color: #fff !important; }
+    .popular-badge {
+      position: absolute; top: 20px; right: 20px;
+      background: rgba(255,255,255,0.20); color: #fff;
+      font-size: 11px; font-weight: 700; padding: 4px 12px;
+      border-radius: 100px; letter-spacing: 0.06em;
+    }
+    .price-tier { font-size: 13px; font-weight: 700; color: #5DD9A4; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px; }
+    .price-card.popular .price-tier { color: rgba(255,255,255,0.70); }
+    .price-name { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .price-amount {
+      font-family: var(--font-display); font-size: 52px; font-weight: 600;
+      color: #fff; line-height: 1; margin: 16px 0 6px;
+    }
+    .price-unit { font-size: 14px; color: rgba(255,255,255,0.55); margin-bottom: 28px; }
+    .price-divider { height: 1px; background: rgba(255,255,255,0.12); margin: 24px 0; }
+    .price-features { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+    .price-feature {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 14px; color: rgba(255,255,255,0.75); line-height: 1.4;
+    }
+    .price-feature::before { content: '✓'; color: #5DD9A4; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+    .price-card.popular .price-feature::before { color: rgba(255,255,255,0.80); }
+    .btn-price {
+      width: 100%; padding: 14px; border-radius: var(--radius-btn);
+      font-size: 15px; font-weight: 700; cursor: pointer;
+      border: none; transition: all 0.2s; text-align: center;
+      text-decoration: none; display: block;
+    }
+    .btn-price-light { background: rgba(255,255,255,0.10); color: #fff; }
+    .btn-price-light:hover { background: rgba(255,255,255,0.18); }
+    .btn-price-white { background: #fff; color: var(--green); }
+    .btn-price-white:hover { background: #F0FAF5; }
+
+    /* ─── Advantages ─── */
+    .adv-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 32px; align-items: center; }
+    .adv-text { padding-right: 48px; }
+    .adv-list { display: flex; flex-direction: column; gap: 24px; }
+    .adv-item { display: flex; gap: 16px; align-items: flex-start; }
+    .adv-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: var(--green-pale); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+    .adv-item-title { font-size: 16px; font-weight: 700; color: var(--dark); margin-bottom: 4px; }
+    .adv-item-desc { font-size: 14px; color: var(--muted); line-height: 1.6; }
+    .adv-visual {
+      background: linear-gradient(135deg, var(--green) 0%, #00A870 100%);
+      border-radius: var(--radius-card); padding: 48px 40px;
+      color: #fff; position: relative; overflow: hidden;
+    }
+    .adv-visual::before {
+      content: '';
+      position: absolute; bottom: -60px; right: -60px;
+      width: 240px; height: 240px; border-radius: 50%;
+      background: rgba(255,255,255,0.07);
+    }
+    .adv-visual-title { font-family: var(--font-display); font-size: 28px; font-weight: 600; margin-bottom: 24px; }
+    .adv-check-list { display: flex; flex-direction: column; gap: 14px; }
+    .adv-check { display: flex; align-items: center; gap: 12px; font-size: 15px; font-weight: 500; }
+    .adv-check::before {
+      content: '✓'; width: 24px; height: 24px; border-radius: 50%;
+      background: rgba(255,255,255,0.20); display: flex; align-items: center;
+      justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0;
+      line-height: 24px; text-align: center;
+    }
+
+    /* ─── Testimonials ─── */
+    .testimonials-bg { background: var(--green-pale2); }
+    .cards-3-test { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .test-card {
+      background: #fff; border-radius: var(--radius-card);
+      border: 1px solid var(--border); padding: 32px;
+      box-shadow: var(--shadow-card);
+    }
+    .test-stars { color: var(--gold); font-size: 16px; margin-bottom: 16px; letter-spacing: 2px; }
+    .test-quote { font-size: 15px; color: var(--text); line-height: 1.7; margin-bottom: 24px; font-style: italic; }
+    .test-author { display: flex; align-items: center; gap: 12px; }
+    .test-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--green) 0%, #00A870 100%);
+      color: #fff; display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 700; flex-shrink: 0;
+    }
+    .test-name { font-size: 14px; font-weight: 700; color: var(--dark); }
+    .test-role { font-size: 12px; color: var(--muted); }
+
+    /* ─── CTA banner ─── */
+    .cta-banner {
+      background: linear-gradient(135deg, var(--green) 0%, #00874F 100%);
+      border-radius: var(--radius-card); padding: 72px 64px;
+      text-align: center; color: #fff;
+      box-shadow: 0 20px 60px rgba(0,108,73,0.30);
+    }
+    .cta-title { font-family: var(--font-display); font-size: 42px; font-weight: 600; margin-bottom: 14px; }
+    .cta-sub { font-size: 18px; opacity: 0.8; margin-bottom: 36px; }
+    .cta-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .btn-cta-white {
+      font-size: 16px; font-weight: 700; color: var(--green);
+      padding: 14px 36px; border-radius: var(--radius-btn);
+      background: #fff; border: none; cursor: pointer;
+      text-decoration: none; transition: all 0.2s;
+    }
+    .btn-cta-white:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+    .btn-cta-outline {
+      font-size: 16px; font-weight: 600; color: #fff;
+      padding: 14px 36px; border-radius: var(--radius-btn);
+      background: transparent; border: 2px solid rgba(255,255,255,0.50);
+      cursor: pointer; text-decoration: none; transition: all 0.2s;
+    }
+    .btn-cta-outline:hover { border-color: #fff; background: rgba(255,255,255,0.10); }
+
+    /* ─── Footer ─── */
+    footer {
+      background: var(--dark); padding: 56px 32px 32px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .footer-inner {
+      max-width: 1160px; margin: 0 auto;
+      display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px;
+      margin-bottom: 48px;
+    }
+    .footer-brand .logo { color: #fff; margin-bottom: 14px; display: inline-flex; }
+    .footer-brand p { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.7; max-width: 260px; }
+    .footer-col h4 { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.55); letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 16px; }
+    .footer-col a { display: block; font-size: 13px; color: rgba(255,255,255,0.40); text-decoration: none; margin-bottom: 10px; transition: color 0.2s; }
+    .footer-col a:hover { color: #5DD9A4; }
+    .footer-bottom {
+      max-width: 1160px; margin: 0 auto;
+      padding-top: 28px; border-top: 1px solid rgba(255,255,255,0.08);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .footer-bottom p { font-size: 12px; color: rgba(255,255,255,0.30); }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 960px) {
+      .cards-3, .cards-3-test, .cards-pricing { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: repeat(3, 1fr); gap: 24px; }
+      .steps::before { display: none; }
+      .adv-grid { grid-template-columns: 1fr; }
+      .adv-text { padding-right: 0; }
+      .stats-inner { grid-template-columns: repeat(2, 1fr); gap: 32px; }
+      .dp-grid { grid-template-columns: repeat(2, 1fr); }
+      .footer-inner { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 640px) {
+      .header-inner { padding: 0 20px; }
+      nav { display: none; }
+      h1 { font-size: 36px; }
+      .hero { padding: 120px 20px 72px; }
+      .steps { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── Header ─── -->
+<header>
+  <div class="header-inner">
+    <a class="logo" href="#">
+      VRonly
+      <span class="logo-badge">高校版</span>
+    </a>
+    <nav>
+      <a href="#features">功能模块</a>
+      <a href="#workflow">实施流程</a>
+      <a href="#pricing">机构定价</a>
+      <a href="#cases">合作案例</a>
+      <a href="#contact">联系我们</a>
+      <a href="ui_preview.html" style="color:var(--muted);border-left:1px solid rgba(0,108,73,0.15);padding-left:32px;margin-left:8px;font-size:13px;">← 个人使用</a>
+    </nav>
+    <div class="header-actions">
+      <a class="btn-outline" href="ui_preview_login.html">院校登录</a>
+      <a class="btn-primary" href="#">申请演示</a>
+    </div>
+  </div>
+</header>
+
+<!-- ─── Hero ─── -->
+<section class="hero" id="top">
+  <div class="hero-tag">高校机构专属版</div>
+  <h1>
+    让每一篇论文<br/>
+    都有<span>智能全程指导</span>
+  </h1>
+  <p class="hero-sub">
+    从选题评估到投稿指导，VRonly 高校版为院校提供从学生侧到管理侧的一体化论文质量管控平台，全面提升毕业论文合格率。
+  </p>
+  <div class="hero-ctas">
+    <a class="btn-hero-primary" href="#">申请机构演示 →</a>
+    <a class="btn-hero-secondary" href="#">查看功能手册</a>
+  </div>
+  <div class="trust-bar">
+    <span class="trust-label">已服务高校</span>
+    <div class="trust-logos">
+      <span class="trust-logo">985 工程院校</span>
+      <span class="trust-logo">211 重点高校</span>
+      <span class="trust-logo">双一流建设</span>
+      <span class="trust-logo">地方本科院校</span>
+      <span class="trust-logo">高职专科院校</span>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Stats bar ─── -->
+<div class="stats-bar">
+  <div class="stats-inner">
+    <div class="stat-item">
+      <div class="stat-num">120<span>+</span></div>
+      <div class="stat-label">合作高校</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">86<span>万</span></div>
+      <div class="stat-label">累计处理论文</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">97<span>%</span></div>
+      <div class="stat-label">院校续约率</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">23<span>%</span></div>
+      <div class="stat-label">毕业论文优良率提升</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Features ─── -->
+<section id="features">
+  <div class="section-inner">
+    <div class="section-tag">核心功能模块</div>
+    <h2 class="section-title">覆盖论文全生命周期的<br/>八大核心能力</h2>
+    <p class="section-desc">从学生选题到最终提交，每一个环节都有 AI 深度介入，同时为院校管理层提供全链路数据看板。</p>
+
+    <div class="cards-3">
+      <div class="feature-card">
+        <div class="card-icon">🎯</div>
+        <div class="card-title">选题评估</div>
+        <div class="card-desc">AI 从创新性、可行性、重要性三维度深度评估研究选题，搜索相关文献佐证，生成 Word 评估报告，帮助学生在起点就少走弯路。</div>
+        <div class="card-pills">
+          <span class="pill">创新性评分</span>
+          <span class="pill">文献检索</span>
+          <span class="pill">报告导出</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="card-icon">📚</div>
+        <div class="card-title">文献综述生成</div>
+        <div class="card-desc">输入关键词或已有论文列表，自动检索 PubMed、Semantic Scholar，按主题分类后生成 2000-4000 字综述初稿，支持 GB/T 7714 规范引用。</div>
+        <div class="card-pills">
+          <span class="pill">自动检索</span>
+          <span class="pill">主题分类</span>
+          <span class="pill">综述生成</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="card-icon">✍️</div>
+        <div class="card-title">写作辅助</div>
+        <div class="card-desc">段落扩写、逻辑优化、学术表达润色。支持人文社科、理工农医、艺术三类论文风格，在保持学生原意的前提下提升表达质量。</div>
+        <div class="card-pills">
+          <span class="pill">三类论文</span>
+          <span class="pill">段落扩写</span>
+          <span class="pill">逻辑优化</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="card-icon">⭐</div>
+        <div class="card-title">智能评价</div>
+        <div class="card-desc">按山东省抽检评议标准，五维度加权评分（选题意义/写作安排/逻辑构建/专业能力/学术规范），生成含雷达图的 Word 评价报告。</div>
+        <div class="card-pills">
+          <span class="pill">五维度评分</span>
+          <span class="pill">雷达图</span>
+          <span class="pill">Word 报告</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="card-icon">🔍</div>
+        <div class="card-title">论文校对</div>
+        <div class="card-desc">AI 智能检测错别字、语法错误、逻辑漏洞，输出带有修订标记（Track Changes）的 Word 文档，教师可一键接受或拒绝修改建议。</div>
+        <div class="card-pills">
+          <span class="pill">修订标记</span>
+          <span class="pill">错别字检测</span>
+          <span class="pill">逻辑校验</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="card-icon">📐</div>
+        <div class="card-title">模板排版</div>
+        <div class="card-desc">上传学校标准模板，一键批量套用格式规范。支持自定义学校样式库，从字体到段距全面统一，避免人工逐篇调整的重复劳动。</div>
+        <div class="card-pills">
+          <span class="pill">自定义模板</span>
+          <span class="pill">批量处理</span>
+          <span class="pill">格式统一</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="card-icon">🛡️</div>
+        <div class="card-title">查重预检</div>
+        <div class="card-desc">知网提交前的智能预检工具。提前识别高重复风险段落，让学生有充足时间修改，减少指导教师因查重超标反复审阅的工作量。不替代知网，与知网结合使用。</div>
+        <div class="card-pills">
+          <span class="pill">中英文双引擎</span>
+          <span class="pill">风险分级</span>
+          <span class="pill">详细报告</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="card-icon">📰</div>
+        <div class="card-title">期刊投稿指导</div>
+        <div class="card-desc">基于论文评价结果，智能匹配适合的中英文期刊，提供影响因子、投稿要求、命中概率分析，帮助学生论文成功发表。</div>
+        <div class="card-pills">
+          <span class="pill">期刊匹配</span>
+          <span class="pill">影响因子</span>
+          <span class="pill">投稿建议</span>
+        </div>
+      </div>
+      <div class="feature-card" style="background: linear-gradient(135deg, var(--green-pale) 0%, #DCF0E6 100%); border-color: rgba(0,108,73,0.20);">
+        <div class="card-icon" style="background: rgba(0,108,73,0.15);">🔍</div>
+        <div class="card-title">AIGC 检测</div>
+        <div class="card-desc">检测论文中 AI 生成内容的占比，精准标注疑似 AI 代写段落，输出可溯源的合规报告。帮助教师快速识别并给出修改反馈，满足各校 AI 使用规范要求。</div>
+        <div class="card-pills">
+          <span class="pill">AI 内容识别</span>
+          <span class="pill">段落标注</span>
+          <span class="pill">合规报告</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Workflow ─── -->
+<section class="workflow-bg" id="workflow">
+  <div class="section-inner">
+    <div class="section-tag">实施流程</div>
+    <h2 class="section-title">从签约到全校上线<br/>最快 5 个工作日</h2>
+    <p class="section-desc">标准化的院校接入流程，无需 IT 部署，开箱即用。</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-title">需求调研</div>
+        <div class="step-desc">与学院负责人确认学生规模、使用场景和配额需求</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-title">合同签署</div>
+        <div class="step-desc">提供合规电子合同，支持对公转账及院校采购流程</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-title">账号配置</div>
+        <div class="step-desc">开通机构账号，配置学院架构、模板库和配额规则</div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-title">培训上线</div>
+        <div class="step-desc">提供线上操作培训，30 分钟即可让师生掌握核心功能</div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-title">持续支持</div>
+        <div class="step-desc">专属客户经理，工作日 2 小时内响应，定期数据报告</div>
+      </div>
+    </div>
+
+    <!-- Dashboard Preview Mockup -->
+    <div class="dashboard-preview">
+      <div class="dp-header">
+        <div class="dp-dot red"></div>
+        <div class="dp-dot yellow"></div>
+        <div class="dp-dot green"></div>
+        <div class="dp-title">VRonly 高校管理后台 — 某大学教务处</div>
+      </div>
+      <div class="dp-grid">
+        <div class="dp-kpi">
+          <div class="dp-kpi-num">2,847</div>
+          <div class="dp-kpi-label">本学期论文总量</div>
+          <div class="dp-progress" style="margin-top:10px;"><div class="dp-progress-fill" style="width:72%;"></div></div>
+        </div>
+        <div class="dp-kpi">
+          <div class="dp-kpi-num">1,203</div>
+          <div class="dp-kpi-label">本月已完成评价</div>
+          <div class="dp-progress" style="margin-top:10px;"><div class="dp-progress-fill" style="width:42%;"></div></div>
+        </div>
+        <div class="dp-kpi">
+          <div class="dp-kpi-num">84.2</div>
+          <div class="dp-kpi-label">全院平均评分</div>
+          <div class="dp-progress" style="margin-top:10px;"><div class="dp-progress-fill" style="width:84%;"></div></div>
+        </div>
+        <div class="dp-kpi">
+          <div class="dp-kpi-num">320</div>
+          <div class="dp-kpi-label">剩余额度（次）</div>
+          <div class="dp-progress" style="margin-top:10px;"><div class="dp-progress-fill" style="width:26%;background:#C8962A;"></div></div>
+        </div>
+      </div>
+      <div class="dp-table">
+        <div class="dp-table-header">
+          <span>论文题目</span>
+          <span>学院</span>
+          <span>状态</span>
+          <span>评分</span>
+        </div>
+        <div class="dp-table-row">
+          <span>基于深度学习的图像分类研究</span>
+          <span>计算机学院</span>
+          <span><span class="status-badge status-done">已完成</span></span>
+          <span style="font-weight:700;color:var(--green);">87.5</span>
+        </div>
+        <div class="dp-table-row">
+          <span>新冠疫情对高校教育影响分析</span>
+          <span>教育学院</span>
+          <span><span class="status-badge status-proc">评价中</span></span>
+          <span style="color:var(--muted);">—</span>
+        </div>
+        <div class="dp-table-row">
+          <span>传统民居建筑美学保护研究</span>
+          <span>艺术学院</span>
+          <span><span class="status-badge status-done">已完成</span></span>
+          <span style="font-weight:700;color:var(--green);">79.2</span>
+        </div>
+        <div class="dp-table-row">
+          <span>碳中和目标下企业ESG信息披露</span>
+          <span>商学院</span>
+          <span><span class="status-badge status-done">已完成</span></span>
+          <span style="font-weight:700;color:var(--green);">91.0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Advantages ─── -->
+<section>
+  <div class="section-inner">
+    <div class="adv-grid">
+      <div class="adv-text">
+        <div class="section-tag">为什么选择 VRonly 高校版</div>
+        <h2 class="section-title">专为高校场景<br/>深度定制</h2>
+        <p class="section-desc">不是把 ToC 产品打包卖给学校，而是从学校管理需求出发重新设计的机构级产品。</p>
+        <div class="adv-list">
+          <div class="adv-item">
+            <div class="adv-icon">🎓</div>
+            <div>
+              <div class="adv-item-title">学术诚信合规定位</div>
+              <div class="adv-item-desc">VRonly 是辅助工具，不是代写工具。AI 生成初稿后需学生二次修改完善，系统记录修改痕迹，满足各校 AI 使用规范要求。</div>
+            </div>
+          </div>
+          <div class="adv-item">
+            <div class="adv-icon">🔒</div>
+            <div>
+              <div class="adv-item-title">数据安全与合规</div>
+              <div class="adv-item-desc">论文数据仅用于服务处理，不训练 AI 模型。支持私有化部署，满足教育行业数据安全要求。</div>
+            </div>
+          </div>
+          <div class="adv-item">
+            <div class="adv-icon">📊</div>
+            <div>
+              <div class="adv-item-title">精细化配额管理</div>
+              <div class="adv-item-desc">按学院、年级、导师分配使用额度，支持配额预警和自动续充，避免学期末突然超限。</div>
+            </div>
+          </div>
+          <div class="adv-item">
+            <div class="adv-icon">🏷️</div>
+            <div>
+              <div class="adv-item-title">院校品牌定制</div>
+              <div class="adv-item-desc">报告页眉可嵌入学校 Logo 和标准格式，学校模板库由管理员统一维护，全校风格高度一致。</div>
+            </div>
+          </div>
+          <div class="adv-item">
+            <div class="adv-icon">🔗</div>
+            <div>
+              <div class="adv-item-title">教务系统对接</div>
+              <div class="adv-item-desc">提供 Open API，可与学校现有教务管理系统、用户中心（SSO）打通，无需学生单独注册。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="adv-visual">
+        <div class="adv-visual-title">院校专属权益</div>
+        <div class="adv-check-list">
+          <div class="adv-check">专属机构管理员控制台</div>
+          <div class="adv-check">不限数量学生账号开通</div>
+          <div class="adv-check">学校论文模板库（无限制）</div>
+          <div class="adv-check">按学院 / 年级分级配额</div>
+          <div class="adv-check">月度数据报告自动推送</div>
+          <div class="adv-check">优先接入新功能内测</div>
+          <div class="adv-check">专属客户经理 + 技术支持</div>
+          <div class="adv-check">支持院校采购合同签署</div>
+          <div class="adv-check">可选私有化部署方案</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Pricing ─── -->
+<section class="pricing-bg" id="pricing">
+  <div class="section-inner">
+    <div class="section-tag">机构定价</div>
+    <h2 class="section-title">透明年费制，不按次计费</h2>
+    <p class="section-desc">按学校规模选择套餐，年内无限使用核心功能，无需担心超量额外付费。</p>
+
+    <div class="cards-pricing">
+      <div class="price-card">
+        <div class="price-tier">基础版</div>
+        <div class="price-name">小型院校</div>
+        <div class="price-amount">10<span style="font-size:24px;font-weight:400;opacity:0.7;"> 万</span></div>
+        <div class="price-unit">元 / 年 · 适合 3000 名学生以下</div>
+        <div class="price-divider"></div>
+        <div class="price-features">
+          <div class="price-feature">5,000 次 / 年 论文评价</div>
+          <div class="price-feature">3,000 次 / 年 论文校对</div>
+          <div class="price-feature">3,000 次 / 年 格式排版</div>
+          <div class="price-feature">选题评估 &amp; 文献综述（限量）</div>
+          <div class="price-feature">5 个管理员账号</div>
+          <div class="price-feature">标准客服支持</div>
+        </div>
+        <a class="btn-price btn-price-light" href="#">联系销售</a>
+      </div>
+
+      <div class="price-card popular">
+        <div class="popular-badge">最受欢迎</div>
+        <div class="price-tier">标准版</div>
+        <div class="price-name">中型院校</div>
+        <div class="price-amount">30<span style="font-size:24px;font-weight:400;opacity:0.8;"> 万</span></div>
+        <div class="price-unit">元 / 年 · 适合 3000–10000 名学生</div>
+        <div class="price-divider" style="background:rgba(255,255,255,0.20);"></div>
+        <div class="price-features">
+          <div class="price-feature">20,000 次 / 年 论文评价</div>
+          <div class="price-feature">12,000 次 / 年 论文校对</div>
+          <div class="price-feature">不限 格式排版</div>
+          <div class="price-feature">选题评估 &amp; 文献综述（不限量）</div>
+          <div class="price-feature">查重（中英文双引擎）</div>
+          <div class="price-feature">20 个管理员账号</div>
+          <div class="price-feature">专属客户经理</div>
+          <div class="price-feature">月度数据报告</div>
+        </div>
+        <a class="btn-price btn-price-white" href="#">申请演示 →</a>
+      </div>
+
+      <div class="price-card">
+        <div class="price-tier">旗舰版</div>
+        <div class="price-name">大型 / 985 院校</div>
+        <div class="price-amount">50<span style="font-size:24px;font-weight:400;opacity:0.7;"> 万</span></div>
+        <div class="price-unit">元起 / 年 · 1 万+ 学生规模</div>
+        <div class="price-divider"></div>
+        <div class="price-features">
+          <div class="price-feature">全功能模块不限量使用</div>
+          <div class="price-feature">私有化部署可选</div>
+          <div class="price-feature">教务系统 SSO 对接</div>
+          <div class="price-feature">Open API 深度集成</div>
+          <div class="price-feature">院校品牌定制报告</div>
+          <div class="price-feature">不限管理员账号</div>
+          <div class="price-feature">SLA 保障 + 7×12 技术支持</div>
+          <div class="price-feature">数据安全审计报告</div>
+        </div>
+        <a class="btn-price btn-price-light" href="#">定制方案</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Testimonials ─── -->
+<section class="testimonials-bg" id="cases">
+  <div class="section-inner">
+    <div class="section-tag">合作反馈</div>
+    <h2 class="section-title">来自一线教师和<br/>教务管理者的真实评价</h2>
+    <p class="section-desc" style="margin-bottom: 48px;">超过 120 所高校的使用经验让我们不断打磨产品细节。</p>
+    <div class="cards-3-test">
+      <div class="test-card">
+        <div class="test-stars">★★★★★</div>
+        <div class="test-quote">
+          "我们学院每年有近 800 篇毕业论文，VRonly 的批量排版功能把格式整理时间从 3 周压缩到 2 天。评价报告也让学生在答辩前就能看到明确的改进方向，答辩通过率提升明显。"
+        </div>
+        <div class="test-author">
+          <div class="test-avatar">李</div>
+          <div>
+            <div class="test-name">李教授</div>
+            <div class="test-role">某 211 高校 · 计算机学院教学副院长</div>
+          </div>
+        </div>
+      </div>
+      <div class="test-card">
+        <div class="test-stars">★★★★★</div>
+        <div class="test-quote">
+          "作为教务处负责人，我最看重的是数据合规和管理可视化。VRonly 的后台能清晰看到每个学院的使用情况，还会自动生成月报，省了我们很多统计工作。"
+        </div>
+        <div class="test-author">
+          <div class="test-avatar">王</div>
+          <div>
+            <div class="test-name">王主任</div>
+            <div class="test-role">某地方本科院校 · 教务处处长</div>
+          </div>
+        </div>
+      </div>
+      <div class="test-card">
+        <div class="test-stars">★★★★☆</div>
+        <div class="test-quote">
+          "文献综述生成模块真的帮学生省了大量时间，尤其是理工科学生做跨领域综述时。检索到的文献质量也不错，支持 PubMed 来源让我放心很多，不是乱编的。"
+        </div>
+        <div class="test-author">
+          <div class="test-avatar">张</div>
+          <div>
+            <div class="test-name">张导师</div>
+            <div class="test-role">某医科大学 · 生物医学工程系导师</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── CTA ─── -->
+<section id="contact">
+  <div class="section-inner">
+    <div class="cta-banner">
+      <div class="cta-title">准备好为贵校学生提供全程论文支持了吗？</div>
+      <div class="cta-sub">免费演示 · 最快 5 个工作日上线 · 支持院校采购流程</div>
+      <div class="cta-btns">
+        <a class="btn-cta-white" href="#">申请机构演示</a>
+        <a class="btn-cta-outline" href="#">联系销售团队</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Footer ─── -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <a class="logo" href="#">VRonly</a>
+      <p>专注于学术论文质量提升的 AI 平台，服务全国高校超过 120 所，覆盖本科至博士各层次论文场景。</p>
+    </div>
+    <div class="footer-col">
+      <h4>功能模块</h4>
+      <a href="#">选题评估</a>
+      <a href="#">文献综述</a>
+      <a href="#">论文评价</a>
+      <a href="#">论文校对</a>
+      <a href="#">模板排版</a>
+      <a href="#">论文查重</a>
+    </div>
+    <div class="footer-col">
+      <h4>高校服务</h4>
+      <a href="#">机构定价</a>
+      <a href="#">实施流程</a>
+      <a href="#">API 对接</a>
+      <a href="#">私有化部署</a>
+      <a href="#">培训支持</a>
+    </div>
+    <div class="footer-col">
+      <h4>关于我们</h4>
+      <a href="#">公司介绍</a>
+      <a href="#">合作伙伴</a>
+      <a href="#">数据安全</a>
+      <a href="#">联系我们</a>
+      <a href="#">院校登录</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 VRonly. 青岛市崂山区科苑纬一路一号</p>
+    <p>隐私政策 · 服务条款 · 数据安全承诺</p>
+  </div>
+</footer>
+
+</body>
+</html>

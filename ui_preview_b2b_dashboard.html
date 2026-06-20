@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VRonly 高校版 — 管理控制台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@1,600&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green:       #006C49;
+      --green-dark:  #004D34;
+      --green-mid:   #00875C;
+      --green-pale:  #E8F5EE;
+      --green-pale2: #F0FAF5;
+      --gold:        #C8962A;
+      --red:         #DC3545;
+      --orange:      #E8840A;
+      --blue:        #2563EB;
+      --sidebar-bg:  #003D28;
+      --sidebar-w:   228px;
+      --body-bg:     #F5F7F6;
+      --card-bg:     #FFFFFF;
+      --text:        #1A2E20;
+      --text-mid:    #3D5244;
+      --muted:       #7A8C82;
+      --border:      #E2EBE6;
+      --radius:      16px;
+      --radius-sm:   10px;
+      --shadow:      0 2px 16px rgba(0,60,40,0.08);
+      --font:        'Noto Sans SC', sans-serif;
+      --font-d:      'Newsreader', serif;
+    }
+
+    html, body { height: 100%; }
+    body {
+      font-family: var(--font);
+      background: var(--body-bg);
+      color: var(--text);
+      display: flex;
+      font-size: 14px;
+    }
+
+    /* ══════════════════════════════
+       SIDEBAR
+    ══════════════════════════════ */
+    .sidebar {
+      width: var(--sidebar-w);
+      min-height: 100vh;
+      background: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      overflow-y: auto;
+      z-index: 50;
+    }
+
+    .sidebar-logo {
+      padding: 24px 20px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .sidebar-logo .wordmark {
+      font-family: var(--font-d);
+      font-style: italic;
+      font-size: 20px;
+      color: #fff;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .sidebar-logo .inst-name {
+      font-size: 12px;
+      color: rgba(255,255,255,0.45);
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sidebar-section {
+      padding: 16px 12px 4px;
+    }
+    .sidebar-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.28);
+      padding: 0 8px;
+      margin-bottom: 6px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+      color: rgba(255,255,255,0.55);
+      font-size: 13.5px;
+      font-weight: 500;
+      text-decoration: none;
+      margin-bottom: 2px;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.85); }
+    .nav-item.active { background: var(--green); color: #fff; }
+    .nav-item .nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+    .nav-badge {
+      margin-left: auto;
+      background: var(--red);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 100px;
+      min-width: 18px;
+      text-align: center;
+    }
+    .nav-badge.orange { background: var(--orange); }
+
+    .sidebar-bottom {
+      margin-top: auto;
+      padding: 16px 12px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .admin-card {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px; border-radius: 10px;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .admin-card:hover { background: rgba(255,255,255,0.07); }
+    .admin-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--green-mid);
+      color: #fff; font-size: 13px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .admin-name { font-size: 13px; color: rgba(255,255,255,0.80); font-weight: 600; }
+    .admin-role { font-size: 11px; color: rgba(255,255,255,0.38); }
+
+    /* ══════════════════════════════
+       MAIN LAYOUT
+    ══════════════════════════════ */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Top bar */
+    .topbar {
+      height: 60px;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 28px;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+    .topbar-title { font-size: 16px; font-weight: 700; color: var(--text); }
+    .topbar-path { font-size: 13px; color: var(--muted); flex: 1; }
+    .topbar-path span { color: var(--green); }
+    .topbar-actions { display: flex; gap: 10px; align-items: center; }
+    .topbar-btn {
+      padding: 7px 16px; border-radius: 100px;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer; border: none; transition: all 0.15s;
+      text-decoration: none; display: inline-block;
+    }
+    .btn-ghost { background: var(--green-pale); color: var(--green); }
+    .btn-ghost:hover { background: #d6ede5; }
+    .btn-solid { background: var(--green); color: #fff; }
+    .btn-solid:hover { background: var(--green-mid); }
+    .notif-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--green-pale);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; cursor: pointer; position: relative;
+    }
+    .notif-dot {
+      position: absolute; top: 6px; right: 6px;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--red); border: 1.5px solid #fff;
+    }
+    .period-selector {
+      display: flex; gap: 2px;
+      background: var(--body-bg); padding: 3px; border-radius: 8px;
+    }
+    .period-btn {
+      font-size: 12px; font-weight: 600; padding: 5px 12px;
+      border-radius: 6px; cursor: pointer; border: none;
+      background: transparent; color: var(--muted); transition: all 0.15s;
+    }
+    .period-btn.active { background: #fff; color: var(--green); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+
+    /* Content area */
+    .content { padding: 24px 28px; flex: 1; }
+
+    /* Alert banner */
+    .alert-banner {
+      background: #FFF8EC;
+      border: 1px solid #F5C87A;
+      border-radius: var(--radius-sm);
+      padding: 10px 16px;
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 20px;
+      font-size: 13px; color: #7A5A00;
+    }
+    .alert-banner strong { color: #5A4000; }
+    .alert-close { margin-left: auto; cursor: pointer; color: #A8860A; font-size: 16px; }
+
+    /* ── KPI Cards ── */
+    .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+    .kpi-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 20px 22px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    .kpi-card::after {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 3px; border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .kpi-card.green::after  { background: var(--green); }
+    .kpi-card.orange::after { background: var(--orange); }
+    .kpi-card.blue::after   { background: var(--blue); }
+    .kpi-card.red::after    { background: var(--red); }
+    .kpi-label { font-size: 12px; color: var(--muted); font-weight: 600; letter-spacing: 0.04em; margin-bottom: 8px; }
+    .kpi-value {
+      font-family: var(--font-d); font-size: 36px; font-weight: 600;
+      line-height: 1; color: var(--text); margin-bottom: 6px;
+    }
+    .kpi-value small { font-size: 18px; font-weight: 400; color: var(--muted); }
+    .kpi-trend { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+    .trend-up   { color: #16A34A; font-weight: 700; }
+    .trend-down { color: var(--red); font-weight: 700; }
+    .kpi-icon {
+      position: absolute; top: 16px; right: 18px;
+      font-size: 28px; opacity: 0.12;
+    }
+
+    /* ── Row of panels ── */
+    .panel-row { display: grid; gap: 16px; margin-bottom: 20px; }
+    .panel-row-2 { grid-template-columns: 1fr 1fr; }
+    .panel-row-3 { grid-template-columns: 2fr 1fr; }
+
+    .panel {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .panel-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-title { font-size: 14px; font-weight: 700; color: var(--text); }
+    .panel-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .panel-action { font-size: 12px; color: var(--green); cursor: pointer; font-weight: 600; }
+    .panel-body { padding: 20px; }
+
+    /* ── Usage bar chart (CSS) ── */
+    .chart-wrap { height: 160px; display: flex; align-items: flex-end; gap: 10px; padding-bottom: 8px; }
+    .chart-col { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+    .chart-bar-wrap { flex: 1; display: flex; align-items: flex-end; width: 100%; }
+    .chart-bar {
+      width: 100%; border-radius: 6px 6px 0 0;
+      background: var(--green);
+      transition: all 0.3s;
+      min-height: 4px;
+    }
+    .chart-bar.faded { background: var(--green-pale); }
+    .chart-bar:hover { background: var(--green-mid); cursor: pointer; }
+    .chart-label { font-size: 11px; color: var(--muted); }
+    .chart-val { font-size: 11px; font-weight: 600; color: var(--green); }
+
+    /* ── Score distribution ── */
+    .score-dist { display: flex; flex-direction: column; gap: 10px; }
+    .score-row { display: flex; align-items: center; gap: 10px; }
+    .score-range { font-size: 12px; color: var(--muted); width: 60px; flex-shrink: 0; }
+    .score-bar-wrap { flex: 1; background: var(--green-pale); border-radius: 100px; height: 10px; overflow: hidden; }
+    .score-bar-fill { height: 100%; border-radius: 100px; background: var(--green); }
+    .score-count { font-size: 12px; font-weight: 700; color: var(--text); width: 36px; text-align: right; }
+
+    /* ── Dept table ── */
+    .dept-table { width: 100%; border-collapse: collapse; }
+    .dept-table th {
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 0 0 10px; text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .dept-table td {
+      padding: 11px 0; font-size: 13px; color: var(--text);
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .dept-table tr:last-child td { border-bottom: none; }
+    .dept-dot {
+      display: inline-block; width: 8px; height: 8px;
+      border-radius: 50%; margin-right: 6px; vertical-align: middle;
+    }
+    .quota-bar-wrap { width: 80px; background: var(--border); border-radius: 100px; height: 6px; display: inline-block; overflow: hidden; }
+    .quota-bar-fill { height: 100%; border-radius: 100px; background: var(--green); }
+    .quota-bar-fill.warn { background: var(--orange); }
+    .quota-bar-fill.danger { background: var(--red); }
+    .score-chip {
+      font-size: 12px; font-weight: 700; padding: 3px 10px;
+      border-radius: 100px; display: inline-block;
+    }
+    .score-chip.high { background: #D4F0E6; color: #006C49; }
+    .score-chip.mid  { background: #E8F0FF; color: #2563EB; }
+    .score-chip.low  { background: #FEE9CE; color: #C25900; }
+
+    /* ── Paper list ── */
+    .paper-list { display: flex; flex-direction: column; }
+    .paper-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+    }
+    .paper-item:last-child { border-bottom: none; }
+    .paper-type-badge {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: var(--green-pale);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; flex-shrink: 0;
+    }
+    .paper-info { flex: 1; min-width: 0; }
+    .paper-title {
+      font-size: 13px; font-weight: 600; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: 3px;
+    }
+    .paper-meta { font-size: 11px; color: var(--muted); display: flex; gap: 12px; }
+    .status-dot {
+      display: inline-block; width: 6px; height: 6px;
+      border-radius: 50%; margin-right: 4px; vertical-align: middle;
+    }
+    .status-dot.done    { background: #16A34A; }
+    .status-dot.proc    { background: var(--orange); }
+    .status-dot.pending { background: var(--muted); }
+    .paper-score { font-family: var(--font-d); font-size: 20px; font-weight: 600; color: var(--green); flex-shrink: 0; }
+    .paper-score.proc { color: var(--muted); font-size: 13px; }
+
+    /* ── Quota gauge ── */
+    .quota-overview { display: flex; flex-direction: column; gap: 14px; }
+    .quota-item { }
+    .quota-item-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .quota-item-name { font-size: 13px; font-weight: 600; color: var(--text); }
+    .quota-item-num  { font-size: 12px; color: var(--muted); }
+    .quota-track { background: var(--border); border-radius: 100px; height: 8px; overflow: hidden; }
+    .quota-fill { height: 100%; border-radius: 100px; transition: width 0.4s; }
+    .quota-fill.g { background: var(--green); }
+    .quota-fill.o { background: var(--orange); }
+    .quota-fill.b { background: var(--blue); }
+    .quota-divider { height: 1px; background: var(--border); margin: 6px 0; }
+
+    /* ── Approval list ── */
+    .approval-list { display: flex; flex-direction: column; gap: 10px; }
+    .approval-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px; border-radius: var(--radius-sm);
+      background: var(--body-bg); border: 1px solid var(--border);
+    }
+    .appr-avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--green-mid) 0%, #00A870 100%);
+      color: #fff; font-size: 13px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .appr-info { flex: 1; }
+    .appr-name { font-size: 13px; font-weight: 600; color: var(--text); }
+    .appr-detail { font-size: 11px; color: var(--muted); }
+    .appr-actions { display: flex; gap: 6px; }
+    .appr-btn {
+      font-size: 12px; font-weight: 600; padding: 5px 12px;
+      border-radius: 100px; border: none; cursor: pointer; transition: all 0.15s;
+    }
+    .appr-btn.pass { background: var(--green-pale); color: var(--green); }
+    .appr-btn.pass:hover { background: var(--green); color: #fff; }
+    .appr-btn.reject { background: #FFE9E9; color: var(--red); }
+    .appr-btn.reject:hover { background: var(--red); color: #fff; }
+
+    /* ── Notification list ── */
+    .notif-list { display: flex; flex-direction: column; gap: 0; }
+    .notif-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+    }
+    .notif-item:last-child { border-bottom: none; }
+    .notif-icon {
+      width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+    }
+    .notif-icon.warn  { background: #FFF3CD; }
+    .notif-icon.info  { background: var(--green-pale); }
+    .notif-icon.alert { background: #FFE9E9; }
+    .notif-text { font-size: 13px; color: var(--text); line-height: 1.5; flex: 1; }
+    .notif-time { font-size: 11px; color: var(--muted); flex-shrink: 0; margin-top: 2px; }
+    .notif-unread { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; margin-top: 6px; }
+
+    /* ── Empty state ── */
+    .empty-state { text-align: center; padding: 32px; color: var(--muted); font-size: 13px; }
+
+    /* ── Tabs ── */
+    .tab-row {
+      display: flex; gap: 0;
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+    }
+    .tab {
+      font-size: 13px; font-weight: 600; padding: 12px 16px;
+      cursor: pointer; border-bottom: 2px solid transparent;
+      color: var(--muted); transition: all 0.15s; white-space: nowrap;
+    }
+    .tab.active { color: var(--green); border-bottom-color: var(--green); }
+    .tab:hover:not(.active) { color: var(--text); }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(0,108,73,0.15); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════ SIDEBAR ══════════ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span class="wordmark">VRonly</span>
+    <span class="inst-name">某某大学 管理控制台</span>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">概览</div>
+    <a class="nav-item active" href="#">
+      <span class="nav-icon">🏠</span> 工作台
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">📊</span> 数据报告
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">论文管理</div>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">📄</span> 论文列表
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">⭐</span> 智能评价
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">🔍</span> 论文校对
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">🛡️</span> 论文查重
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">📐</span> 模板排版
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">AI 助手（新）</div>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">🎯</span> 选题评估
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">📚</span> 文献综述
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">✍️</span> 写作辅助
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">机构管理</div>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">👥</span> 学生账号
+      <span class="nav-badge">3</span>
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">🏛️</span> 学院管理
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">🎫</span> 配额管理
+      <span class="nav-badge orange">!</span>
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">📋</span> 模板库
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">设置</div>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">⚙️</span> 机构设置
+    </a>
+    <a class="nav-item" href="#">
+      <span class="nav-icon">🔗</span> API 对接
+    </a>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="admin-card">
+      <div class="admin-avatar">王</div>
+      <div>
+        <div class="admin-name">王教务长</div>
+        <div class="admin-role">超级管理员</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ══════════ MAIN ══════════ -->
+<div class="main">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div style="flex:1;">
+      <div class="topbar-title">工作台</div>
+      <div class="topbar-path">某某大学 <span>/ 教务管理控制台</span></div>
+    </div>
+    <div class="period-selector">
+      <button class="period-btn">今日</button>
+      <button class="period-btn">本周</button>
+      <button class="period-btn active">本月</button>
+      <button class="period-btn">学年</button>
+    </div>
+    <div class="topbar-actions">
+      <a class="topbar-btn btn-ghost" href="#">导出报告</a>
+      <a class="topbar-btn btn-solid" href="#">+ 批量导入学生</a>
+      <div class="notif-btn">🔔<div class="notif-dot"></div></div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- Alert -->
+    <div class="alert-banner">
+      ⚠️ &nbsp;<strong>配额预警：</strong>商学院剩余配额不足 20%，建议尽快补充或调拨。
+      <span style="margin-left:12px;text-decoration:underline;cursor:pointer;color:#A07000;">立即处理</span>
+      <span class="alert-close">✕</span>
+    </div>
+
+    <!-- KPI Row -->
+    <div class="kpi-row">
+      <div class="kpi-card green">
+        <span class="kpi-icon">📄</span>
+        <div class="kpi-label">本月处理论文</div>
+        <div class="kpi-value">1,203<small> 篇</small></div>
+        <div class="kpi-trend"><span class="trend-up">↑ 18%</span> 较上月</div>
+      </div>
+      <div class="kpi-card blue">
+        <span class="kpi-icon">⭐</span>
+        <div class="kpi-label">全院平均评分</div>
+        <div class="kpi-value">84.2<small> 分</small></div>
+        <div class="kpi-trend"><span class="trend-up">↑ 2.1</span> 较上月</div>
+      </div>
+      <div class="kpi-card orange">
+        <span class="kpi-icon">🎫</span>
+        <div class="kpi-label">剩余配额</div>
+        <div class="kpi-value">3,248<small> 次</small></div>
+        <div class="kpi-trend"><span class="trend-down">↓ 已用 67%</span></div>
+      </div>
+      <div class="kpi-card red">
+        <span class="kpi-icon">👥</span>
+        <div class="kpi-label">待审批学生</div>
+        <div class="kpi-value">3<small> 人</small></div>
+        <div class="kpi-trend">本月已审批 <span style="font-weight:700;color:var(--text);">142</span> 人</div>
+      </div>
+    </div>
+
+    <!-- 主图区：使用趋势 + 评分分布 -->
+    <div class="panel-row panel-row-2" style="grid-template-columns: 3fr 2fr;">
+      <!-- 使用趋势 -->
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">论文处理量趋势</div>
+            <div class="panel-sub">本月各功能模块使用次数</div>
+          </div>
+          <span class="panel-action">查看详情 →</span>
+        </div>
+        <div class="panel-body">
+          <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
+            <span style="font-size:12px;display:flex;align-items:center;gap:5px;color:var(--muted);">
+              <span style="width:10px;height:10px;border-radius:2px;background:var(--green);display:inline-block;"></span>智能评价
+            </span>
+            <span style="font-size:12px;display:flex;align-items:center;gap:5px;color:var(--muted);">
+              <span style="width:10px;height:10px;border-radius:2px;background:#60B4FF;display:inline-block;"></span>论文校对
+            </span>
+            <span style="font-size:12px;display:flex;align-items:center;gap:5px;color:var(--muted);">
+              <span style="width:10px;height:10px;border-radius:2px;background:#FFB347;display:inline-block;"></span>排版查重
+            </span>
+          </div>
+          <div class="chart-wrap">
+            <div class="chart-col">
+              <div class="chart-bar-wrap">
+                <div class="chart-bar" style="height:40%;background:var(--green);position:relative;">
+                  <div style="position:absolute;bottom:0;left:0;right:0;height:100%;background:#60B4FF;border-radius:6px 6px 0 0;opacity:0.5;"></div>
+                </div>
+              </div>
+              <div class="chart-label">6/1</div>
+            </div>
+            <div class="chart-col">
+              <div class="chart-bar-wrap"><div class="chart-bar" style="height:55%;"></div></div>
+              <div class="chart-label">6/3</div>
+            </div>
+            <div class="chart-col">
+              <div class="chart-bar-wrap"><div class="chart-bar" style="height:38%;"></div></div>
+              <div class="chart-label">6/5</div>
+            </div>
+            <div class="chart-col">
+              <div class="chart-bar-wrap"><div class="chart-bar" style="height:72%;"></div></div>
+              <div class="chart-label">6/7</div>
+            </div>
+            <div class="chart-col">
+              <div class="chart-bar-wrap"><div class="chart-bar" style="height:88%;"></div></div>
+              <div class="chart-label">6/9</div>
+            </div>
+            <div class="chart-col">
+              <div class="chart-bar-wrap"><div class="chart-bar" style="height:65%;"></div></div>
+              <div class="chart-label">6/11</div>
+            </div>
+            <div class="chart-col">
+              <div class="chart-bar-wrap"><div class="chart-bar" style="height:100%;"></div></div>
+              <div class="chart-label">6/13</div>
+            </div>
+            <div class="chart-col">
+              <div class="chart-bar-wrap"><div class="chart-bar" style="height:78%;"></div></div>
+              <div class="chart-label">6/15</div>
+            </div>
+            <div class="chart-col">
+              <div class="chart-bar-wrap"><div class="chart-bar" style="height:52%;"></div></div>
+              <div class="chart-label">6/17</div>
+            </div>
+            <div class="chart-col">
+              <div class="chart-bar-wrap"><div class="chart-bar faded" style="height:20%;"></div></div>
+              <div class="chart-label">6/19</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 评分分布 -->
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">评分段分布</div>
+            <div class="panel-sub">本月 1203 篇评价结果</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="score-dist">
+            <div class="score-row">
+              <div class="score-range">90–100分</div>
+              <div class="score-bar-wrap"><div class="score-bar-fill" style="width:22%;background:#16A34A;"></div></div>
+              <div class="score-count">265</div>
+            </div>
+            <div class="score-row">
+              <div class="score-range">80–89分</div>
+              <div class="score-bar-wrap"><div class="score-bar-fill" style="width:100%;"></div></div>
+              <div class="score-count">498</div>
+            </div>
+            <div class="score-row">
+              <div class="score-range">70–79分</div>
+              <div class="score-bar-wrap"><div class="score-bar-fill" style="width:60%;"></div></div>
+              <div class="score-count">298</div>
+            </div>
+            <div class="score-row">
+              <div class="score-range">60–69分</div>
+              <div class="score-bar-wrap"><div class="score-bar-fill" style="width:22%;background:var(--orange);"></div></div>
+              <div class="score-count">109</div>
+            </div>
+            <div class="score-row">
+              <div class="score-range">&lt;60分</div>
+              <div class="score-bar-wrap"><div class="score-bar-fill" style="width:7%;background:var(--red);"></div></div>
+              <div class="score-count">33</div>
+            </div>
+          </div>
+          <div style="margin-top:20px;padding:14px;background:var(--green-pale2);border-radius:var(--radius-sm);">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">优良率（≥75分）</div>
+            <div style="font-size:28px;font-family:var(--font-d);font-weight:600;color:var(--green);">
+              63.3%
+              <span style="font-size:13px;font-weight:400;color:#16A34A;">↑ 4.1%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 中间行：学院明细 + 配额总览 -->
+    <div class="panel-row" style="grid-template-columns: 3fr 2fr;">
+      <!-- 各学院使用明细 -->
+      <div class="panel">
+        <div class="tab-row">
+          <div class="tab active">学院明细</div>
+          <div class="tab">导师排行</div>
+          <div class="tab">年级对比</div>
+        </div>
+        <div class="panel-body" style="padding-top:16px;">
+          <table class="dept-table">
+            <thead>
+              <tr>
+                <th>学院</th>
+                <th>本月论文</th>
+                <th>平均分</th>
+                <th>配额余量</th>
+                <th>状态</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="dept-dot" style="background:#006C49;"></span>计算机学院</td>
+                <td>312</td>
+                <td><span class="score-chip high">87.4</span></td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span class="quota-bar-wrap"><span class="quota-bar-fill" style="width:72%;"></span></span>
+                    <span style="font-size:11px;color:var(--muted);">720次</span>
+                  </div>
+                </td>
+                <td><span style="font-size:12px;color:#16A34A;font-weight:600;">正常</span></td>
+              </tr>
+              <tr>
+                <td><span class="dept-dot" style="background:#2563EB;"></span>商学院</td>
+                <td>287</td>
+                <td><span class="score-chip mid">82.1</span></td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span class="quota-bar-wrap"><span class="quota-bar-fill warn" style="width:18%;"></span></span>
+                    <span style="font-size:11px;color:var(--orange);font-weight:600;">180次 ⚠</span>
+                  </div>
+                </td>
+                <td><span style="font-size:12px;color:var(--orange);font-weight:600;">预警</span></td>
+              </tr>
+              <tr>
+                <td><span class="dept-dot" style="background:#9333EA;"></span>医学院</td>
+                <td>198</td>
+                <td><span class="score-chip high">89.2</span></td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span class="quota-bar-wrap"><span class="quota-bar-fill" style="width:55%;"></span></span>
+                    <span style="font-size:11px;color:var(--muted);">550次</span>
+                  </div>
+                </td>
+                <td><span style="font-size:12px;color:#16A34A;font-weight:600;">正常</span></td>
+              </tr>
+              <tr>
+                <td><span class="dept-dot" style="background:#E8840A;"></span>教育学院</td>
+                <td>176</td>
+                <td><span class="score-chip mid">78.6</span></td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span class="quota-bar-wrap"><span class="quota-bar-fill" style="width:40%;"></span></span>
+                    <span style="font-size:11px;color:var(--muted);">400次</span>
+                  </div>
+                </td>
+                <td><span style="font-size:12px;color:#16A34A;font-weight:600;">正常</span></td>
+              </tr>
+              <tr>
+                <td><span class="dept-dot" style="background:#DC3545;"></span>艺术学院</td>
+                <td>143</td>
+                <td><span class="score-chip low">71.3</span></td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span class="quota-bar-wrap"><span class="quota-bar-fill danger" style="width:8%;"></span></span>
+                    <span style="font-size:11px;color:var(--red);font-weight:600;">80次 !</span>
+                  </div>
+                </td>
+                <td><span style="font-size:12px;color:var(--red);font-weight:600;">紧张</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 右侧：配额总览 -->
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">配额总览</div>
+            <div class="panel-sub">合同总额 10,000 次/年</div>
+          </div>
+          <span class="panel-action">补充配额</span>
+        </div>
+        <div class="panel-body">
+          <div style="text-align:center;padding:16px 0 20px;">
+            <div style="font-size:13px;color:var(--muted);margin-bottom:4px;">年度配额已用</div>
+            <div style="font-family:var(--font-d);font-size:48px;font-weight:600;color:var(--green);line-height:1;">67<span style="font-size:24px;font-weight:400;color:var(--muted);">%</span></div>
+            <div style="font-size:13px;color:var(--muted);margin-top:4px;">已用 6,752 / 10,000 次</div>
+            <!-- 圆形进度条效果（CSS） -->
+            <div style="margin:16px auto 0;width:80px;height:8px;background:var(--border);border-radius:100px;overflow:hidden;">
+              <div style="width:67%;height:100%;background:var(--green);border-radius:100px;"></div>
+            </div>
+          </div>
+          <div class="quota-divider"></div>
+          <div class="quota-overview">
+            <div class="quota-item">
+              <div class="quota-item-head">
+                <span class="quota-item-name">⭐ 智能评价</span>
+                <span class="quota-item-num">2,103 / 4,000</span>
+              </div>
+              <div class="quota-track"><div class="quota-fill g" style="width:52%;"></div></div>
+            </div>
+            <div class="quota-item">
+              <div class="quota-item-head">
+                <span class="quota-item-name">🔍 论文校对</span>
+                <span class="quota-item-num">1,832 / 3,000</span>
+              </div>
+              <div class="quota-track"><div class="quota-fill b" style="width:61%;"></div></div>
+            </div>
+            <div class="quota-item">
+              <div class="quota-item-head">
+                <span class="quota-item-name">🛡️ 论文查重</span>
+                <span class="quota-item-num">1,204 / 2,000</span>
+              </div>
+              <div class="quota-track"><div class="quota-fill o" style="width:60%;"></div></div>
+            </div>
+            <div class="quota-item">
+              <div class="quota-item-head">
+                <span class="quota-item-name">🎯 选题评估（新）</span>
+                <span class="quota-item-num">348 / 1,000</span>
+              </div>
+              <div class="quota-track"><div class="quota-fill g" style="width:35%;"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部行：最新论文 + 待审批 + 消息 -->
+    <div class="panel-row" style="grid-template-columns: 2fr 1.2fr 1.2fr;">
+      <!-- 最新论文动态 -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">最新论文动态</div>
+          <span class="panel-action">全部论文 →</span>
+        </div>
+        <div class="panel-body" style="padding:0 20px;">
+          <div class="paper-list">
+            <div class="paper-item">
+              <div class="paper-type-badge">⭐</div>
+              <div class="paper-info">
+                <div class="paper-title">基于 Transformer 的中文文本情感分析研究</div>
+                <div class="paper-meta">
+                  <span><span class="status-dot done"></span>评价完成</span>
+                  <span>计算机学院 · 李明</span>
+                  <span>3 分钟前</span>
+                </div>
+              </div>
+              <div class="paper-score">91.5</div>
+            </div>
+            <div class="paper-item">
+              <div class="paper-type-badge">🔍</div>
+              <div class="paper-info">
+                <div class="paper-title">碳排放权交易市场机制对企业绿色创新影响</div>
+                <div class="paper-meta">
+                  <span><span class="status-dot proc"></span>校对中</span>
+                  <span>商学院 · 张思远</span>
+                  <span>12 分钟前</span>
+                </div>
+              </div>
+              <div class="paper-score proc">处理中…</div>
+            </div>
+            <div class="paper-item">
+              <div class="paper-type-badge">📐</div>
+              <div class="paper-info">
+                <div class="paper-title">传统纹样在现代服装设计中的创新应用</div>
+                <div class="paper-meta">
+                  <span><span class="status-dot done"></span>排版完成</span>
+                  <span>艺术学院 · 王芳</span>
+                  <span>28 分钟前</span>
+                </div>
+              </div>
+              <div class="paper-score">—</div>
+            </div>
+            <div class="paper-item">
+              <div class="paper-type-badge">⭐</div>
+              <div class="paper-info">
+                <div class="paper-title">中医药治疗2型糖尿病的系统性综述研究</div>
+                <div class="paper-meta">
+                  <span><span class="status-dot done"></span>评价完成</span>
+                  <span>医学院 · 陈志强</span>
+                  <span>1 小时前</span>
+                </div>
+              </div>
+              <div class="paper-score">86.2</div>
+            </div>
+            <div class="paper-item">
+              <div class="paper-type-badge">🎯</div>
+              <div class="paper-info">
+                <div class="paper-title">乡村教育数字化转型困境与对策研究</div>
+                <div class="paper-meta">
+                  <span><span class="status-dot done"></span>选题评估完成</span>
+                  <span>教育学院 · 刘洁</span>
+                  <span>2 小时前</span>
+                </div>
+              </div>
+              <div class="paper-score" style="font-size:14px;color:var(--green);font-weight:700;">可行 ✓</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 待审批账号 -->
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">待审批账号</div>
+            <div class="panel-sub">共 3 位学生等待激活</div>
+          </div>
+          <span class="panel-action">全部 →</span>
+        </div>
+        <div class="panel-body">
+          <div class="approval-list">
+            <div class="approval-item">
+              <div class="appr-avatar">孙</div>
+              <div class="appr-info">
+                <div class="appr-name">孙晓雨</div>
+                <div class="appr-detail">计算机学院 · 2021级 · 注册于今天</div>
+              </div>
+              <div class="appr-actions">
+                <button class="appr-btn pass">通过</button>
+                <button class="appr-btn reject">拒绝</button>
+              </div>
+            </div>
+            <div class="approval-item">
+              <div class="appr-avatar">周</div>
+              <div class="appr-info">
+                <div class="appr-name">周子豪</div>
+                <div class="appr-detail">医学院 · 2020级 · 注册于昨天</div>
+              </div>
+              <div class="appr-actions">
+                <button class="appr-btn pass">通过</button>
+                <button class="appr-btn reject">拒绝</button>
+              </div>
+            </div>
+            <div class="approval-item">
+              <div class="appr-avatar">吴</div>
+              <div class="appr-info">
+                <div class="appr-name">吴思琪</div>
+                <div class="appr-detail">艺术学院 · 2022级 · 注册于昨天</div>
+              </div>
+              <div class="appr-actions">
+                <button class="appr-btn pass">通过</button>
+                <button class="appr-btn reject">拒绝</button>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:16px;text-align:center;">
+            <button style="width:100%;padding:9px;background:var(--green-pale);color:var(--green);border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;">一键全部通过</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 系统消息 -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">系统消息</div>
+          <span class="panel-action">全部已读</span>
+        </div>
+        <div class="panel-body" style="padding:0 20px;">
+          <div class="notif-list">
+            <div class="notif-item">
+              <div class="notif-icon alert">⚠️</div>
+              <div class="notif-text">
+                <strong>艺术学院</strong>配额仅剩 80 次，预计本月底耗尽。
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                <div class="notif-time">1小时前</div>
+                <div class="notif-unread"></div>
+              </div>
+            </div>
+            <div class="notif-item">
+              <div class="notif-icon info">🚀</div>
+              <div class="notif-text">
+                <strong>选题评估</strong>功能已上线，已向全院学生开放。
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                <div class="notif-time">今天</div>
+                <div class="notif-unread"></div>
+              </div>
+            </div>
+            <div class="notif-item">
+              <div class="notif-icon warn">📊</div>
+              <div class="notif-text">
+                5月份月度数据报告已生成，可下载查看。
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                <div class="notif-time">昨天</div>
+              </div>
+            </div>
+            <div class="notif-item">
+              <div class="notif-icon info">✅</div>
+              <div class="notif-text">
+                系统维护已完成，所有服务恢复正常。
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                <div class="notif-time">2天前</div>
+              </div>
+            </div>
+            <div class="notif-item">
+              <div class="notif-icon info">📋</div>
+              <div class="notif-text">
+                <strong>浙大毕业论文模板</strong>已由管理员更新至 2026 版。
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                <div class="notif-time">3天前</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+</body>
+</html>

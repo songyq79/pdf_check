@@ -1,5 +1,6 @@
 import axios from 'axios'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import router from '@/router'
 
 // ── 基础配置 ──────────────────────────────────────────────────────────
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
@@ -46,6 +47,11 @@ request.interceptors.request.use(
   (config) => {
     config.timeout = getTimeout(config)
     config._retryCount = config._retryCount || 0
+    // 自动附加 token
+    const token = localStorage.getItem('access_token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
     return config
   },
   (error) => {
@@ -60,6 +66,24 @@ request.interceptors.response.use(
 
   async (error) => {
     const config = error.config
+
+    // 402: 额度不足，弹窗提示并可选跳转
+    if (error.response?.status === 402) {
+      ElMessageBox.confirm(
+        '本次操作失败，您的可用次数已不足，可前往购买',
+        '次数不足',
+        {
+          confirmButtonText: '去购买',
+          cancelButtonText: '暂不购买',
+          confirmButtonClass: 'el-button--primary',
+          customStyle: { '--el-color-primary': 'rgb(0, 108, 73)' },
+          showClose: false,
+        }
+      ).then(() => {
+        router.push('/pricing')
+      }).catch(() => {})
+      return Promise.reject(error)
+    }
 
     // 自动重试
     if (config && shouldRetry(error) && config._retryCount < MAX_RETRIES) {
@@ -97,6 +121,7 @@ function formatErrorMessage(error) {
     switch (status) {
       case 400: return detail || '请求参数错误'
       case 401: return '未授权，请登录'
+      case 402: return detail || '配额不足'
       case 403: return '拒绝访问'
       case 404: return detail || '请求的资源不存在'
       case 413: return '文件过大，请压缩后重试'

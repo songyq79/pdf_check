@@ -23,9 +23,10 @@ export function validateFile(file, options = {}) {
   })
 
   if (!isValidType) {
+    const exts = acceptedTypes.filter(t => t.startsWith('.'))
     return {
       valid: false,
-      error: '仅支持 .docx 格式的文件'
+      error: `仅支持 ${exts.join(' / ')} 格式的文件`
     }
   }
 

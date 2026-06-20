@@ -35,6 +35,10 @@ logger.add(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # 初始化数据库
+    from app.models.user import init_db
+    init_db()
+
     logger.info("=" * 55)
     logger.info(f"  {settings.APP_NAME}  v{settings.APP_VERSION}  启动")
     logger.info(f"  API 文档: http://localhost:8000/docs")

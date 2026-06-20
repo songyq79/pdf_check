@@ -7,18 +7,26 @@ env/
 *.egg-info/
 .pytest_cache/
 
-# 环境变量
+# 环境变量（含密钥，绝不提交；仅保留 .env.example 模板）
 .env
+.env.*
+!.env.example
 
 # 日志
 logs/
 *.log
 
-# 存储文件
-backend/storage/uploads/*
-backend/storage/outputs/*
-backend/storage/temp/*
-!backend/storage/*/.gitkeep
+# 存储文件（运行时数据/数据库/支付回调，全部不提交）
+backend/storage/
+*.db
+
+# 用户上传的模板（非源代码）
+backend/templates/user/custom/
+
+# 测试产物 / 文档（非源代码）
+backend/test_report_*.png
+backend/test_*.png
+*.pdf
 
 # Node.js
 node_modules/
@@ -31,3 +39,6 @@ frontend/dist/
 
 # Claude
 .claude/
+
+# Windows 保留设备名（误由 > nul 重定向产生）
+nul

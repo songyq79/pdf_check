@@ -118,8 +118,13 @@ export const useSpellCheckStore = defineStore('spellCheck', () => {
       progress.value = 15
       startPolling(res.task_id)
     } catch (err) {
-      phase.value = 'failed'
-      errorMsg.value = err?.response?.data?.detail || '上传失败，请重试'
+      if (err?.response?.status === 402) {
+        phase.value = 'idle'
+      } else {
+        phase.value = 'failed'
+        errorMsg.value = err?.response?.data?.detail || '上传失败，请重试'
+      }
+      throw err
     }
   }
 

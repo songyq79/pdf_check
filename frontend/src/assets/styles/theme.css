@@ -1,174 +1,146 @@
-/* 新主题样式 - 渐变背景和现代化设计 */
+/* 新主题样式 - 绿色主调和现代化设计 */
 
-/* 全局渐变背景 */
+/* 全局背景 */
 body {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  background-attachment: fixed;
+  background: rgb(249, 249, 249);
+}
+
+/* Home 页面特殊背景 */
+body.home-page {
+  background: rgb(249, 249, 249);
 }
 
 /* 毛玻璃效果卡片 */
 .glass-card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  background: white;
+  border-radius: 32px;
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.06);
   transition: all 0.3s ease;
+  border: 1px solid rgba(229, 231, 235, 0.50);
 }
 
 .glass-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.10);
 }
 
 /* 渐变按钮 */
 .gradient-button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: rgb(0, 108, 73);
   border: none;
   color: white;
   padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 15px;
+  border-radius: 9999px;
+  font-size: 16px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: filter 0.18s ease, transform 0.1s ease;
 }
 
 .gradient-button:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+  filter: brightness(0.92);
+}
+
+.gradient-button:active {
+  transform: scale(0.97);
 }
 
 /* 功能图标渐变 */
 .icon-gradient-blue {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: rgba(39, 226, 159, 0.10);
+  color: #006D4A;
 }
 
 .icon-gradient-red {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: rgba(167, 139, 250, 0.10);
+  color: #A78BFA;
 }
 
 .icon-gradient-cyan {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: rgba(18, 18, 18, 0.05);
+  color: #121212;
+}
+
+.icon-gradient-purple {
+  background: rgb(232, 250, 244);
+  color: #006D4A;
 }
 
 /* 页面容器优化 */
 .modern-page-container {
-  padding: 20px;
-  min-height: calc(100vh - 60px);
-  max-width: 1200px;
+  padding: 48px 20px 80px;
+  min-height: calc(100vh - 80px);
+  max-width: 1000px;
   margin: 0 auto;
-}
-
-/* 欢迎区域样式 */
-.modern-welcome-section {
-  text-align: center;
-  color: white;
-  padding: 80px 20px 60px;
-  margin-bottom: 50px;
-}
-
-.modern-welcome-title {
-  font-size: 52px;
-  font-weight: 700;
-  margin-bottom: 20px;
-  line-height: 1.2;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  letter-spacing: -0.5px;
-}
-
-.modern-welcome-subtitle {
-  font-size: 22px;
-  color: rgba(255, 255, 255, 0.95);
-  margin-bottom: 16px;
-  font-weight: 400;
-}
-
-.modern-welcome-description {
-  font-size: 16px;
-  color: rgba(255, 255, 255, 0.9);
-  max-width: 750px;
-  margin: 0 auto;
-  line-height: 1.8;
 }
 
 /* 功能卡片网格 */
 .modern-features-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
   margin-bottom: 40px;
-  max-width: 1200px;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .modern-feature-card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  padding: 40px 32px;
-  transition: all 0.3s ease;
+  background: rgb(253, 253, 253);
+  border-radius: 32px;
+  padding: 40px;
+  transition: all 0.22s ease;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  text-align: center;
+  box-shadow: none;
+  border: 1px solid rgba(229, 231, 235, 0.50);
+  text-align: left;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  gap: 24px;
 }
 
 .modern-feature-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  transform: translateY(-6px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.10);
 }
 
 .modern-feature-icon {
-  width: 72px;
-  height: 72px;
-  border-radius: 16px;
+  width: 56px;
+  height: 56px;
+  border-radius: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 24px;
-  color: white;
-  font-size: 36px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .modern-feature-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin-bottom: 16px;
-  line-height: 1.3;
+  font-size: 24px;
+  font-weight: 400;
+  color: rgb(18, 18, 18);
+  line-height: 32px;
 }
 
 .modern-feature-description {
-  font-size: 14px;
-  color: #666;
-  line-height: 1.8;
-  margin-bottom: 28px;
-  min-height: 84px;
-  text-align: center;
+  font-size: 16px;
+  color: rgb(107, 114, 128);
+  line-height: 26px;
 }
 
 .modern-feature-button {
   width: 100%;
   padding: 14px 24px;
-  border-radius: 8px;
-  font-size: 15px;
+  border-radius: 9999px;
+  font-size: 16px;
   font-weight: 500;
-  transition: all 0.3s ease;
+  transition: filter 0.18s ease;
   border: none;
 }
 
 /* 数据统计区域 */
 .modern-stats-section {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  padding: 40px;
+  background: white;
+  border-radius: 32px;
+  padding: 48px;
   margin-bottom: 40px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(229, 231, 235, 0.50);
 }
 
 .modern-stats-grid {
@@ -183,24 +155,28 @@ body {
 }
 
 .modern-stat-value {
-  font-size: 42px;
-  font-weight: 700;
-  color: #667eea;
+  font-family: 'Newsreader', serif;
+  font-style: italic;
+  font-size: 48px;
+  font-weight: 400;
+  color: rgb(0, 108, 73);
   margin-bottom: 8px;
 }
 
 .modern-stat-label {
-  font-size: 14px;
-  color: #666;
+  font-size: 12px;
+  color: rgb(113, 113, 122);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
 }
 
 /* 历史记录区域 */
 .modern-history-section {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  background: white;
+  border-radius: 32px;
+  padding: 48px;
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(229, 231, 235, 0.50);
 }
 
 .modern-section-header {
@@ -211,25 +187,25 @@ body {
 }
 
 .modern-section-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1a1a1a;
+  font-size: 24px;
+  font-weight: 400;
+  color: rgb(18, 18, 18);
 }
 
 /* 响应式优化 */
-@media (max-width: 1024px) {
+@media (max-width: 1100px) {
   .modern-features-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .modern-page-container {
+    max-width: calc(100% - 80px);
   }
 }
 
-@media (max-width: 768px) {
-  .modern-welcome-title {
-    font-size: 32px;
-  }
-
-  .modern-welcome-subtitle {
-    font-size: 18px;
+@media (max-width: 680px) {
+  .modern-features-grid {
+    grid-template-columns: 1fr;
   }
 
   .modern-stats-grid {
@@ -238,32 +214,23 @@ body {
   }
 
   .modern-stat-value {
-    font-size: 32px;
+    font-size: 36px;
   }
-}
 
-@media (max-width: 480px) {
   .modern-page-container {
-    padding: 10px;
-  }
-
-  .modern-welcome-section {
-    padding: 40px 15px;
-  }
-
-  .modern-welcome-title {
-    font-size: 28px;
+    padding: 32px 24px 60px;
+    max-width: calc(100% - 48px);
   }
 
   .modern-feature-card {
-    padding: 24px;
+    padding: 32px;
   }
 
   .modern-stats-section {
-    padding: 24px;
+    padding: 32px;
   }
 
   .modern-history-section {
-    padding: 20px;
+    padding: 32px;
   }
 }

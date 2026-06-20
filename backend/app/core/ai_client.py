@@ -61,7 +61,7 @@ async def _call_deepseek(prompt: str) -> str:
     resp = await client.chat.completions.create(
         model=settings.DEEPSEEK_MODEL,
         messages=[{"role": "user", "content": prompt}],
-        temperature=0,
+        temperature=0.3,
     )
     return resp.choices[0].message.content
 

@@ -12,6 +12,9 @@
         :max-size="20"
         @file-selected="handleFileSelected"
       />
+      <div class="upload-tip">
+        仅支持 .docx（校对结果需以 Word 修订模式返回，PDF 不适用）
+      </div>
     </div>
 
     <!-- 处理中 -->
@@ -19,7 +22,7 @@
       <el-card>
         <LoadingSpinner :size="60" :text="store.statusText" />
         <div class="mt-20">
-          <el-progress :percentage="store.progress" :stroke-width="10" status="striped" striped-flow />
+          <el-progress :percentage="store.progress" :stroke-width="10" :show-text="false" />
         </div>
         <div class="file-info mt-10">
           <el-icon><Document /></el-icon>
@@ -72,15 +75,6 @@
             <div class="summary-content">
               <div class="summary-label">发现并修改</div>
               <div class="summary-value text-danger">{{ store.stats.changed }}</div>
-            </div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-icon ok-icon">
-              <el-icon :size="36"><CircleCheckFilled /></el-icon>
-            </div>
-            <div class="summary-content">
-              <div class="summary-label">无需修改</div>
-              <div class="summary-value text-success">{{ store.stats.skipped }}</div>
             </div>
           </div>
           <div class="summary-item">
@@ -143,13 +137,22 @@ const store = useSpellCheckStore()
 const historyStore = useHistoryStore()
 const route = useRoute()
 
-// 加载待展示结果或保持当前状态
 onMounted(() => {
-  store.loadPendingOrKeep()
-  store.resumeIfProcessing()
+  // 检查是否从历史记录页面跳转过来
+  const fromHistory = route.query.from === 'history'
   
-  // 移除自动重置逻辑，用户需要主动点击"重新检查"按钮才会重置
-  // 这样刷新页面、切换菜单后都能保持结果显示
+  // 如果有 pendingResult，说明是从历史记录跳转过来的，加载结果
+  if (store.pendingResult) {
+    store.loadPendingOrKeep()
+  }
+  // 如果没有 pendingResult，但是状态是 completed，且不是从历史记录来的，需要重置
+  else if (store.isCompleted && !fromHistory) {
+    store.reset()
+  }
+  // 其他情况（idle、processing、failed 或从历史记录刷新）保持当前状态
+  
+  // 如果正在处理中，恢复轮询
+  store.resumeIfProcessing()
 })
 onBeforeUnmount(() => store.stopPolling())
 
@@ -178,9 +181,12 @@ async function handleFileSelected(file) {
       return
     }
   }
-  await store.uploadAndCheck(file)
-  if (store.isFailed) {
-    ElMessage.error(store.errorMsg || '上传失败，请重试')
+  try {
+    await store.uploadAndCheck(file)
+  } catch (err) {
+    if (err?.response?.status !== 402) {
+      ElMessage.error(store.errorMsg || '上传失败，请重试')
+    }
   }
 }
 
@@ -202,6 +208,13 @@ function formatDate(iso) {
 </script>
 
 <style scoped>
+.upload-tip {
+  margin-top: 12px;
+  font-size: 13px;
+  color: rgb(107, 114, 128);
+  text-align: center;
+}
+
 .result-summary {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -213,18 +226,35 @@ function formatDate(iso) {
   display: flex; align-items: center; justify-content: center;
   color: white; flex-shrink: 0;
 }
-.total-icon   { background: linear-gradient(135deg,#4facfe,#00f2fe); }
-.changed-icon { background: linear-gradient(135deg,#f093fb,#f5576c); }
-.ok-icon      { background: linear-gradient(135deg,#43e97b,#38f9d7); }
-.time-icon    { background: linear-gradient(135deg,#fa8231,#f9ca24); }
-.summary-label { font-size: 13px; color: #909399; margin-bottom: 4px; }
-.summary-value { font-size: 28px; font-weight: bold; color: #303133; }
-.summary-value.small { font-size: 13px; font-weight: normal; }
+.total-icon   { background: rgba(39, 226, 159, 0.15); color: rgb(0, 108, 73); }
+.changed-icon { background: rgba(167, 139, 250, 0.15); color: #A78BFA; }
+.ok-icon      { background: rgba(39, 226, 159, 0.15); color: rgb(0, 108, 73); }
+.time-icon    { background: rgba(18, 18, 18, 0.08); color: rgb(18, 18, 18); }
+.summary-label { font-size: 12px; color: rgb(113, 113, 122); margin-bottom: 4px; letter-spacing: 0.5px; }
+.summary-value { font-family: 'Newsreader', serif; font-style: italic; font-size: 28px; font-weight: 400; color: rgb(18, 18, 18); }
+.summary-value.small { font-size: 13px; font-weight: normal; font-family: inherit; font-style: normal; }
 .text-danger  { color: #f56c6c; }
-.text-success { color: #67c23a; }
-.file-info { display: flex; align-items: center; gap: 6px; color: #909399; font-size: 13px; }
+.text-success { color: rgb(0, 108, 73); }
+.file-info { display: flex; align-items: center; gap: 6px; color: rgb(107, 114, 128); font-size: 13px; }
 .button-group { display: flex; gap: 12px; flex-wrap: wrap; }
 .mt-10 { margin-top: 10px; }
 .mt-20 { margin-top: 20px; }
 .mb-20 { margin-bottom: 20px; }
+
+:deep(.el-card) {
+  border-radius: 24px;
+  border: 1px solid rgba(229, 231, 235, 0.50);
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.06);
+}
+
+:deep(.el-button--primary) {
+  background: rgb(0, 108, 73);
+  border-color: rgb(0, 108, 73);
+  border-radius: 9999px;
+}
+
+:deep(.el-button--primary:hover) {
+  background: rgb(0, 90, 60);
+  border-color: rgb(0, 90, 60);
+}
 </style>

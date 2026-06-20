@@ -14,6 +14,15 @@
             <el-option label="智能评价" value="evaluation" />
             <el-option label="错别字检查" value="spellcheck" />
             <el-option label="模板排版" value="formatting" />
+            <el-option label="论文查重" value="plagiarism" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="查重语种" v-if="filterForm.type === '' || filterForm.type === 'plagiarism'">
+          <el-select v-model="filterForm.engineLang" placeholder="全部" clearable style="width: 120px;">
+            <el-option label="全部" value="" />
+            <el-option label="中文" value="zh" />
+            <el-option label="外文" value="en" />
           </el-select>
         </el-form-item>
 
@@ -49,7 +58,7 @@
     </el-card>
 
     <!-- 记录列表 -->
-    <div v-if="filteredRecords.length > 0">
+    <div v-if="allFilteredRecords.length > 0">
       <el-card
         v-for="record in filteredRecords"
         :key="record.id"
@@ -69,6 +78,14 @@
             <div class="record-header">
               <el-tag :type="getRecordTypeTag(record.type)" size="large">
                 {{ getRecordTypeName(record.type) }}
+              </el-tag>
+              <el-tag
+                v-if="record.type === 'plagiarism'"
+                :type="getEngineTagType(record.result?.engine)"
+                size="small"
+                effect="plain"
+              >
+                {{ getEngineLabel(record.result?.engine) }}
               </el-tag>
               <span class="record-title">{{ getRecordTitle(record) }}</span>
             </div>
@@ -96,6 +113,18 @@
           </div>
         </div>
       </el-card>
+
+      <!-- 分页 -->
+      <div class="pagination-wrapper">
+        <el-pagination
+          v-model:current-page="currentPage"
+          :page-size="pageSize"
+          :total="totalRecords"
+          layout="total, prev, pager, next"
+          background
+          @current-change="handlePageChange"
+        />
+      </div>
     </div>
 
     <!-- 空状态 -->
@@ -126,34 +155,50 @@ import { useHistoryStore } from '@/store/modules/history'
 import { useEvaluationStore } from '@/store/modules/evaluation'
 import { useSpellCheckStore } from '@/store/modules/spellCheck'
 import { useFormattingStore } from '@/store/modules/formatting'
+import { usePlagiarismStore } from '@/store/modules/plagiarism'
 
 const router = useRouter()
 const historyStore = useHistoryStore()
 const evaluationStore = useEvaluationStore()
 const spellCheckStore = useSpellCheckStore()
 const formattingStore = useFormattingStore()
+const plagiarismStore = usePlagiarismStore()
+
+// 分页
+const currentPage = ref(1)
+const pageSize = ref(10)
 
 // 筛选表单
 const filterForm = ref({
   type: '',
+  engineLang: '',
   dateRange: null
 })
 
 // 当前应用的筛选条件
 const appliedFilter = ref({
   type: '',
+  engineLang: '',
   dateRange: null
 })
 
 /**
- * 筛选后的记录
+ * 筛选后的记录（全部）
  */
-const filteredRecords = computed(() => {
+const allFilteredRecords = computed(() => {
   let records = [...historyStore.records]
 
   // 按类型筛选
   if (appliedFilter.value.type) {
     records = records.filter(r => r.type === appliedFilter.value.type)
+  }
+
+  // 按查重语种筛选（仅作用于查重记录）
+  if (appliedFilter.value.engineLang) {
+    records = records.filter(r => {
+      if (r.type !== 'plagiarism') return false
+      return getEngineLang(r.result?.engine) === appliedFilter.value.engineLang
+    })
   }
 
   // 按日期范围筛选
@@ -169,11 +214,26 @@ const filteredRecords = computed(() => {
 })
 
 /**
+ * 当前页的记录
+ */
+const filteredRecords = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return allFilteredRecords.value.slice(start, start + pageSize.value)
+})
+
+/**
+ * 总记录数
+ */
+const totalRecords = computed(() => allFilteredRecords.value.length)
+
+/**
  * 应用筛选
  */
 function handleFilter() {
+  currentPage.value = 1
   appliedFilter.value = {
     type: filterForm.value.type,
+    engineLang: filterForm.value.engineLang,
     dateRange: filterForm.value.dateRange
   }
 }
@@ -182,14 +242,25 @@ function handleFilter() {
  * 重置筛选
  */
 function handleReset() {
+  currentPage.value = 1
   filterForm.value = {
     type: '',
+    engineLang: '',
     dateRange: null
   }
   appliedFilter.value = {
     type: '',
+    engineLang: '',
     dateRange: null
   }
+}
+
+/**
+ * 分页变化
+ */
+function handlePageChange(page) {
+  currentPage.value = page
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 /**
@@ -217,14 +288,21 @@ function handleClearAll() {
  */
 function handleView(record) {
   if (record.type === 'evaluation') {
+    console.log('[History] 设置 pendingResult:', record.result)
+    // 先访问 store 触发初始化
+    const _ = evaluationStore.evaluationStatus
     evaluationStore.setPendingResult(record.result)
-    router.push('/evaluation')
+    console.log('[History] pendingResult 已设置，准备跳转')
+    router.push({ path: '/evaluation', query: { from: 'history' } })
   } else if (record.type === 'spellcheck') {
     spellCheckStore.setPendingResult(record.result)
-    router.push('/spell-check')
+    router.push({ path: '/spell-check', query: { from: 'history' } })
   } else if (record.type === 'formatting') {
     formattingStore.setPendingResult(record.result)
-    router.push('/formatting')
+    router.push({ path: '/formatting', query: { from: 'history' } })
+  } else if (record.type === 'plagiarism') {
+    plagiarismStore.setPendingResult(record.result)
+    router.push({ path: '/plagiarism', query: { from: 'history' } })
   }
 }
 
@@ -251,7 +329,8 @@ function getRecordIcon(type) {
   const iconMap = {
     evaluation: Edit,
     spellcheck: DocumentChecked,
-    formatting: Document
+    formatting: Document,
+    plagiarism: Search
   }
   return iconMap[type] || Edit
 }
@@ -261,11 +340,12 @@ function getRecordIcon(type) {
  */
 function getRecordColor(type) {
   const colorMap = {
-    evaluation: '#409EFF',
-    spellcheck: '#67C23A',
-    formatting: '#E6A23C'
+    evaluation: 'rgb(0, 108, 73)',
+    spellcheck: 'rgb(167, 139, 250)',
+    formatting: 'rgb(18, 18, 18)',
+    plagiarism: 'rgb(0, 108, 73)'
   }
-  return colorMap[type] || '#909399'
+  return colorMap[type] || 'rgb(107, 114, 128)'
 }
 
 /**
@@ -275,7 +355,8 @@ function getRecordTypeTag(type) {
   const tagMap = {
     evaluation: 'primary',
     spellcheck: 'success',
-    formatting: 'warning'
+    formatting: 'warning',
+    plagiarism: 'danger'
   }
   return tagMap[type] || 'info'
 }
@@ -287,9 +368,42 @@ function getRecordTypeName(type) {
   const nameMap = {
     evaluation: '智能评价',
     spellcheck: '错别字检查',
-    formatting: '模板排版'
+    formatting: '模板排版',
+    plagiarism: '论文查重'
   }
   return nameMap[type] || '未知'
+}
+
+/**
+ * 查重引擎 → 语种
+ */
+function getEngineLang(engine) {
+  if (engine === 'english_academic' || engine === 'english_academic_fallback') {
+    return 'en'
+  }
+  return 'zh'
+}
+
+/**
+ * 查重引擎 → 中文标签
+ */
+function getEngineLabel(engine) {
+  const map = {
+    hybrid: '中文·AI语义',
+    opensource: '中文·开源比对',
+    english_academic: '外文·学术库',
+    english_academic_fallback: '外文·降级',
+  }
+  return map[engine] || '中文·AI语义'
+}
+
+/**
+ * 查重引擎 → 徽章色
+ */
+function getEngineTagType(engine) {
+  if (engine === 'english_academic') return 'success'
+  if (engine === 'english_academic_fallback') return 'warning'
+  return 'info'
 }
 
 /**
@@ -351,7 +465,7 @@ function formatDate(timestamp) {
 .record-title {
   font-size: 16px;
   font-weight: 500;
-  color: #303133;
+  color: rgb(18, 18, 18);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -361,7 +475,7 @@ function formatDate(timestamp) {
   display: flex;
   gap: 20px;
   font-size: 13px;
-  color: #909399;
+  color: rgb(107, 114, 128);
 }
 
 .meta-item {
@@ -389,5 +503,33 @@ function formatDate(timestamp) {
   .record-actions .el-button {
     flex: 1;
   }
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.pagination-wrapper :deep(.el-pagination__total) {
+  color: rgb(107, 114, 128);
+}
+
+:deep(.el-card) {
+  border-radius: 24px;
+  border: 1px solid rgba(229, 231, 235, 0.50);
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.06);
+}
+
+:deep(.el-button--primary) {
+  background: rgb(0, 108, 73);
+  border-color: rgb(0, 108, 73);
+  border-radius: 9999px;
+}
+
+:deep(.el-button--primary:hover) {
+  background: rgb(0, 90, 60);
+  border-color: rgb(0, 90, 60);
 }
 </style>

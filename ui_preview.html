@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VRonly — 论文全程助手 2.0 预览</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,700;1,400;1,700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans SC', 'PingFang SC', -apple-system, sans-serif;
+      background: #f9f9f9;
+      color: #1a1c1c;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─────────────────────────────────────────────
+       HEADER  (exact match to App.vue)
+    ───────────────────────────────────────────── */
+    .modern-header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 80px;
+      background: rgba(255,255,255,0.70);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .header-container {
+      width: 1000px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-family: 'Newsreader', serif;
+      font-size: 24px;
+      font-weight: 400;
+      font-style: italic;
+      color: rgb(24,24,27);
+      text-decoration: none;
+      width: 90px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .nav-item {
+      font-size: 15px;
+      color: rgb(26,28,28);
+      text-decoration: none;
+      line-height: 24px;
+      padding-bottom: 3px;
+      position: relative;
+      font-weight: 400;
+      transition: color .18s;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .nav-item:hover { color: rgb(16,185,129); }
+    .nav-item.active { border-bottom: 1px solid rgb(16,185,129); }
+
+    .nav-new-dot {
+      display: inline-block;
+      width: 5px; height: 5px;
+      background: #E07000;
+      border-radius: 50%;
+      margin-left: 4px;
+      vertical-align: middle;
+      position: relative;
+      top: -1px;
+    }
+
+    .login-btn {
+      background: rgb(18,18,18);
+      color: white;
+      border: none;
+      border-radius: 9999px;
+      height: 36px;
+      width: 92px;
+      font-size: 15px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: opacity .18s;
+    }
+    .login-btn:hover { opacity: .85; }
+
+    /* ─────────────────────────────────────────────
+       HERO SECTION
+    ───────────────────────────────────────────── */
+    .home-wrap { width: 100%; margin-top: 80px; }
+
+    .home-hero {
+      width: 100%;
+      padding: 110px 20px 80px;
+      text-align: center;
+    }
+
+    .hero-inner {
+      max-width: 1000px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(79,251,182,.20);
+      border-radius: 9999px;
+      padding: 8px 16px;
+      font-size: 14px;
+      color: #006C49;
+      line-height: 20px;
+    }
+
+    .hero-title {
+      font-size: 80px;
+      font-weight: 500;
+      color: #1a1c1c;
+      line-height: 108px;
+      letter-spacing: -2.4px;
+      margin: 0;
+    }
+
+    .hero-title .accent { color: #006C49; }
+
+    .hero-desc {
+      font-size: 18px;
+      font-weight: 400;
+      color: #3b4a41;
+      line-height: 32px;
+      margin: 0;
+      max-width: 760px;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .btn-dark {
+      background: rgb(18,18,18);
+      color: white;
+      border: none;
+      border-radius: 9999px;
+      height: 52px;
+      padding: 0 32px;
+      font-size: 16px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: opacity .18s;
+    }
+    .btn-dark:hover { opacity: .85; }
+
+    .btn-outline-green {
+      background: transparent;
+      color: #006C49;
+      border: 1.5px solid #006C49;
+      border-radius: 9999px;
+      height: 52px;
+      padding: 0 32px;
+      font-size: 16px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .18s;
+    }
+    .btn-outline-green:hover { background: rgba(0,108,73,.06); }
+
+    /* ─────────────────────────────────────────────
+       LIFECYCLE JOURNEY BAR
+    ───────────────────────────────────────────── */
+    .lifecycle-section {
+      max-width: 1000px;
+      margin: 0 auto 72px;
+      padding: 0 20px;
+    }
+
+    .lifecycle-label {
+      text-align: center;
+      font-size: 12px;
+      font-weight: 500;
+      color: rgb(161,161,170);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+
+    .lifecycle-flow {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    .lf-node {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .lf-dot {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      transition: transform .15s;
+      cursor: default;
+      position: relative;
+    }
+
+    .lf-node:hover .lf-dot { transform: scale(1.08); }
+
+    .lf-dot.done { background: #006C49; }
+    .lf-dot.new-p1 {
+      background: #fff8f0;
+      border: 2px solid #E07000;
+    }
+    .lf-dot.coming {
+      background: #f5f5f5;
+      border: 2px dashed #d1d5db;
+    }
+
+    .lf-phase-tag {
+      position: absolute;
+      top: -18px;
+      background: #E07000;
+      color: #fff;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 9999px;
+      white-space: nowrap;
+    }
+
+    .lf-connector {
+      width: 28px;
+      height: 1.5px;
+      background: linear-gradient(90deg, rgba(0,108,73,.3), rgba(0,108,73,.1));
+      margin-top: 19px;
+      flex-shrink: 0;
+    }
+    .lf-connector.dashed {
+      background: none;
+      border-top: 1.5px dashed #e5e7eb;
+    }
+    .lf-connector.live {
+      background: rgba(0,108,73,.55);
+    }
+
+    .lf-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: #6b7280;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .lf-label.live { color: #006C49; font-weight: 600; }
+    .lf-label.new { color: #E07000; font-weight: 600; }
+    .lf-label.coming-label { color: #c4b5fd; }
+
+    /* ─────────────────────────────────────────────
+       SECTION HEADINGS
+    ───────────────────────────────────────────── */
+    .section-header {
+      max-width: 1000px;
+      margin: 0 auto 28px;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .phase-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 9999px;
+      padding: 6px 16px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .pill-new { background: rgba(224,112,0,.10); color: #E07000; }
+    .pill-live { background: rgba(0,108,73,.08); color: #006C49; }
+    .pill-soon { background: rgba(124,58,237,.07); color: #7c3aed; }
+
+    .section-title {
+      font-size: 14px;
+      color: #9ca3af;
+      font-weight: 400;
+    }
+
+    .section-divider {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, #e5e7eb, transparent);
+    }
+
+    /* ─────────────────────────────────────────────
+       FEATURE CARDS GRID
+    ───────────────────────────────────────────── */
+    .home-features {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 20px 56px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+    }
+
+    .home-features-3 { grid-template-columns: repeat(3, 1fr); }
+    .home-features-2 { grid-template-columns: repeat(2, 1fr); }
+
+    .feature-card {
+      position: relative;
+      background: rgb(253,253,253);
+      border: 1px solid rgba(229,231,235,.5);
+      border-radius: 32px;
+      padding: 36px;
+      min-height: 360px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      transition: transform .22s ease, box-shadow .22s ease;
+      cursor: pointer;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 16px 48px rgba(0,0,0,.10);
+    }
+
+    .feature-card.card-new-p1 {
+      border-top: 2.5px solid rgba(224,112,0,.40);
+    }
+
+    .feature-card.card-coming {
+      opacity: .72;
+      cursor: default;
+    }
+    .feature-card.card-coming:hover {
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* status badges (top-right absolute) */
+    .card-badge {
+      position: absolute;
+      top: 18px; right: 18px;
+      display: inline-flex;
+      align-items: center;
+      border-radius: 9999px;
+      padding: 4px 12px;
+      font-size: 10px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      font-weight: 600;
+      z-index: 1;
+    }
+    .badge-live { background: rgb(232,250,244); color: #006D4A; }
+    .badge-new { background: rgb(255,243,230); color: #E07000; }
+    .badge-soon { background: rgb(245,243,255); color: #7c3aed; }
+
+    .feature-icon-wrap {
+      width: 52px; height: 52px;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 26px;
+    }
+
+    .feature-title {
+      font-size: 22px;
+      font-weight: 400;
+      color: #121212;
+      line-height: 30px;
+      margin: 0;
+    }
+
+    .feature-desc {
+      font-size: 14px;
+      color: #6b7280;
+      line-height: 24px;
+      margin: 0;
+      flex: 1;
+    }
+
+    .feature-footer {
+      margin-top: auto;
+    }
+
+    .feature-price { font-size: 13px; color: #9ca3af; }
+    .feature-price strong { color: #3b4a41; font-size: 14px; }
+    .feature-price .free { color: #006C49; font-weight: 600; }
+
+    .feature-skills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .skill-tag {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      font-weight: 500;
+    }
+    .skill-green { background: rgba(0,108,73,.08); color: #006C49; }
+    .skill-orange { background: rgba(224,112,0,.08); color: #E07000; }
+    .skill-purple { background: rgba(124,58,237,.07); color: #7c3aed; }
+
+    /* ─────────────────────────────────────────────
+       STATS SECTION (dark full-width)
+    ───────────────────────────────────────────── */
+    .home-stats {
+      width: 100%;
+      background: rgb(26,28,28);
+      padding: 96px 0;
+      display: flex;
+      justify-content: center;
+      margin: 40px 0 72px;
+    }
+
+    .stats-inner {
+      max-width: 1000px;
+      width: 100%;
+      padding: 0 20px;
+      display: flex;
+      justify-content: space-between;
+      gap: 32px;
+    }
+
+    .stat-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stat-number {
+      font-family: 'Newsreader', serif;
+      font-style: italic;
+      font-size: 48px;
+      font-weight: 400;
+      color: rgb(83,254,185);
+      line-height: 48px;
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: rgb(238,238,238);
+      letter-spacing: 1.2px;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    /* ─────────────────────────────────────────────
+       PRICING SECTION
+    ───────────────────────────────────────────── */
+    .home-pricing {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 20px 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 56px;
+    }
+
+    .pricing-heading {
+      font-size: 36px;
+      font-weight: 400;
+      color: #1a1c1c;
+      text-align: center;
+      line-height: 44px;
+      margin: 0;
+    }
+
+    .pricing-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+    }
+
+    .pricing-card {
+      border-radius: 48px;
+      padding: 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pricing-card.light {
+      background: rgb(243,243,244);
+      border: 1px solid rgba(186,202,191,.1);
+    }
+
+    .pricing-card.dark {
+      background: #006C49;
+      box-shadow: 0 16px 48px rgba(0,108,73,.35);
+    }
+
+    .pricing-bg-circle {
+      position: absolute;
+      width: 192px; height: 192px;
+      background: rgba(255,255,255,.1);
+      border-radius: 50%;
+      top: -96px; right: -96px;
+      pointer-events: none;
+    }
+
+    .pricing-label {
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 1.2px;
+      line-height: 16px;
+    }
+    .label-green { color: #006C49; }
+    .label-mint { color: rgb(79,251,182); }
+
+    .pricing-name {
+      font-size: 36px;
+      font-weight: 400;
+      line-height: 40px;
+      margin: 0;
+    }
+    .pricing-card.light .pricing-name { color: #1a1c1c; }
+    .pricing-card.dark .pricing-name { color: white; }
+
+    .pricing-sub {
+      font-size: 16px;
+      line-height: 24px;
+      margin: 0;
+    }
+    .pricing-card.light .pricing-sub { color: #3b4a41; }
+    .pricing-card.dark .pricing-sub { color: rgba(255,255,255,.80); }
+
+    .pricing-price-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      margin: 24px 0;
+    }
+
+    .pricing-price-num {
+      font-family: 'Newsreader', serif;
+      font-size: 48px;
+      font-weight: 400;
+      line-height: 48px;
+    }
+    .pricing-card.light .pricing-price-num { color: #1a1c1c; }
+    .pricing-card.dark .pricing-price-num { color: white; }
+
+    .pricing-price-unit {
+      font-size: 20px;
+      line-height: 28px;
+    }
+    .pricing-card.light .pricing-price-unit { color: #3b4a41; }
+    .pricing-card.dark .pricing-price-unit { color: rgba(255,255,255,.80); }
+
+    .pricing-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding: 0;
+      margin: 20px 0;
+    }
+
+    .pricing-list li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 15px;
+      line-height: 24px;
+    }
+    .pricing-card.light .pricing-list li { color: #1a1c1c; }
+    .pricing-card.dark .pricing-list li { color: white; }
+
+    .pricing-btn {
+      width: 100%;
+      height: 56px;
+      border: none;
+      border-radius: 9999px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      flex-shrink: 0;
+      font-family: inherit;
+      transition: filter .18s, transform .1s;
+    }
+    .pricing-btn:hover { filter: brightness(.92); }
+    .pricing-btn:active { transform: scale(.97); }
+    .light-btn { background: rgb(226,226,226); color: #1a1c1c; }
+    .dark-btn { background: white; color: #006C49; }
+
+    /* check icon reuse */
+    .check-green path { fill: #006C49; }
+    .check-mint path { fill: #4FFBB6; }
+
+    /* ─────────────────────────────────────────────
+       SECURITY SECTION
+    ───────────────────────────────────────────── */
+    .home-security {
+      max-width: 1000px;
+      margin: 0 auto 80px;
+      background: rgb(255,255,255);
+      border: 1px solid rgba(229,231,235,.50);
+      border-radius: 32px;
+      padding: 48px;
+      box-shadow: 0 4px 32px rgba(0,0,0,.06);
+      display: flex;
+      align-items: center;
+      gap: 64px;
+    }
+
+    .security-left {
+      width: 260px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .security-title {
+      font-size: 28px;
+      font-weight: 400;
+      color: rgb(18,18,18);
+      line-height: 36px;
+      margin: 0;
+    }
+
+    .security-desc {
+      font-size: 15px;
+      color: rgb(107,114,128);
+      line-height: 26px;
+      margin: 0;
+    }
+
+    .security-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: 40px;
+      row-gap: 40px;
+    }
+
+    .security-item {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .security-icon-wrap {
+      width: 44px; height: 44px;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 18px;
+    }
+
+    .security-item-text h4 {
+      font-size: 15px;
+      font-weight: 500;
+      color: rgb(18,18,18);
+      line-height: 24px;
+      margin: 0 0 4px;
+    }
+
+    .security-item-text p {
+      font-size: 13px;
+      color: rgb(107,114,128);
+      line-height: 22px;
+      margin: 0;
+    }
+
+    /* ─────────────────────────────────────────────
+       FOOTER
+    ───────────────────────────────────────────── */
+    .footer {
+      width: 100%;
+      background: rgb(244,244,245);
+      padding: 56px 0 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .footer-inner {
+      width: 1000px;
+      max-width: calc(100% - 80px);
+      display: flex;
+      align-items: flex-start;
+      gap: 60px;
+      padding-bottom: 48px;
+      border-bottom: 1px solid rgb(229,231,235);
+    }
+
+    .footer-brand-name {
+      font-family: 'Newsreader', serif;
+      font-size: 20px;
+      font-weight: 700;
+      font-style: italic;
+      color: rgb(24,24,27);
+      margin-bottom: 12px;
+    }
+
+    .footer-brand-desc {
+      font-size: 14px;
+      color: rgb(113,113,122);
+      line-height: 1.75;
+      margin: 0;
+      max-width: 320px;
+    }
+
+    .footer-col-title {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: rgb(24,24,27);
+      margin-bottom: 16px;
+    }
+
+    .contact-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 13px;
+      color: rgb(113,113,122);
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+
+    .footer-bottom {
+      width: 1000px;
+      max-width: calc(100% - 80px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0;
+      font-size: 12px;
+      color: rgb(161,161,170);
+    }
+
+    @media (max-width: 1100px) {
+      .header-container { width: calc(100% - 80px); }
+      .nav { gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<header class="modern-header">
+  <div class="header-container">
+    <span class="logo">VRonly</span>
+    <nav class="nav">
+      <a class="nav-item active">首页</a>
+      <a class="nav-item">智能评价</a>
+      <a class="nav-item">论文校对</a>
+      <a class="nav-item">模板排版</a>
+      <a class="nav-item">论文查重</a>
+      <a class="nav-item" style="color:#E07000;">选题评估<span class="nav-new-dot"></span></a>
+      <a class="nav-item" style="color:#E07000;">文献综述<span class="nav-new-dot"></span></a>
+      <a class="nav-item" href="ui_preview_b2b.html" style="color:#006C49;border-left:1px solid #E2EBE6;padding-left:16px;margin-left:4px;">🏫 高校合作</a>
+    </nav>
+    <button class="login-btn" onclick="location.href='ui_preview_login.html'">登录 / 注册</button>
+  </div>
+</header>
+
+<div class="home-wrap">
+
+  <!-- ═══════════════ HERO ═══════════════ -->
+  <section class="home-hero">
+    <div class="hero-inner">
+      <div class="hero-badge">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+          <path d="M10.6358 4.72703L9.89722 3.10212L8.27231 2.36352L9.89722 1.62492L10.6358 0L11.3744 1.62492L12.9993 2.36352L11.3744 3.10212L10.6358 4.72703ZM10.6358 12.9993L9.89722 11.3744L8.27231 10.6358L9.89722 9.89722L10.6358 8.27231L11.3744 9.89722L12.9993 10.6358L11.3744 11.3744L10.6358 12.9993ZM4.72703 11.2267L3.24984 7.97687L0 6.49967L3.24984 5.02247L4.72703 1.77264L6.20423 5.02247L9.45407 6.49967L6.20423 7.97687L4.72703 11.2267Z" fill="#006C49"/>
+        </svg>
+        论文全生命周期 AI 助手 2.0
+      </div>
+      <h1 class="hero-title">欢迎使用<br>VRonly <span class="accent">论文助手</span></h1>
+      <p class="hero-desc">先把选题做对，再把文献做全——<strong style="color:#006C49;">选题评估</strong>和<strong style="color:#006C49;">文献综述</strong>是论文成功的真正起点。评价、校对、排版、查重，覆盖答辩前全流程。AI 辅助生成初稿，修改权始终在你手里。</p>
+      <div class="hero-cta">
+        <button class="btn-dark">立即使用</button>
+        <button class="btn-outline-green">了解更多</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ LIFECYCLE JOURNEY ═══════════════ -->
+  <div style="max-width:1000px;margin:0 auto 72px;padding:0 20px;">
+    <div style="text-align:center;font-size:12px;font-weight:500;color:rgb(161,161,170);letter-spacing:.12em;text-transform:uppercase;margin-bottom:32px;">
+      论文全生命周期 · 从选题到发表
+    </div>
+    <div style="display:flex;align-items:flex-start;justify-content:center;">
+
+      <!-- 选题 -->
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:10px;">
+        <div style="width:40px;height:40px;border-radius:50%;background:#fff8f0;border:2px solid #E07000;display:flex;align-items:center;justify-content:center;font-size:18px;position:relative;transition:transform .15s;cursor:default;">
+          <span style="position:absolute;top:-18px;background:#E07000;color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:9999px;white-space:nowrap;">NEW</span>
+          🎯
+        </div>
+        <div style="font-size:11px;font-weight:600;color:#E07000;">选题评估</div>
+      </div>
+
+      <div style="width:24px;height:1.5px;background:linear-gradient(90deg,rgba(224,112,0,.4),rgba(224,112,0,.2));margin-top:19px;flex-shrink:0;"></div>
+
+      <!-- 文献 -->
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:10px;">
+        <div style="width:40px;height:40px;border-radius:50%;background:#fff8f0;border:2px solid #E07000;display:flex;align-items:center;justify-content:center;font-size:18px;position:relative;">
+          <span style="position:absolute;top:-18px;background:#E07000;color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:9999px;white-space:nowrap;">NEW</span>
+          📚
+        </div>
+        <div style="font-size:11px;font-weight:600;color:#E07000;">文献综述</div>
+      </div>
+
+      <div style="width:24px;height:1.5px;border-top:1.5px dashed #d1d5db;margin-top:19px;flex-shrink:0;"></div>
+
+      <!-- 写作 -->
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:10px;">
+        <div style="width:40px;height:40px;border-radius:50%;background:#f5f5f5;border:2px dashed #d1d5db;display:flex;align-items:center;justify-content:center;font-size:18px;">✍️</div>
+        <div style="font-size:11px;font-weight:500;color:#c4b5fd;">写作辅助</div>
+      </div>
+
+      <div style="width:24px;height:1.5px;border-top:1.5px dashed #d1d5db;margin-top:19px;flex-shrink:0;"></div>
+
+      <!-- 实验 -->
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:10px;">
+        <div style="width:40px;height:40px;border-radius:50%;background:#f5f5f5;border:2px dashed #d1d5db;display:flex;align-items:center;justify-content:center;font-size:18px;">🔬</div>
+        <div style="font-size:11px;font-weight:500;color:#c4b5fd;">实验设计</div>
+      </div>
+
+      <div style="width:24px;height:1.5px;background:rgba(0,108,73,.55);margin-top:19px;flex-shrink:0;"></div>
+
+      <!-- 评价 -->
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:10px;">
+        <div style="width:40px;height:40px;border-radius:50%;background:#006C49;display:flex;align-items:center;justify-content:center;font-size:18px;">⭐</div>
+        <div style="font-size:11px;font-weight:600;color:#006C49;">智能评价</div>
+      </div>
+
+      <div style="width:24px;height:1.5px;background:rgba(0,108,73,.55);margin-top:19px;flex-shrink:0;"></div>
+
+      <!-- 校对 -->
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:10px;">
+        <div style="width:40px;height:40px;border-radius:50%;background:#006C49;display:flex;align-items:center;justify-content:center;font-size:18px;">🔍</div>
+        <div style="font-size:11px;font-weight:600;color:#006C49;">论文校对</div>
+      </div>
+
+      <div style="width:24px;height:1.5px;background:rgba(0,108,73,.55);margin-top:19px;flex-shrink:0;"></div>
+
+      <!-- 排版 -->
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:10px;">
+        <div style="width:40px;height:40px;border-radius:50%;background:#006C49;display:flex;align-items:center;justify-content:center;font-size:18px;">📄</div>
+        <div style="font-size:11px;font-weight:600;color:#006C49;">模板排版</div>
+      </div>
+
+      <div style="width:24px;height:1.5px;background:rgba(0,108,73,.55);margin-top:19px;flex-shrink:0;"></div>
+
+      <!-- 查重 -->
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:10px;">
+        <div style="width:40px;height:40px;border-radius:50%;background:#006C49;display:flex;align-items:center;justify-content:center;font-size:18px;">🛡️</div>
+        <div style="font-size:11px;font-weight:600;color:#006C49;">论文查重</div>
+      </div>
+
+      <div style="width:24px;height:1.5px;background:linear-gradient(90deg,rgba(0,108,73,.55),rgba(224,112,0,.4));margin-top:19px;flex-shrink:0;"></div>
+
+      <!-- 投稿 -->
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:10px;">
+        <div style="width:40px;height:40px;border-radius:50%;background:#fff8f0;border:2px solid #E07000;display:flex;align-items:center;justify-content:center;font-size:18px;position:relative;">
+          <span style="position:absolute;top:-18px;background:#E07000;color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:9999px;">NEW</span>
+          🏆
+        </div>
+        <div style="font-size:11px;font-weight:600;color:#E07000;">期刊投稿</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════ PHASE 1 NEW FEATURES ═══════════════ -->
+  <div class="section-header">
+    <span class="phase-pill pill-new">✦ Phase 1 · 2026 Q3 即将上线</span>
+    <span class="section-title">开题新功能 — 从更早阶段陪伴您的研究</span>
+    <div class="section-divider"></div>
+  </div>
+
+  <section class="home-features home-features-3">
+
+    <!-- 选题评估 -->
+    <div class="feature-card card-new-p1">
+      <span class="card-badge badge-new">即将上线</span>
+      <div class="feature-icon-wrap" style="background:rgba(224,112,0,.10);">🎯</div>
+      <h3 class="feature-title">选题评估</h3>
+      <div class="feature-skills">
+        <span class="skill-tag skill-orange">hypothesis-generation</span>
+        <span class="skill-tag skill-orange">database-lookup</span>
+      </div>
+      <p class="feature-desc">输入研究问题与方向，AI 从创新性、可行性、重要性三维评分，自动检索 5-10 篇相关已有研究，识别技术难点，给出选题改进建议与方向。</p>
+      <div class="feature-footer">
+        <div class="feature-price"><strong>¥30</strong> / 次 &ensp;·&ensp; 消耗 3 积分</div>
+      </div>
+    </div>
+
+    <!-- 文献综述 -->
+    <div class="feature-card card-new-p1">
+      <span class="card-badge badge-new">即将上线</span>
+      <div class="feature-icon-wrap" style="background:rgba(224,112,0,.10);">📚</div>
+      <h3 class="feature-title">文献综述生成</h3>
+      <div class="feature-skills">
+        <span class="skill-tag skill-orange">literature-review</span>
+        <span class="skill-tag skill-orange">citation-management</span>
+      </div>
+      <p class="feature-desc">上传文献列表（txt / BibTeX / CSV）或直接输入关键词，自动补充检索、分类整理，生成 1500-3000 字综述初稿 + GB/T 7714 参考文献表。</p>
+      <div class="feature-footer">
+        <div class="feature-price"><strong>¥50</strong> / 次 &ensp;·&ensp; 消耗 5 积分</div>
+      </div>
+    </div>
+
+    <!-- 期刊投稿指导 -->
+    <div class="feature-card card-new-p1">
+      <span class="card-badge badge-new">即将上线</span>
+      <div class="feature-icon-wrap" style="background:rgba(0,108,73,.08);">🏆</div>
+      <h3 class="feature-title">期刊投稿指导</h3>
+      <div class="feature-skills">
+        <span class="skill-tag skill-green">database-lookup</span>
+      </div>
+      <p class="feature-desc">基于论文评价结果，自动推荐 5-10 个匹配期刊，展示影响因子、JCR 分区、投稿要求、审稿周期，以及论文与期刊的契合度评分。</p>
+      <div class="feature-footer">
+        <div class="feature-price"><span class="free">✓ 完全免费</span> &ensp;·&ensp; 基于评价结果自动生成</div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ═══════════════ EXISTING FEATURES ═══════════════ -->
+  <div class="section-header">
+    <span class="phase-pill pill-live">● 现有功能 · 立即可用</span>
+    <span class="section-title">论文后期全流程 — 评价 → 校对 → 排版 → 查重</span>
+    <div class="section-divider"></div>
+  </div>
+
+  <section class="home-features">
+
+    <!-- 智能评价 -->
+    <div class="feature-card">
+      <span class="card-badge badge-live">运行中</span>
+      <div class="feature-icon-wrap" style="background:rgba(39,226,159,.10);">
+        <svg width="28" height="28" viewBox="0 0 36 36" fill="none"><path d="M18 2L22.4 13.2L34.6 13.2L25 20.4L29.4 31.6L18 24.8L6.6 31.6L11 20.4L1.4 13.2L13.6 13.2L18 2Z" fill="#006D4A"/></svg>
+      </div>
+      <h3 class="feature-title">智能评价</h3>
+      <p class="feature-desc">5 个维度 AI 评分（选题意义/写作安排/逻辑构建/专业能力/学术规范），权重精细化配比，导出带雷达图的 Word 评价报告。支持人文/理工/艺术三类。</p>
+      <div class="feature-footer">
+        <div class="feature-price"><strong>¥50</strong> / 篇 &ensp;·&ensp; 5 积分</div>
+      </div>
+    </div>
+
+    <!-- 论文校对 -->
+    <div class="feature-card">
+      <span class="card-badge badge-live">运行中</span>
+      <div class="feature-icon-wrap" style="background:rgba(167,139,250,.10);">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M3 21h3.75L17.81 9.94l-3.75-3.75L3 17.25V21zm17.71-11.35l-3.75-3.75 2.54-2.54a.996.996 0 0 1 1.41 0l2.34 2.34c.39.39.39 1.02 0 1.41l-2.54 2.54z" fill="#A78BFA"/></svg>
+      </div>
+      <h3 class="feature-title">论文校对</h3>
+      <p class="feature-desc">AI 逐段检查拼写、语法、标点、段落逻辑，输出带 Word Track Changes 修订标记的文档，WPS 格式兼容，并发调用加速处理。</p>
+      <div class="feature-footer">
+        <div class="feature-price"><strong>¥50-100</strong> / 篇 &ensp;·&ensp; 按字数阶梯定价</div>
+      </div>
+    </div>
+
+    <!-- 模板排版 -->
+    <div class="feature-card">
+      <span class="card-badge badge-live">运行中</span>
+      <div class="feature-icon-wrap" style="background:rgba(18,18,18,.05);">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="3" y="5" width="22" height="3" rx="1.5" fill="#121212"/><rect x="3" y="11" width="22" height="3" rx="1.5" fill="#121212"/><rect x="3" y="17" width="14" height="3" rx="1.5" fill="#121212"/></svg>
+      </div>
+      <h3 class="feature-title">模板排版</h3>
+      <p class="feature-desc">ZIP 级样式注入，一键套用浙大、清华、中文核心期刊等内置模板，或上传自定义模板。字体、行距、标题层级完全合规，导出即可提交。</p>
+      <div class="feature-footer">
+        <div class="feature-price"><strong>¥30-50</strong> / 次 &ensp;·&ensp; 3 积分</div>
+      </div>
+    </div>
+
+    <!-- 论文查重 -->
+    <div class="feature-card">
+      <div class="feature-icon-wrap" style="background:rgb(232,250,244);">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="11" stroke="#006D4A" stroke-width="2.5" fill="none"/><path d="M9 14l3 3 7-7" stroke="#006D4A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3 class="feature-title">查重预检</h3>
+      <p class="feature-desc">提交知网前的智能预检工具——提前识别高风险段落，给你留足修改时间。不是替代知网，而是让你在正式查重前先排雷。中英文双引擎，输出分级风险报告。</p>
+      <div class="feature-footer">
+        <div class="feature-price">中文 <strong>¥20</strong> &ensp;/&ensp; 英文 <strong>¥50</strong></div>
+      </div>
+    </div>
+
+    <!-- AIGC 检测 -->
+    <div class="feature-card">
+      <div class="feature-icon-wrap" style="background:rgb(232,250,244);">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="12.5" cy="12.5" r="8" stroke="#006D4A" stroke-width="2.5" fill="none"/><path d="M18.5 18.5l5 5" stroke="#006D4A" stroke-width="2.5" stroke-linecap="round"/></svg>
+      </div>
+      <h3 class="feature-title">AIGC 检测</h3>
+      <p class="feature-desc">交稿前先自查 AI 生成内容占比，精准定位疑似 AI 段落，给出降 AI 改写建议。让你赶在导师检测前主动优化，从容应对各校 AI 使用规范。</p>
+      <div class="feature-footer">
+        <div class="feature-price">按次 <strong>¥20</strong></div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ═══════════════ PHASE 2 COMING SOON ═══════════════ -->
+  <div class="section-header">
+    <span class="phase-pill pill-soon">○ Phase 2 · 2026 Q4 规划中</span>
+    <span class="section-title">写作全程辅助 — 覆盖论文写作过程中段</span>
+    <div class="section-divider"></div>
+  </div>
+
+  <section class="home-features home-features-2" style="padding-bottom:16px;">
+
+    <!-- 高级写作辅助 -->
+    <div class="feature-card card-coming">
+      <span class="card-badge badge-soon">规划中</span>
+      <div class="feature-icon-wrap" style="background:rgba(124,58,237,.07);">✍️</div>
+      <h3 class="feature-title">高级写作辅助</h3>
+      <div class="feature-skills">
+        <span class="skill-tag skill-purple">scientific-writing</span>
+        <span class="skill-tag skill-purple">hypothesis-generation</span>
+      </div>
+      <p class="feature-desc">集成富文本编辑器，边写边获得实时 AI 反馈。检查语法与学术规范、段落逻辑连贯性、论证强度，提供改写建议与学科专业术语推荐。</p>
+      <div class="feature-footer">
+        <div class="feature-price"><strong>¥20</strong> / 次 &ensp;·&ensp; 2 积分</div>
+      </div>
+    </div>
+
+    <!-- 实验设计评审 -->
+    <div class="feature-card card-coming">
+      <span class="card-badge badge-soon">规划中</span>
+      <div class="feature-icon-wrap" style="background:rgba(124,58,237,.07);">🔬</div>
+      <h3 class="feature-title">实验设计评审</h3>
+      <div class="feature-skills">
+        <span class="skill-tag skill-purple">experimental-design</span>
+      </div>
+      <p class="feature-desc">上传实验方案，AI 审查科学性与完整性，识别伪重复、混淆变量与伦理风险，自动生成随机化分组方案（可导出 CSV），提供 DOE 方法论改进建议。</p>
+      <div class="feature-footer">
+        <div class="feature-price"><strong>¥30</strong> / 次 &ensp;·&ensp; 3 积分</div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ═══════════════ STATS ═══════════════ -->
+  <section class="home-stats">
+    <div class="stats-inner">
+      <div class="stat-item">
+        <span class="stat-number">98.5%</span>
+        <span class="stat-label">评估准确率</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">500+</span>
+        <span class="stat-label">活跃用户</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">2M+</span>
+        <span class="stat-label">处理字数</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">8+</span>
+        <span class="stat-label">全程功能</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ PRICING ═══════════════ -->
+  <section class="home-pricing">
+    <h2 class="pricing-heading">选择最适合您学术进程的方案</h2>
+    <div class="pricing-cards">
+
+      <!-- 按次购买 -->
+      <div class="pricing-card light">
+        <p class="pricing-label label-green">最优价格</p>
+        <h3 class="pricing-name">按次使用</h3>
+        <p class="pricing-sub">Perfect for final polish or single chapters.</p>
+        <div class="pricing-price-row">
+          <span class="pricing-price-num">¥9.90</span>
+          <span class="pricing-price-unit">/次起</span>
+        </div>
+        <ul class="pricing-list">
+          <li>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M8.6 14.6L15.65 7.55L14.25 6.15L8.6 11.8L5.75 8.95L4.35 10.35L8.6 14.6ZM10 20C8.61667 20 7.31667 19.7375 6.1 19.2125C4.88333 18.6875 3.825 17.975 2.925 17.075C2.025 16.175 1.3125 15.1167 0.7875 13.9C0.2625 12.6833 0 11.3833 0 10C0 8.61667 0.2625 7.31667 0.7875 6.1C1.3125 4.88333 2.025 3.825 2.925 2.925C3.825 2.025 4.88333 1.3125 6.1 0.7875C7.31667 0.2625 8.61667 0 10 0C11.3833 0 12.6833 0.2625 13.9 0.7875C15.1167 1.3125 16.175 2.025 17.075 2.925C17.975 3.825 18.6875 4.88333 19.2125 6.1C19.7375 7.31667 20 8.61667 20 10C20 11.3833 19.7375 12.6833 19.2125 13.9C18.6875 15.1167 17.975 16.175 17.075 17.075C16.175 17.975 15.1167 18.6875 13.9 19.2125C12.6833 19.7375 11.3833 20 10 20Z" fill="#006C49"/></svg>
+            全部 8 项功能可用
+          </li>
+          <li>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M8.6 14.6L15.65 7.55L14.25 6.15L8.6 11.8L5.75 8.95L4.35 10.35L8.6 14.6ZM10 20C8.61667 20 7.31667 19.7375 6.1 19.2125C4.88333 18.6875 3.825 17.975 2.925 17.075C2.025 16.175 1.3125 15.1167 0.7875 13.9C0.2625 12.6833 0 11.3833 0 10C0 8.61667 0.2625 7.31667 0.7875 6.1C1.3125 4.88333 2.025 3.825 2.925 2.925C3.825 2.025 4.88333 1.3125 6.1 0.7875C7.31667 0.2625 8.61667 0 10 0C11.3833 0 12.6833 0.2625 13.9 0.7875C15.1167 1.3125 16.175 2.025 17.075 2.925C17.975 3.825 18.6875 4.88333 19.2125 6.1C19.7375 7.31667 20 8.61667 20 10C20 11.3833 19.7375 12.6833 19.2125 13.9C18.6875 15.1167 17.975 16.175 17.075 17.075C16.175 17.975 15.1167 18.6875 13.9 19.2125C12.6833 19.7375 11.3833 20 10 20Z" fill="#006C49"/></svg>
+            使用即扣，无过期限制
+          </li>
+          <li>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M8.6 14.6L15.65 7.55L14.25 6.15L8.6 11.8L5.75 8.95L4.35 10.35L8.6 14.6ZM10 20C8.61667 20 7.31667 19.7375 6.1 19.2125C4.88333 18.6875 3.825 17.975 2.925 17.075C2.025 16.175 1.3125 15.1167 0.7875 13.9C0.2625 12.6833 0 11.3833 0 10C0 8.61667 0.2625 7.31667 0.7875 6.1C1.3125 4.88333 2.025 3.825 2.925 2.925C3.825 2.025 4.88333 1.3125 6.1 0.7875C7.31667 0.2625 8.61667 0 10 0C11.3833 0 12.6833 0.2625 13.9 0.7875C15.1167 1.3125 16.175 2.025 17.075 2.925C17.975 3.825 18.6875 4.88333 19.2125 6.1C19.7375 7.31667 20 8.61667 20 10C20 11.3833 19.7375 12.6833 19.2125 13.9C18.6875 15.1167 17.975 16.175 17.075 17.075C16.175 17.975 15.1167 18.6875 13.9 19.2125C12.6833 19.7375 11.3833 20 10 20Z" fill="#006C49"/></svg>
+            新功能上线自动解锁
+          </li>
+        </ul>
+        <button class="pricing-btn light-btn">立即购买</button>
+      </div>
+
+      <!-- 包月订阅 -->
+      <div class="pricing-card dark">
+        <div class="pricing-bg-circle"></div>
+        <p class="pricing-label label-mint">最受欢迎</p>
+        <h3 class="pricing-name">包月订阅</h3>
+        <p class="pricing-sub">Unlimited access for your full thesis journey.</p>
+        <div class="pricing-price-row">
+          <span class="pricing-price-num">¥69.90</span>
+          <span class="pricing-price-unit">/月</span>
+        </div>
+        <ul class="pricing-list">
+          <li>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M8.6 14.6L15.65 7.55L14.25 6.15L8.6 11.8L5.75 8.95L4.35 10.35L8.6 14.6ZM10 20C8.61667 20 7.31667 19.7375 6.1 19.2125C4.88333 18.6875 3.825 17.975 2.925 17.075C2.025 16.175 1.3125 15.1167 0.7875 13.9C0.2625 12.6833 0 11.3833 0 10C0 8.61667 0.2625 7.31667 0.7875 6.1C1.3125 4.88333 2.025 3.825 2.925 2.925C3.825 2.025 4.88333 1.3125 6.1 0.7875C7.31667 0.2625 8.61667 0 10 0C11.3833 0 12.6833 0.2625 13.9 0.7875C15.1167 1.3125 16.175 2.025 17.075 2.925C17.975 3.825 18.6875 4.88333 19.2125 6.1C19.7375 7.31667 20 8.61667 20 10C20 11.3833 19.7375 12.6833 19.2125 13.9C18.6875 15.1167 17.975 16.175 17.075 17.075C16.175 17.975 15.1167 18.6875 13.9 19.2125C12.6833 19.7375 11.3833 20 10 20Z" fill="#4FFBB6"/></svg>
+            每月 20 次使用额度
+          </li>
+          <li>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M8.6 14.6L15.65 7.55L14.25 6.15L8.6 11.8L5.75 8.95L4.35 10.35L8.6 14.6ZM10 20C8.61667 20 7.31667 19.7375 6.1 19.2125C4.88333 18.6875 3.825 17.975 2.925 17.075C2.025 16.175 1.3125 15.1167 0.7875 13.9C0.2625 12.6833 0 11.3833 0 10C0 8.61667 0.2625 7.31667 0.7875 6.1C1.3125 4.88333 2.025 3.825 2.925 2.925C3.825 2.025 4.88333 1.3125 6.1 0.7875C7.31667 0.2625 8.61667 0 10 0C11.3833 0 12.6833 0.2625 13.9 0.7875C15.1167 1.3125 16.175 2.025 17.075 2.925C17.975 3.825 18.6875 4.88333 19.2125 6.1C19.7375 7.31667 20 8.61667 20 10C20 11.3833 19.7375 12.6833 19.2125 13.9C18.6875 15.1167 17.975 16.175 17.075 17.075C16.175 17.975 15.1167 18.6875 13.9 19.2125C12.6833 19.7375 11.3833 20 10 20Z" fill="#4FFBB6"/></svg>
+            全部新功能优先体验
+          </li>
+          <li>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M8.6 14.6L15.65 7.55L14.25 6.15L8.6 11.8L5.75 8.95L4.35 10.35L8.6 14.6ZM10 20C8.61667 20 7.31667 19.7375 6.1 19.2125C4.88333 18.6875 3.825 17.975 2.925 17.075C2.025 16.175 1.3125 15.1167 0.7875 13.9C0.2625 12.6833 0 11.3833 0 10C0 8.61667 0.2625 7.31667 0.7875 6.1C1.3125 4.88333 2.025 3.825 2.925 2.925C3.825 2.025 4.88333 1.3125 6.1 0.7875C7.31667 0.2625 8.61667 0 10 0C11.3833 0 12.6833 0.2625 13.9 0.7875C15.1167 1.3125 16.175 2.025 17.075 2.925C17.975 3.825 18.6875 4.88333 19.2125 6.1C19.7375 7.31667 20 8.61667 20 10C20 11.3833 19.7375 12.6833 19.2125 13.9C18.6875 15.1167 17.975 16.175 17.075 17.075C16.175 17.975 15.1167 18.6875 13.9 19.2125C12.6833 19.7375 11.3833 20 10 20Z" fill="#4FFBB6"/></svg>
+            30 天有效期 · 续费累计
+          </li>
+          <li>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M8.6 14.6L15.65 7.55L14.25 6.15L8.6 11.8L5.75 8.95L4.35 10.35L8.6 14.6ZM10 20C8.61667 20 7.31667 19.7375 6.1 19.2125C4.88333 18.6875 3.825 17.975 2.925 17.075C2.025 16.175 1.3125 15.1167 0.7875 13.9C0.2625 12.6833 0 11.3833 0 10C0 8.61667 0.2625 7.31667 0.7875 6.1C1.3125 4.88333 2.025 3.825 2.925 2.925C3.825 2.025 4.88333 1.3125 6.1 0.7875C7.31667 0.2625 8.61667 0 10 0C11.3833 0 12.6833 0.2625 13.9 0.7875C15.1167 1.3125 16.175 2.025 17.075 2.925C17.975 3.825 18.6875 4.88333 19.2125 6.1C19.7375 7.31667 20 8.61667 20 10C20 11.3833 19.7375 12.6833 19.2125 13.9C18.6875 15.1167 17.975 16.175 17.075 17.075C16.175 17.975 15.1167 18.6875 13.9 19.2125C12.6833 19.7375 11.3833 20 10 20Z" fill="#4FFBB6"/></svg>
+            优先客服支持
+          </li>
+        </ul>
+        <button class="pricing-btn dark-btn">立即订阅</button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════ SECURITY ═══════════════ -->
+  <section class="home-security">
+    <div class="security-left">
+      <h2 class="security-title">安全承诺</h2>
+      <p class="security-desc">您的学术成果是无价之宝，我们采用银行级加密技术保护您的隐私与知识产权。</p>
+    </div>
+    <div class="security-grid">
+      <div class="security-item">
+        <div class="security-icon-wrap" style="background:rgba(39,226,159,.10);">
+          <svg width="15" height="20" viewBox="0 0 15 20" fill="none"><path d="M1.80768 19.4999C1.30896 19.4999 0.883006 19.3233 0.529803 18.9701C0.176601 18.6169 0 18.1909 0 17.6922V8.30764C0 7.80893 0.176601 7.38297 0.529803 7.02977C0.883006 6.67656 1.30896 6.49996 1.80768 6.49996H3V4.49996C3 3.25126 3.43782 2.18908 4.31345 1.31345C5.18908 0.437817 6.25126 0 7.49996 0C8.74867 0 9.81084 0.437817 10.6865 1.31345C11.5621 2.18908 11.9999 3.25126 11.9999 4.49996V6.49996H13.1922C13.691 6.49996 14.1169 6.67656 14.4701 7.02977C14.8233 7.38297 14.9999 7.80893 14.9999 8.30764V17.6922C14.9999 18.1909 14.8233 18.6169 14.4701 18.9701C14.1169 19.3233 13.691 19.4999 13.1922 19.4999H1.80768ZM7.49996 14.7499C7.98586 14.7499 8.39899 14.5797 8.73937 14.2393C9.07975 13.899 9.24994 13.4858 9.24994 12.9999C9.24994 12.514 9.07975 12.1009 8.73937 11.7605C8.39899 11.4201 7.98586 11.2499 7.49996 11.2499C7.01407 11.2499 6.60093 11.4201 6.26055 11.7605C5.92017 12.1009 5.74998 12.514 5.74998 12.9999C5.74998 13.4858 5.92017 13.899 6.26055 14.2393C6.60093 14.5797 7.01407 14.7499 7.49996 14.7499ZM4.49996 6.49996H10.5V4.49996C10.5 3.66663 10.2083 2.9583 9.62496 2.37496C9.04163 1.79163 8.3333 1.49996 7.49996 1.49996C6.66663 1.49996 5.9583 1.79163 5.37496 2.37496C4.79163 2.9583 4.49996 3.66663 4.49996 4.49996V6.49996Z" fill="#006D4A"/></svg>
+        </div>
+        <div class="security-item-text">
+          <h4>Security Audit</h4>
+          <p>定期进行第三方安全审计，确保系统无漏洞。</p>
+        </div>
+      </div>
+      <div class="security-item">
+        <div class="security-icon-wrap" style="background:rgba(167,139,250,.10);">
+          <svg width="18" height="19" viewBox="0 0 18 19" fill="none"><path d="M0 18.6103V17.0758H11.7642V18.6103H0ZM5.93721 13.334L0.511526 7.90834L2.30564 6.06307L7.78248 11.4888L5.93721 13.334ZM12.0003 7.27095L6.5746 1.79412L8.41987 0L13.8456 5.42569L12.0003 7.27095ZM16.9224 17.4889L3.92668 4.49319L5.00471 3.41515L18.0004 16.4109L16.9224 17.4889Z" fill="#A78BFA"/></svg>
+        </div>
+        <div class="security-item-text">
+          <h4>Legal Compliance</h4>
+          <p>严格遵守数据保护法，不存储用户核心内容。</p>
+        </div>
+      </div>
+      <div class="security-item">
+        <div class="security-icon-wrap" style="background:rgb(244,244,245);">
+          <svg width="19" height="15" viewBox="0 0 19 15" fill="none"><path d="M1.80768 14.9999C1.30255 14.9999 0.874992 14.8249 0.524995 14.4749C0.174998 14.1249 0 13.6974 0 13.1922V1.80768C0 1.30255 0.174998 0.874992 0.524995 0.524995C0.874992 0.174998 1.30255 0 1.80768 0H17.1922C17.6974 0 18.1249 0.174998 18.4749 0.524995C18.8249 0.874992 18.9999 1.30255 18.9999 1.80768V13.1922C18.9999 13.6974 18.8249 14.1249 18.4749 14.4749C18.1249 14.8249 17.6974 14.9999 17.1922 14.9999H1.80768ZM1.80768 13.5H17.1922C17.2692 13.5 17.3397 13.4679 17.4038 13.4038C17.4679 13.3397 17.5 13.2692 17.5 13.1922V3.49996H1.49996V13.1922C1.49996 13.2692 1.53202 13.3397 1.59612 13.4038C1.66023 13.4679 1.73075 13.5 1.80768 13.5ZM4.99996 12.1442L3.95576 11.1L6.53076 8.49996L3.93076 5.89996L4.99996 4.85576L8.64417 8.49996L4.99996 12.1442ZM9.74998 12.2499V10.75H15.2499V12.2499H9.74998Z" fill="#121212"/></svg>
+        </div>
+        <div class="security-item-text">
+          <h4>Technical Encryption</h4>
+          <p>AES-256 位加密传输，全程密文处理。</p>
+        </div>
+      </div>
+      <div class="security-item">
+        <div class="security-icon-wrap" style="background:rgba(39,226,159,.05);">
+          <svg width="21" height="14" viewBox="0 0 21 14" fill="none"><path d="M10.4638 11.0769C11.5969 11.0769 12.5592 10.6803 13.3509 9.8871C14.1426 9.09393 14.5384 8.1308 14.5384 6.9977C14.5384 5.8646 14.1418 4.90222 13.3486 4.11056C12.5555 3.3189 11.5923 2.92307 10.4592 2.92307C9.32614 2.92307 8.36376 3.31966 7.5721 4.11282C6.78044 4.90599 6.38461 5.86913 6.38461 7.00223C6.38461 8.13532 6.78119 9.0977 7.57436 9.88936C8.36753 10.681 9.33066 11.0769 10.4638 11.0769ZM10.4615 9.69996C9.7115 9.69996 9.074 9.43746 8.549 8.91246C8.024 8.38746 7.7615 7.74996 7.7615 6.99996C7.7615 6.24996 8.024 5.61246 8.549 5.08746C9.074 4.56246 9.7115 4.29996 10.4615 4.29996C11.2115 4.29996 11.849 4.56246 12.374 5.08746C12.899 5.61246 13.1615 6.24996 13.1615 6.99996C13.1615 7.74996 12.899 8.38746 12.374 8.91246C11.849 9.43746 11.2115 9.69996 10.4615 9.69996ZM10.4629 13.9999C8.16325 13.9999 6.06793 13.3656 4.17691 12.0971C2.28589 10.8285 0.893589 9.12944 0 6.99996C0.893589 4.87049 2.28543 3.17146 4.17554 1.90287C6.06564 0.634292 8.1605 0 10.4601 0C12.7597 0 14.8551 0.634292 16.7461 1.90287C18.6371 3.17146 20.0294 4.87049 20.923 6.99996C20.0294 9.12944 18.6376 10.8285 16.7475 12.0971C14.8574 13.3656 12.7625 13.9999 10.4629 13.9999Z" fill="#006D4A"/></svg>
+        </div>
+        <div class="security-item-text">
+          <h4>Transparency</h4>
+          <p>透明的处理流程，用户可随时撤回授权。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div style="flex:1;min-width:0;">
+      <div class="footer-brand-name">VRonly</div>
+      <p class="footer-brand-desc">专注于学术论文全生命周期质量提升的创新平台，助力科研梦想实现</p>
+    </div>
+    <div style="flex-shrink:0;width:240px;">
+      <span class="footer-col-title">联系我们</span>
+      <div class="contact-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#006D4A" style="flex-shrink:0;margin-top:2px;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>
+        <span>山东省青岛市崂山区科苑纬一路一号<br>创新园C座1001室</span>
+      </div>
+      <div class="contact-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#006D4A" style="flex-shrink:0;margin-top:2px;"><path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.61 21 3 13.39 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1.02l-2.2 2.2z"/></svg>
+        <span>0532-83815891</span>
+      </div>
+      <div class="contact-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#006D4A" style="flex-shrink:0;margin-top:2px;"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg>
+        <span>VRonly@163.com</span>
+      </div>
+    </div>
+    <div style="flex-shrink:0;width:120px;">
+      <span class="footer-col-title">关注我们</span>
+      <div style="width:100px;height:100px;background:#e5e7eb;border-radius:8px;border:1px solid rgb(229,231,235);display:flex;align-items:center;justify-content:center;">
+        <span style="font-size:11px;color:#9ca3af;text-align:center;">二维码<br>占位</span>
+      </div>
+      <p style="font-size:12px;color:#9ca3af;margin-top:8px;text-align:center;">扫码关注公众号</p>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2025 VRonly. 保留所有权利.</span>
+    <span>鲁ICP备XXXXXXXX号</span>
+  </div>
+</footer>
+
+</body>
+</html>

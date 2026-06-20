@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VRonly — 登录 / 注册</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@1,600&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green:      #006C49;
+      --green-mid:  #00875C;
+      --green-pale: #E8F5EE;
+      --green-pale2:#F0FAF5;
+      --muted:      #7A8C82;
+      --border:     #E2EBE6;
+      --text:       #1A2E20;
+      --mid:        #3D5244;
+      --red:        #DC3545;
+      --font:       'Noto Sans SC', sans-serif;
+      --font-d:     'Newsreader', serif;
+      --radius:     16px;
+    }
+    body {
+      font-family: var(--font);
+      background: linear-gradient(145deg, #F0FAF5 0%, #E4F4EC 50%, #F5F7F6 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── top bar ── */
+    .topbar {
+      height: 60px; padding: 0 40px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo { font-family: var(--font-d); font-style: italic; font-size: 22px; color: var(--text); text-decoration: none; font-weight: 600; }
+    .back-link { font-size: 13px; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 4px; }
+    .back-link:hover { color: var(--green); }
+
+    /* ── main layout ── */
+    .main {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      padding: 24px 20px 48px;
+      gap: 64px;
+    }
+
+    /* left panel */
+    .left-panel { max-width: 380px; }
+    .lp-tag { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: var(--green); text-transform: uppercase; margin-bottom: 12px; }
+    .lp-title { font-family: var(--font-d); font-size: 38px; font-weight: 600; color: var(--text); line-height: 1.2; margin-bottom: 16px; }
+    .lp-title span { color: var(--green); }
+    .lp-desc { font-size: 15px; color: var(--muted); line-height: 1.7; margin-bottom: 32px; }
+    .feature-list { display: flex; flex-direction: column; gap: 14px; }
+    .feat-item { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--mid); }
+    .feat-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: var(--green-pale); display: flex; align-items: center;
+      justify-content: center; font-size: 17px; flex-shrink: 0;
+    }
+
+    /* right: auth card */
+    .auth-card {
+      background: #fff; border-radius: 24px;
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 48px rgba(0,108,73,0.10);
+      width: 420px; overflow: hidden;
+    }
+
+    /* mode tabs */
+    .mode-tabs { display: flex; border-bottom: 1px solid var(--border); }
+    .mode-tab {
+      flex: 1; padding: 16px; text-align: center;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      color: var(--muted); transition: all 0.15s;
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
+    }
+    .mode-tab.active { color: var(--green); border-bottom-color: var(--green); background: var(--green-pale2); }
+
+    .card-body { padding: 28px 32px 32px; }
+
+    /* sub tabs: 登录 / 注册 */
+    .auth-tabs { display: flex; gap: 0; background: #F4F7F5; border-radius: 10px; padding: 3px; margin-bottom: 24px; }
+    .auth-tab {
+      flex: 1; padding: 8px; text-align: center; font-size: 13px; font-weight: 600;
+      color: var(--muted); border-radius: 8px; cursor: pointer; transition: all 0.15s;
+    }
+    .auth-tab.active { background: #fff; color: var(--green); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+
+    /* form */
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 12px; font-weight: 700; color: var(--mid); margin-bottom: 6px; letter-spacing: 0.03em; }
+    input, select {
+      width: 100%; padding: 11px 14px; border-radius: 10px;
+      border: 1.5px solid var(--border); background: #FAFBFA;
+      font-size: 14px; color: var(--text); font-family: var(--font);
+      outline: none; transition: border-color 0.15s;
+    }
+    input:focus, select:focus { border-color: var(--green); background: #fff; }
+    input::placeholder { color: #B0BDB5; }
+    .input-with-btn { position: relative; }
+    .input-with-btn input { padding-right: 100px; }
+    .send-code-btn {
+      position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+      font-size: 12px; font-weight: 700; color: var(--green);
+      background: var(--green-pale); border: none; padding: 5px 12px;
+      border-radius: 6px; cursor: pointer; white-space: nowrap;
+    }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .divider { display: flex; align-items: center; gap: 10px; margin: 16px 0; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .divider span { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+    .submit-btn {
+      width: 100%; padding: 13px; border-radius: 100px;
+      background: var(--green); color: #fff; border: none;
+      font-size: 15px; font-weight: 700; cursor: pointer; font-family: var(--font);
+      transition: all 0.15s; margin-top: 4px;
+    }
+    .submit-btn:hover { background: var(--green-mid); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,108,73,0.25); }
+
+    /* third-party login */
+    .oauth-row { display: flex; gap: 10px; }
+    .oauth-btn {
+      flex: 1; padding: 10px; border-radius: 10px;
+      border: 1.5px solid var(--border); background: #fff;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      font-size: 13px; font-weight: 600; color: var(--mid);
+      cursor: pointer; transition: all 0.15s;
+    }
+    .oauth-btn:hover { border-color: var(--green); color: var(--green); background: var(--green-pale2); }
+    .oauth-icon { font-size: 18px; }
+
+    /* agreement */
+    .agreement {
+      font-size: 12px; color: var(--muted); text-align: center;
+      margin-top: 14px; line-height: 1.6;
+    }
+    .agreement a { color: var(--green); text-decoration: none; }
+
+    /* invite code hint */
+    .invite-hint {
+      background: #FFF8E1; border: 1px solid rgba(232,132,10,0.20);
+      border-radius: 10px; padding: 11px 14px;
+      font-size: 12px; color: #7A5A00; line-height: 1.5; margin-bottom: 16px;
+    }
+    .invite-hint strong { color: #5A4000; }
+
+    /* free credits badge */
+    .free-badge {
+      background: var(--green-pale); border: 1px solid rgba(0,108,73,0.15);
+      border-radius: 10px; padding: 11px 14px;
+      font-size: 12px; color: var(--green); margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .free-badge strong { font-size: 18px; color: var(--green); }
+
+    /* pending state */
+    .pending-card {
+      text-align: center; padding: 24px 0;
+    }
+    .pending-icon { font-size: 48px; margin-bottom: 14px; }
+    .pending-title { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+    .pending-desc { font-size: 13px; color: var(--muted); line-height: 1.7; }
+
+    /* page states toggling */
+    .state { display: none; }
+    .state.active { display: block; }
+
+    /* error text */
+    .err { font-size: 12px; color: var(--red); margin-top: 4px; display: none; }
+
+    /* forgot */
+    .forgot { font-size: 12px; color: var(--green); text-decoration: none; float: right; margin-top: -2px; }
+    .forgot:hover { text-decoration: underline; }
+
+    /* SSO btn */
+    .sso-btn {
+      width: 100%; padding: 13px; border-radius: 100px;
+      background: #F0FAF5; color: var(--green); border: 1.5px solid rgba(0,108,73,0.25);
+      font-size: 14px; font-weight: 700; cursor: pointer; font-family: var(--font);
+      transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .sso-btn:hover { background: var(--green-pale); border-color: var(--green); }
+
+    /* mobile */
+    @media (max-width: 860px) {
+      .left-panel { display: none; }
+      .main { justify-content: center; }
+      .auth-card { width: 100%; max-width: 420px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="logo" href="#">VRonly</a>
+  <a class="back-link" href="#">← 返回首页</a>
+</div>
+
+<div class="main">
+
+  <!-- left intro -->
+  <div class="left-panel">
+    <div class="lp-tag">论文全程助手</div>
+    <div class="lp-title">从选题到<span>投稿</span><br/>一站搞定</div>
+    <div class="lp-desc">AI 驱动的论文全生命周期平台，帮你在每个阶段都少走弯路。</div>
+    <div class="feature-list">
+      <div class="feat-item"><div class="feat-icon">🎯</div>选题评估 — 创新性、可行性、重要性三维分析</div>
+      <div class="feat-item"><div class="feat-icon">📚</div>文献综述 — 自动检索 + 分类 + 生成初稿</div>
+      <div class="feat-item"><div class="feat-icon">⭐</div>智能评价 — 五维度专业评分报告</div>
+      <div class="feat-item"><div class="feat-icon">🔍</div>论文校对 — AI 修订标记，教师级审阅体验</div>
+      <div class="feat-item"><div class="feat-icon">🛡️</div>论文查重 — 中英文双引擎，全面检测</div>
+    </div>
+  </div>
+
+  <!-- auth card -->
+  <div class="auth-card">
+
+    <!-- 模式切换：个人 / 机构学生 -->
+    <div class="mode-tabs">
+      <div class="mode-tab active" onclick="switchMode('personal', this)">个人使用</div>
+      <div class="mode-tab" onclick="switchMode('institution', this)">机构学生</div>
+    </div>
+
+    <!-- ══ 个人模式 ══ -->
+    <div id="mode-personal" class="card-body">
+      <div class="auth-tabs">
+        <div class="auth-tab active" onclick="switchTab('login', this)">登录</div>
+        <div class="auth-tab" onclick="switchTab('register', this)">注册</div>
+      </div>
+
+      <!-- 登录 -->
+      <div id="state-login" class="state active">
+        <div class="form-group">
+          <label>手机号 / 邮箱</label>
+          <input type="text" placeholder="请输入手机号或邮箱" />
+        </div>
+        <div class="form-group">
+          <label>密码 <a class="forgot" href="#">忘记密码？</a></label>
+          <input type="password" placeholder="请输入密码" />
+        </div>
+        <button class="submit-btn">登录</button>
+        <div class="divider"><span>或使用第三方登录</span></div>
+        <div class="oauth-row">
+          <div class="oauth-btn"><span class="oauth-icon">💬</span>微信登录</div>
+          <div class="oauth-btn"><span class="oauth-icon">🔵</span>支付宝登录</div>
+        </div>
+        <div class="divider"><span>也可用验证码登录</span></div>
+        <div class="form-group">
+          <label>手机验证码登录</label>
+          <div class="input-with-btn">
+            <input type="text" placeholder="输入手机号" />
+            <button class="send-code-btn">获取验证码</button>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:-4px;">
+          <input type="text" placeholder="请输入 6 位验证码" />
+        </div>
+        <button class="submit-btn" style="margin-top:4px;background:#3D5244;">验证码登录</button>
+      </div>
+
+      <!-- 注册 -->
+      <div id="state-register" class="state">
+        <div class="free-badge">
+          🎁 注册即送 <strong>5 次</strong> 免费使用额度，无需绑卡
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0;">
+            <label>姓名</label>
+            <input type="text" placeholder="真实姓名" />
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label>学校（选填）</label>
+            <input type="text" placeholder="所在院校" />
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:16px;">
+          <label>手机号</label>
+          <div class="input-with-btn">
+            <input type="text" placeholder="用于登录和接收通知" />
+            <button class="send-code-btn">获取验证码</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>验证码</label>
+          <input type="text" placeholder="请输入 6 位验证码" />
+        </div>
+        <div class="form-group">
+          <label>设置密码</label>
+          <input type="password" placeholder="8位以上，含字母和数字" />
+        </div>
+        <button class="submit-btn" onclick="showRegistered()">立即注册，领取免费额度</button>
+        <div class="agreement">
+          注册即代表同意 <a href="#">用户协议</a> 和 <a href="#">隐私政策</a>，<br/>
+          你的论文数据仅用于服务处理，不用于模型训练
+        </div>
+      </div>
+
+      <!-- 注册成功 + 邀请好友 -->
+      <div id="state-registered" class="state">
+        <div style="text-align:center;padding:8px 0 20px;">
+          <div style="width:56px;height:56px;background:var(--green-pale);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 12px;">🎉</div>
+          <div style="font-size:18px;font-weight:700;color:#1a1c1c;margin-bottom:6px;">注册成功，5 次额度已到账</div>
+          <div style="font-size:13px;color:var(--muted);">AI 辅助初稿，修改权在你手里</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#E8F5EE,#F0FAF5);border:1px solid rgba(0,108,73,0.15);border-radius:14px;padding:18px;margin-bottom:16px;">
+          <div style="font-size:14px;font-weight:700;color:#006C49;margin-bottom:6px;">🎁 邀请同学，双方各得 5 次免费额度</div>
+          <div style="font-size:12px;color:#5A7A6A;margin-bottom:12px;line-height:1.6;">把链接发给同系同学，他们注册成功后你们各自到账 5 次，无上限累计</div>
+          <div style="background:#fff;border:1px solid rgba(0,108,73,0.2);border-radius:8px;padding:10px 12px;font-size:12px;color:#006C49;font-family:monospace;margin-bottom:10px;word-break:break-all;">vronly.com/r/NEW2024XX</div>
+          <button id="copy-invite-btn" onclick="navigator.clipboard.writeText('https://vronly.com/r/NEW2024XX').then(()=>{document.getElementById('copy-invite-btn').textContent='✅ 已复制'}).catch(()=>{})" style="width:100%;background:#006C49;color:#fff;border:none;border-radius:100px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">复制邀请链接</button>
+        </div>
+        <a href="ui_preview_student_dashboard.html" style="display:block;text-align:center;background:#1a1c1c;color:#fff;border-radius:100px;padding:12px;font-size:14px;font-weight:700;text-decoration:none;">进入工作台 →</a>
+      </div>
+    </div>
+
+    <!-- ══ 机构学生模式 ══ -->
+    <div id="mode-institution" class="card-body" style="display:none;">
+      <div class="auth-tabs">
+        <div class="auth-tab active" onclick="switchInstTab('inst-login', this)">学生登录</div>
+        <div class="auth-tab" onclick="switchInstTab('inst-register', this)">学生注册</div>
+        <div class="auth-tab" onclick="switchInstTab('inst-sso', this)">学校 SSO</div>
+      </div>
+
+      <!-- 机构：登录 -->
+      <div id="state-inst-login" class="state active">
+        <div class="form-group">
+          <label>学校邮箱</label>
+          <input type="email" placeholder="学号@school.edu.cn" />
+        </div>
+        <div class="form-group">
+          <label>密码 <a class="forgot" href="#">忘记密码？</a></label>
+          <input type="password" placeholder="请输入密码" />
+        </div>
+        <button class="submit-btn">登录</button>
+        <div class="divider"><span>也可用验证码登录</span></div>
+        <div class="form-group">
+          <div class="input-with-btn">
+            <input type="text" placeholder="输入学校邮箱" />
+            <button class="send-code-btn">发送验证码</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <input type="text" placeholder="请输入 6 位验证码" />
+        </div>
+        <button class="submit-btn" style="background:#3D5244;">验证码登录</button>
+      </div>
+
+      <!-- 机构：注册 -->
+      <div id="state-inst-register" class="state">
+        <div class="invite-hint">
+          ⚠️ 机构学生注册需要<strong>学校邀请码</strong>，由教务处或管理员提供。<br/>
+          注册后需等待管理员审批，审批通过后即可使用学校配额。
+        </div>
+        <div class="form-group">
+          <label>学校邀请码</label>
+          <input type="text" placeholder="请输入 8 位邀请码（向教务处获取）" />
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0;">
+            <label>姓名</label>
+            <input type="text" placeholder="真实姓名" />
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label>学号</label>
+            <input type="text" placeholder="学号" />
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:16px;">
+          <label>学校邮箱</label>
+          <div class="input-with-btn">
+            <input type="email" placeholder="学号@school.edu.cn" />
+            <button class="send-code-btn">发送验证码</button>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0;">
+            <label>学院</label>
+            <select><option>请选择学院</option><option>计算机学院</option><option>商学院</option><option>医学院</option></select>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label>年级</label>
+            <select><option>请选择年级</option><option>2021级</option><option>2022级</option><option>2023级</option></select>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:16px;">
+          <label>设置密码</label>
+          <input type="password" placeholder="8位以上" />
+        </div>
+        <button class="submit-btn" onclick="showPending()">提交申请，等待审批</button>
+      </div>
+
+      <!-- 机构：SSO -->
+      <div id="state-inst-sso" class="state">
+        <div style="text-align:center;padding:16px 0 8px;">
+          <div style="font-size:40px;margin-bottom:12px;">🏫</div>
+          <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;">通过学校统一认证登录</div>
+          <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:24px;">适用于已与 VRonly 完成 SSO 对接的院校，<br/>使用学校账号直接登录，无需单独注册。</div>
+        </div>
+        <div class="form-group">
+          <label>搜索你的学校</label>
+          <input type="text" placeholder="输入学校名称搜索…" />
+        </div>
+        <div style="margin-bottom:16px;">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">常用院校快捷入口</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <div style="padding:6px 12px;background:var(--green-pale);border-radius:8px;font-size:12px;color:var(--green);cursor:pointer;font-weight:600;">某某大学</div>
+            <div style="padding:6px 12px;background:var(--green-pale);border-radius:8px;font-size:12px;color:var(--green);cursor:pointer;font-weight:600;">XX 师范大学</div>
+            <div style="padding:6px 12px;background:var(--green-pale);border-radius:8px;font-size:12px;color:var(--green);cursor:pointer;font-weight:600;">YY 理工大学</div>
+          </div>
+        </div>
+        <button class="sso-btn">🔐 &nbsp;跳转学校统一认证平台</button>
+        <div style="font-size:12px;color:var(--muted);text-align:center;margin-top:12px;">你的学校不在列表中？<a href="#" style="color:var(--green);">联系我们开通</a></div>
+      </div>
+
+      <!-- 审批等待状态（注册后显示） -->
+      <div id="state-pending" class="state">
+        <div class="pending-card">
+          <div class="pending-icon">⏳</div>
+          <div class="pending-title">申请已提交，等待管理员审批</div>
+          <div class="pending-desc">
+            你的注册申请已发送给 <strong>某某大学</strong> 的教务管理员。<br/>
+            审批通过后，你将收到短信和邮件通知。<br/><br/>
+            通常在 <strong>1 个工作日</strong> 内处理。
+          </div>
+          <div style="margin-top:20px;padding:14px;background:var(--green-pale);border-radius:10px;text-align:left;">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">审批中的信息</div>
+            <div style="font-size:13px;color:var(--text);">👤 张同学 &nbsp;|&nbsp; 计算机学院 &nbsp;|&nbsp; 2022级</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px;">提交于 2026-06-20 14:32</div>
+          </div>
+          <a href="#" style="display:inline-block;margin-top:16px;font-size:13px;color:var(--green);text-decoration:none;">我已通过审批，去登录 →</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function switchMode(mode, el) {
+    document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('mode-personal').style.display = mode === 'personal' ? 'block' : 'none';
+    document.getElementById('mode-institution').style.display = mode === 'institution' ? 'block' : 'none';
+  }
+
+  function switchTab(tab, el) {
+    document.querySelectorAll('#mode-personal .auth-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('state-login').classList.toggle('active', tab === 'login');
+    document.getElementById('state-register').classList.toggle('active', tab === 'register');
+  }
+
+  function switchInstTab(tab, el) {
+    document.querySelectorAll('#mode-institution .auth-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    ['inst-login','inst-register','inst-sso','pending'].forEach(id => {
+      const el = document.getElementById('state-' + id);
+      if (el) el.classList.toggle('active', 'state-' + tab === 'state-' + id);
+    });
+  }
+
+  function showPending() {
+    document.querySelectorAll('#mode-institution .auth-tab').forEach(t => t.classList.remove('active'));
+    ['inst-login','inst-register','inst-sso'].forEach(id => {
+      document.getElementById('state-' + id).classList.remove('active');
+    });
+    document.getElementById('state-pending').classList.add('active');
+  }
+
+  function showRegistered() {
+    document.querySelectorAll('#mode-personal .auth-tab').forEach(t => t.classList.remove('active'));
+    ['login','register'].forEach(id => {
+      document.getElementById('state-' + id).classList.remove('active');
+    });
+    document.getElementById('state-registered').classList.add('active');
+  }
+</script>
+</body>
+</html>

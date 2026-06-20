@@ -18,13 +18,46 @@ logger = logging.getLogger(__name__)
 def _find_cjk_font() -> list:
     """
     动态探测可用的中文字体。
+    在 Linux 上先扫描字体文件目录并注册，解决字体已安装但名称识别不到的问题。
     优先级：Noto Sans CJK > 文泉驿 > 思源黑体 > Windows字体 > 回退
     """
     import matplotlib.font_manager as fm
-    
-    # 获取所有可用字体（包括字体文件路径）
+    import platform
+    import os
+
+    # Linux 上先按文件路径扫描字体目录，主动注册 CJK 字体
+    # 这是解决"字体已安装但 matplotlib 名称匹配不到"的关键步骤
+    if platform.system() == 'Linux':
+        font_search_dirs = [
+            '/usr/share/fonts',
+            '/usr/local/share/fonts',
+            os.path.expanduser('~/.fonts'),
+            os.path.expanduser('~/.local/share/fonts'),
+        ]
+        # 文件名含这些关键词的视为 CJK 字体
+        cjk_keywords = [
+            'noto', 'cjk', 'chinese', 'wqy', 'wenquanyi',
+            'simhei', 'simsun', 'source-han', 'sourcehan',
+            'notosanscjk', 'notoserifcjk',
+        ]
+        for font_dir in font_search_dirs:
+            if not os.path.isdir(font_dir):
+                continue
+            for root, _, files in os.walk(font_dir):
+                for fname in files:
+                    if not fname.lower().endswith(('.ttf', '.otf', '.ttc')):
+                        continue
+                    if any(kw in fname.lower() for kw in cjk_keywords):
+                        font_path = os.path.join(root, fname)
+                        try:
+                            fm.fontManager.addfont(font_path)
+                            logger.info(f"[字体] 注册字体文件: {font_path}")
+                        except Exception as e:
+                            logger.warning(f"[字体] 注册失败 {font_path}: {e}")
+
+    # 获取所有已知字体名称（含刚注册的）
     available_fonts = {f.name: f.fname for f in fm.fontManager.ttflist}
-    
+
     # 候选字体列表（按优先级排序）
     candidates = [
         # Linux 服务器常见字体
@@ -46,22 +79,23 @@ def _find_cjk_font() -> list:
         'STHeiti',               # 华文黑体
         'Arial Unicode MS',      # Arial Unicode（支持中文）
     ]
-    
+
     # 查找第一个可用的字体
     found = []
     for candidate in candidates:
         if candidate in available_fonts:
             found.append(candidate)
-            logger.info(f"[字体] 找到中文字体: {candidate}")
-    
+            logger.info(f"[字体] 找到中文字体: {candidate} -> {available_fonts[candidate]}")
+
     if not found:
         logger.warning("[字体] 未找到任何中文字体，将使用 DejaVu Sans（不支持中文）")
-        logger.warning("[字体] 建议安装: sudo apt-get install fonts-noto-cjk")
-        logger.warning(f"[字体] 当前可用字体: {list(available_fonts.keys())[:10]}...")
-    
+        logger.warning("[字体] Alibaba Cloud Linux 3 安装命令: sudo dnf install google-noto-sans-cjk-fonts -y")
+        logger.warning("[字体] 安装后请清除缓存: find ~/.cache/matplotlib -type f -delete")
+        logger.warning(f"[字体] 当前已知字体前20个: {list(available_fonts.keys())[:20]}")
+
     # 添加回退字体
     found.append('DejaVu Sans')
-    
+
     logger.info(f"[字体] 最终字体列表: {found}")
     return found
 

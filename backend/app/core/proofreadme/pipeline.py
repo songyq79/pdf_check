@@ -44,11 +44,20 @@ from docx.oxml.ns import qn
 from app.core.proofreadme.chunk import protect_terms, restore_terms
 from app.core.proofreadme.diff_engine import compute_diff, has_diff
 from app.core.proofreadme.llm import full_proofread, proofread_text, _full_check_once
+from app.services.docx_normalizer import clean_control_chars, normalize_docx
 from app.core.proofreadme.word_patch import (
     enable_track_changes,
     make_del_node,
     make_ins_node,
     new_rev_id,
+    _get_or_create_comments_part,
+    _save_comments_part,
+    _sanitize_rpr,
+    add_comment_to_element,
+    ensure_comments_content_type,
+    make_comment_range_start,
+    make_comment_range_end,
+    make_comment_reference,
 )
 
 logger = logging.getLogger(__name__)
@@ -79,12 +88,13 @@ def _extract_text_fallback(input_path: str) -> str:
             text_content = '\n'.join([elem.text for elem in text_elements if elem.text])
             
             if text_content.strip():
+                text_content = clean_control_chars(text_content)
                 logger.info(f"[pipeline] 降级提取成功: {len(text_content)} 字符")
                 return text_content
-                
+
     except Exception as e:
         logger.warning(f"[pipeline] 降级提取失败: {e}")
-    
+
     return ""
 
 
@@ -150,13 +160,17 @@ def _create_simple_proofread_doc(text_content: str, output_path: str, mode: Proo
             
             # 保存最终文档
             doc.save(output_path)
-            
+            try:
+                ensure_comments_content_type(output_path)
+            except Exception as e:
+                logger.warning(f"[pipeline] 降级路径 Content Types 修补失败: {e}")
+
             # 清理临时文件
             try:
                 os.remove(temp_path)
             except:
                 pass
-            
+
             stats["fallback_mode"] = True
             logger.info(f"[pipeline] 降级校对完成: checked={stats['checked']} changed={stats['changed']}")
             return stats
@@ -209,6 +223,10 @@ async def _proofread_tasks_async(doc, effective_tasks, total_tasks, mode: Proofr
         return_exceptions=True,
     )
     
+    # 获取或创建 comments part（用于添加批注）
+    comments_elem = _get_or_create_comments_part(doc)
+    has_comments = False  # 标记是否有批注需要保存
+    
     logger.info("[pipeline] 串行写入修订节点")
     for i, ai_result in enumerate(ai_results):
         p, ptype = effective_tasks[i]
@@ -223,8 +241,41 @@ async def _proofread_tasks_async(doc, effective_tasks, total_tasks, mode: Proofr
             continue
         
         original, corrected, _ref, all_changes = ai_result
+        
+        # 添加详细日志
+        logger.info(f"[pipeline] 写入修订 idx={i}: original={original[:100]!r}, corrected={corrected[:100]!r}")
+        
         rpr_elem = _get_rpr(para_elem)
         count = _write_revision(para_elem, original, corrected, rpr_elem)
+        
+        logger.info(f"[pipeline] 写入完成 idx={i}: count={count}, all_changes={all_changes}")
+        
+        # 【批注】为每处修改添加 Word 批注，说明修改原因
+        if count > 0 and all_changes:
+            # 合并所有修改原因为一条批注（避免一个段落太多批注气泡）
+            comment_lines = []
+            for change in all_changes:
+                if len(change) >= 3:
+                    # change = ["原文", "修正", "类型说明"]
+                    comment_lines.append(f"「{change[0]}」→「{change[1]}」：{change[2]}")
+                elif len(change) >= 2:
+                    comment_lines.append(f"「{change[0]}」→「{change[1]}」")
+            
+            if comment_lines:
+                comment_text = "\n".join(comment_lines)
+                comment_id = new_rev_id()
+                
+                # 在 comments.xml 中添加批注内容
+                add_comment_to_element(comments_elem, comment_id, comment_text)
+                
+                # 在段落中插入批注范围标记
+                # commentRangeStart 放在段落第一个 run 之前
+                # commentRangeEnd + commentReference 放在段落最后一个 run 之后
+                try:
+                    _insert_comment_markers(para_elem, comment_id)
+                    has_comments = True
+                except Exception as e:
+                    logger.warning(f"[pipeline] 插入批注标记失败 idx={i}: {e}")
         
         stats["checked"] += 1
         if count > 0:
@@ -232,7 +283,52 @@ async def _proofread_tasks_async(doc, effective_tasks, total_tasks, mode: Proofr
             stats["total_changes"] += count
             stats["all_changes"].extend(all_changes)
     
+    # 保存 comments part（如果有批注）
+    if has_comments:
+        try:
+            _save_comments_part(doc, comments_elem)
+            logger.info(f"[pipeline] 批注已保存到文档")
+        except Exception as e:
+            logger.warning(f"[pipeline] 保存批注失败（不影响修订）: {e}")
+    
     return stats
+
+
+# ─────────────────────────────────────────────────────────────
+# 批注标记插入
+# ─────────────────────────────────────────────────────────────
+
+def _insert_comment_markers(para_elem, comment_id: int):
+    """
+    在段落中插入批注范围标记：
+    - commentRangeStart 放在第一个 w:r/w:del/w:ins 之前
+    - commentRangeEnd + commentReference 放在最后一个 w:r/w:del/w:ins 之后
+
+    使用 addprevious / addnext 相对定位，避免索引硬算破坏段落元素顺序
+    （段落末尾可能还有 w:bookmarkEnd 等结构元素，不能乱插）。
+    """
+    first_run = None
+    last_run = None
+
+    for child in para_elem:
+        tag = child.tag.split("}")[-1] if "}" in child.tag else child.tag
+        if tag in ("r", "del", "ins"):
+            if first_run is None:
+                first_run = child
+            last_run = child
+
+    if first_run is None:
+        return  # 没有 run 节点，跳过
+
+    # commentRangeEnd + commentReference 紧跟在最后一个 run 之后
+    end_node = make_comment_range_end(comment_id)
+    ref_node = make_comment_reference(comment_id)
+    last_run.addnext(end_node)
+    end_node.addnext(ref_node)
+
+    # commentRangeStart 紧邻在第一个 run 之前
+    start_node = make_comment_range_start(comment_id)
+    first_run.addprevious(start_node)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -299,6 +395,15 @@ _NO_CN_PAT = _re.compile(r'[\u4e00-\u9fff]')
 # 占位符校验正则（模块级编译，避免每次调用重复编译）
 _PLACEHOLDER_PAT = _re.compile(r'__L?PROT[0-9a-f]{6}_\d{4}T?__')
 
+# 【fix11】首页/封面常见字段关键词，这些行不需要 AI 校对
+_COVER_FIELD_PAT = _re.compile(
+    r'^\s*(?:姓\s*名|学\s*号|专\s*业|班\s*级|学\s*院|系\s*别|'
+    r'指导\s*教师|指导\s*老师|导\s*师|年\s*级|学\s*历|'
+    r'职\s*称|研究\s*方向|完成\s*日期|提交\s*日期|答辩\s*日期|'
+    r'学位\s*类别|学科\s*专业|培养\s*单位|论文\s*题目|题\s*目)\s*[:：]',
+    _re.UNICODE
+)
+
 
 def _should_skip_para(text: str) -> tuple:
     """
@@ -309,6 +414,7 @@ def _should_skip_para(text: str) -> tuple:
     1. 极短段落（≤4字）：标题编号、章节序号等，校对意义极低
     2. 纯数字/英文/符号行：无中文，不存在中文错别字
     3. 参考文献行：[1] 开头，或 '数字. 中文' 开头（fix10：收紧，避免误杀章节标题）
+    4. 首页/封面字段行：姓名、学号、专业等（fix11：避免 AI 误改占位符格式）
     （fix9：表格单元格同样调用此函数过滤排版标签行）
     """
     stripped = text.strip()
@@ -325,6 +431,10 @@ def _should_skip_para(text: str) -> tuple:
     if _REF_LINE_PAT.match(stripped) and len(stripped) < 300:
         return True, "参考文献行"
 
+    # 条件4：首页/封面字段行（姓名：xxx、学号：xxx 等）
+    if _COVER_FIELD_PAT.match(stripped) and len(stripped) < 100:
+        return True, "封面字段行"
+
     return False, ""
 
 
@@ -337,8 +447,14 @@ def _should_skip_para(text: str) -> tuple:
 def _check_placeholders(protected_text: str, corrected_protected: str) -> bool:
     original_tokens = _PLACEHOLDER_PAT.findall(protected_text)   # 有序列表
     corrected_tokens = _PLACEHOLDER_PAT.findall(corrected_protected)  # 有序列表
+    
+    # 添加详细日志
+    logger.debug(f"[protect] 检查占位符: 原文={original_tokens}, 修改后={corrected_tokens}")
+    
     if original_tokens != corrected_tokens:  # 数量或顺序不一致都拦截
         logger.warning(f"[protect] AI 修改了占位符顺序或数量，放弃修改: {original_tokens} -> {corrected_tokens}")
+        logger.warning(f"[protect] 原文: {protected_text[:200]}")
+        logger.warning(f"[protect] 修改后: {corrected_protected[:200]}")
         return False
     return True
 
@@ -392,7 +508,7 @@ def _write_revision(para_elem, original: str, corrected: str, rpr_elem=None) -> 
     def _plain_run(text: str) -> OxmlElement:
         r = OxmlElement("w:r")
         if rpr_elem is not None:
-            r.append(deepcopy(rpr_elem))
+            r.append(_sanitize_rpr(rpr_elem))
         t = OxmlElement("w:t")
         t.set(qn("xml:space"), "preserve")
         t.text = text
@@ -475,6 +591,19 @@ async def _proofread_paragraph(
         if not _check_placeholders(protected_text, corrected_protected):
             return None
         corrected = restore_terms(corrected_protected, protected_map)
+        
+        # 过滤 all_changes 中包含占位符的记录（这些是 AI 误报的修改）
+        filtered_changes = []
+        for change in all_changes:
+            if len(change) >= 2:
+                # 检查原文和修改后的文本是否包含占位符
+                original_text = change[0]
+                corrected_text = change[1]
+                if '__PROT' in original_text or '__PROT' in corrected_text:
+                    logger.warning(f"[protect] 过滤包含占位符的修改记录: {change}")
+                    continue
+            filtered_changes.append(change)
+        all_changes = filtered_changes
 
     except Exception as e:
         logger.error(f"[proofread] 段落校对失败，跳过: {e}")
@@ -505,6 +634,12 @@ async def _proofread_cell(p, sem: asyncio.Semaphore):
     if not original.strip():
         return None
 
+    # 【fix12】表格单元格更严格的跳过条件：
+    # 短于 15 字的单元格通常是表头、数据标签、单位等，不需要校对
+    if len(original.strip()) < 15:
+        logger.debug(f"[skip:cell] 短单元格（<15字），跳过: {original[:30]!r}")
+        return None
+
     # 【fix9】表格单元格同样过滤无需校对内容（排版标签/极短/纯英文等）
     skip, reason = _should_skip_para(original)
     if skip:
@@ -521,12 +656,33 @@ async def _proofread_cell(p, sem: asyncio.Semaphore):
         if not _check_placeholders(protected_text, corrected_protected):
             return None
         corrected = restore_terms(corrected_protected, protected_map)
+        
+        # 过滤 all_changes 中包含占位符的记录（这些是 AI 误报的修改）
+        filtered_changes = []
+        for change in all_changes:
+            if len(change) >= 2:
+                original_text = change[0]
+                corrected_text = change[1]
+                if '__PROT' in original_text or '__PROT' in corrected_text:
+                    logger.warning(f"[protect] 过滤包含占位符的修改记录: {change}")
+                    continue
+            filtered_changes.append(change)
+        all_changes = filtered_changes
 
     except Exception as e:
         logger.error(f"[proofread] 表格单元格校对失败，跳过: {e}")
         return None
 
     if not has_diff(original, corrected):
+        return None
+
+    # 【fix12】表格单元格额外安全检查：
+    # 如果修改只涉及括号/符号的增删（AI 常见误报），直接丢弃
+    import re as _re2
+    diff_chars = set(original) ^ set(corrected)  # 对称差集
+    bracket_chars = set('()（）【】[]{}《》<>、，。；：""''')
+    if diff_chars and diff_chars.issubset(bracket_chars):
+        logger.warning(f"[protect:cell] 修改仅涉及括号/符号变化，丢弃: {original[:50]!r}")
         return None
 
     # 【fix7】不在这里写 XML，返回数据给调用方串行写入
@@ -609,6 +765,9 @@ async def process_word(
         logger.error(f"[pipeline] 文件为空: {input_path}")
         return _empty_stats(mode, error="上传文件为空，请检查后重新上传")
 
+    # 对 WPS 生成的 .docx 先归一化;失败会返回原路径,走下面的降级逻辑
+    input_path = str(normalize_docx(input_path))
+
     try:
         doc = Document(input_path)
     except Exception as e:
@@ -682,6 +841,11 @@ async def process_word(
     stats["skipped"] += stats_skipped_upfront
 
     doc.save(output_path)
+    # 兜底：确保 [Content_Types].xml 包含 comments 的 Override，否则 Word 报 "内容有问题"
+    try:
+        ensure_comments_content_type(output_path)
+    except Exception as e:
+        logger.warning(f"[pipeline] Content Types 校验/修补失败: {e}")
     logger.info(
         f"[pipeline] 完成: mode={mode} checked={stats['checked']} "
         f"changed={stats['changed']} total_changes={stats['total_changes']} "

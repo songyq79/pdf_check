@@ -1,0 +1,137 @@
+version: "3.9"
+
+services:
+  # ── MySQL ────────────────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-paper_check_2024}
+      MYSQL_DATABASE: paper_check
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --default-authentication-plugin=mysql_native_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── FastAPI（接收 HTTP 请求）──────────────────────────────────
+  api:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../backend/.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ../backend/storage:/app/storage
+      - ../backend/logs:/app/logs
+      - ../backend/templates:/app/templates
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Celery Worker：校对队列（IO密集，开满并发）────────────────
+  worker-proofread:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    restart: always
+    command: >
+      celery -A app.workers.celery_app worker
+      --loglevel=info
+      --queues=proofread
+      --concurrency=128
+      --pool=threads
+      --hostname=worker-proofread@%h
+    env_file:
+      - ../backend/.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ../backend/storage:/app/storage
+      - ../backend/logs:/app/logs
+      - ../backend/templates:/app/templates
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  # ── Celery Worker：评价队列 ───────────────────────────────────
+  worker-evaluation:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    restart: always
+    command: >
+      celery -A app.workers.celery_app worker
+      --loglevel=info
+      --queues=evaluation
+      --concurrency=64
+      --pool=threads
+      --hostname=worker-evaluation@%h
+    env_file:
+      - ../backend/.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ../backend/storage:/app/storage
+      - ../backend/logs:/app/logs
+      - ../backend/templates:/app/templates
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  # ── Celery Worker：排版+查重队列（轻量任务）─────────────────
+  worker-misc:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    restart: always
+    command: >
+      celery -A app.workers.celery_app worker
+      --loglevel=info
+      --queues=formatter,plagiarism,default
+      --concurrency=32
+      --pool=threads
+      --hostname=worker-misc@%h
+    env_file:
+      - ../backend/.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ../backend/storage:/app/storage
+      - ../backend/logs:/app/logs
+      - ../backend/templates:/app/templates
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  # ── Nginx 反向代理 ────────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../frontend/dist:/usr/share/nginx/html:ro
+    depends_on:
+      - api
+
+volumes:
+  mysql_data:

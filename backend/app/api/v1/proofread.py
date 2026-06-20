@@ -17,13 +17,18 @@ import uuid
 from datetime import datetime
 from typing import Literal
 
-from fastapi import APIRouter, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse
 from loguru import logger
+from sqlalchemy.orm import Session
 
 from app.config import settings
+from app.models.user import get_db
+from app.api.v1.deps import require_quota, QuotaContext
+from app.services.billing_service import consume_quota
 from app.workers.celery_app import celery_app
 from app.workers.proofread_tasks import run_proofread
+from app.services.task_store import get_task_result_from_db
 
 router = APIRouter()
 
@@ -33,6 +38,8 @@ PROOFREAD_DIR.mkdir(parents=True, exist_ok=True)
 @router.post("/upload", summary="上传文档进行AI校对")
 async def upload_for_proofread(
     file: UploadFile = File(...),
+    ctx: QuotaContext = Depends(require_quota("proofread")),
+    db: Session = Depends(get_db),
 ):
     if not file.filename.lower().endswith(".docx"):
         raise HTTPException(400, "仅支持 .docx 格式")
@@ -58,6 +65,9 @@ async def upload_for_proofread(
 
     logger.info(f"[proofread] 任务已提交 task_id={task_id} file={file.filename}")
 
+    if ctx.billing_on:
+        consume_quota(db, ctx.user.id, "proofread", task_id=task_id)
+
     return {
         "task_id": task_id,
         "filename": file.filename,
@@ -75,13 +85,12 @@ def get_status(task_id: str):
     state_map = {
         "PENDING":  ("pending",    0),
         "STARTED":  ("processing", 20),
-        "PROGRESS": ("processing", None),   # 从 meta 里取真实进度
+        "PROGRESS": ("processing", None),
         "SUCCESS":  ("completed",  100),
         "FAILURE":  ("failed",     0),
     }
     status, progress = state_map.get(state, ("pending", 0))
 
-    # PROGRESS 状态：从任务 meta 读真实进度
     if state == "PROGRESS":
         info = result.info or {}
         progress = info.get("progress", 50)
@@ -90,27 +99,39 @@ def get_status(task_id: str):
 
     if state == "SUCCESS":
         res_data = result.result or {}
-        raw_stats = res_data.get("stats", {})
-        checked  = raw_stats.get("checked", 0)
-        changed  = raw_stats.get("changed", 0)
-        resp["download_url"] = f"/api/v1/proofread/download/{task_id}"
-        resp["stats"] = {
-            "total":   checked,
-            "changed": changed,
-            "skipped": max(0, checked - changed),   # 检查但无需修改的段落数
-        }
-        resp["finished_at"] = datetime.now().isoformat()
-        
-        # 添加警告信息（如果有）
-        if res_data.get("warning"):
-            resp["warning"] = res_data["warning"]
-        
-        # 添加错误信息（如果有）
-        if raw_stats.get("error"):
-            resp["error"] = raw_stats["error"]
-            
-    elif state == "FAILURE":
-        resp["error"] = str(result.result)
+    elif state == "PENDING":
+        # Redis 无记录（TTL过期 or 重启）→ 降级查 MySQL
+        db_record = get_task_result_from_db(task_id)
+        if db_record and db_record["status"] == "success":
+            res_data = db_record["result"] or {}
+            resp["status"] = "completed"
+            resp["progress"] = 100
+            resp["recovered_from_db"] = True
+        elif db_record and db_record["status"] == "failure":
+            resp["status"] = "failed"
+            resp["error"] = db_record["error"]
+            return resp
+        else:
+            return resp
+    else:
+        if state == "FAILURE":
+            resp["error"] = str(result.result)
+        return resp
+
+    raw_stats = res_data.get("stats", {})
+    checked = raw_stats.get("checked", 0)
+    changed = raw_stats.get("changed", 0)
+    resp["download_url"] = f"/api/v1/proofread/download/{task_id}"
+    resp["stats"] = {
+        "total":   checked,
+        "changed": changed,
+        "skipped": max(0, checked - changed),
+    }
+    resp["finished_at"] = datetime.now().isoformat()
+    if res_data.get("warning"):
+        resp["warning"] = res_data["warning"]
+    if raw_stats.get("error"):
+        resp["error"] = raw_stats["error"]
 
     return resp
 

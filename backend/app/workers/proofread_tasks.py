@@ -6,6 +6,7 @@
 
 from app.workers.celery_app import celery_app
 from app.core.proofreadme.pipeline import process_word_sync
+from app.services.task_store import save_task_result, save_task_failure
 from loguru import logger
 
 
@@ -35,7 +36,7 @@ def run_proofread(self, task_id: str, in_path: str, out_path: str, mode: str = "
         
         # 检查是否有错误或使用了降级模式
         result = {"stats": stats, "mode": mode}
-        
+
         if stats.get("fallback_mode"):
             result["warning"] = "文档格式异常，已使用简化模式处理（可能丢失部分格式）"
             logger.warning(f"[task] 校对完成（降级模式） task_id={task_id} stats={stats}")
@@ -43,8 +44,14 @@ def run_proofread(self, task_id: str, in_path: str, out_path: str, mode: str = "
             logger.error(f"[task] 校对失败 task_id={task_id} error={stats['error']}")
         else:
             logger.info(f"[task] 校对完成 task_id={task_id} stats={stats}")
-        
+
+        # 永久存储到 MySQL（Redis TTL过期后仍可查询）
+        import os
+        out_filename = os.path.basename(out_path) if os.path.exists(out_path) else None
+        save_task_result(task_id, "proofread", result, output_file=out_filename)
+
         return result
     except Exception as exc:
         logger.error(f"[task] 校对失败 task_id={task_id}: {exc}")
+        save_task_failure(task_id, "proofread", str(exc))
         raise self.retry(exc=exc)

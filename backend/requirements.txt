@@ -19,6 +19,9 @@ openai>=1.14.0             # DeepSeek（兼容 OpenAI 接口）
 # Word 文档处理
 python-docx>=1.1.0
 
+# PDF 文档处理
+pdfplumber>=0.10.0
+
 # 图表生成
 matplotlib>=3.8.0
 numpy>=1.26.0
@@ -28,3 +31,23 @@ loguru>=0.7.2
 
 # 工具
 python-dateutil>=2.8.2
+
+# 认证
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+bcrypt==4.0.1              # bcrypt 4.x+ 与 passlib 不兼容，锁定此版本
+sqlalchemy>=2.0.0
+pymysql>=1.1.0             # MySQL 数据库驱动（用于 SQLAlchemy）
+
+# 查重模块
+scikit-learn>=1.4.0
+simhash>=2.1.0
+opencc-python-reimplemented>=0.1.7
+
+# 外文查重:语言识别 + HTTP + 重试 + 语义 Embedding
+langdetect>=1.0.9
+httpx>=0.25.0
+tenacity>=8.2.0
+sentence-transformers>=3.0.0
+gunicorn>=21.2.0
+faiss-cpu>=1.7.4

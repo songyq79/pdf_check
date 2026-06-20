@@ -19,6 +19,7 @@ export const useEvaluationStore = defineStore('evaluation', () => {
   const error = ref(null)
   const warning = ref(null) // 降级模式警告信息
   const pendingResult = ref(null)  // 来自历史记录的待展示结果
+  const paperType = ref('humanities') // 论文类别：humanities | science_engineering | arts
 
   const isIdle = computed(() => evaluationStatus.value === 'idle')
   const isUploading = computed(() => evaluationStatus.value === 'uploading')
@@ -40,6 +41,7 @@ export const useEvaluationStore = defineStore('evaluation', () => {
 
       const formData = new FormData()
       formData.append('file', file)
+      formData.append('paper_type', paperType.value)
 
       // 1. 上传文件，得到 task_id
       const uploadResp = await evaluationAPI.upload(formData, {
@@ -63,8 +65,14 @@ export const useEvaluationStore = defineStore('evaluation', () => {
       // 2. 启动轮询
       startPolling(taskId)
     } catch (err) {
-      error.value = err.message || '评价失败'
-      evaluationStatus.value = 'failed'
+      if (err.response?.status === 402) {
+        // 额度不足：回到初始状态，弹窗已由拦截器处理
+        evaluationStatus.value = 'idle'
+        uploadProgress.value = 0
+      } else {
+        error.value = err.message || '评价失败'
+        evaluationStatus.value = 'failed'
+      }
       throw err
     }
   }
@@ -76,6 +84,7 @@ export const useEvaluationStore = defineStore('evaluation', () => {
     currentTaskId.value = null
     error.value = null
     warning.value = null
+    paperType.value = 'humanities'
   }
 
   /**
@@ -94,15 +103,46 @@ export const useEvaluationStore = defineStore('evaluation', () => {
 
   /** 历史记录页跳转前调用，暂存要展示的结果 */
   function setPendingResult(result) {
+    console.log('[evaluation store] setPendingResult 被调用:', result)
     pendingResult.value = result
+    // 同时保存到 sessionStorage，防止被 Pinia 插件覆盖
+    sessionStorage.setItem('evaluation-pendingResult', JSON.stringify(result))
+    console.log('[evaluation store] pendingResult 已设置并保存到 sessionStorage')
   }
 
   /** 页面挂载时调用：若有待展示结果则加载，否则保持当前状态 */
   function loadPendingOrKeep() {
+    console.log('[evaluation store] loadPendingOrKeep 被调用')
+    
+    // 优先从 sessionStorage 读取
+    const savedPending = sessionStorage.getItem('evaluation-pendingResult')
+    if (savedPending) {
+      try {
+        const result = JSON.parse(savedPending)
+        console.log('[evaluation store] 从 sessionStorage 加载 pendingResult:', result)
+        currentResult.value = result
+        warning.value = result.warning || null
+        evaluationStatus.value = 'completed'
+        // 清除 sessionStorage
+        sessionStorage.removeItem('evaluation-pendingResult')
+        console.log('[evaluation store] 加载完成，currentResult:', currentResult.value)
+        return
+      } catch (e) {
+        console.warn('[evaluation store] 解析 sessionStorage 失败:', e)
+      }
+    }
+    
+    // 如果 sessionStorage 没有，再检查 pendingResult
+    console.log('[evaluation store] pendingResult.value:', pendingResult.value)
     if (pendingResult.value) {
+      console.log('[evaluation store] 加载 pendingResult 到 currentResult')
       currentResult.value = pendingResult.value
+      warning.value = pendingResult.value.warning || null
       evaluationStatus.value = 'completed'
       pendingResult.value = null
+      console.log('[evaluation store] 加载完成，currentResult:', currentResult.value)
+    } else {
+      console.log('[evaluation store] pendingResult 为空，保持当前状态')
     }
     // 否则保持当前状态（可能是processing或completed）
   }
@@ -201,8 +241,10 @@ export const useEvaluationStore = defineStore('evaluation', () => {
     stopPolling()
     evaluationStatus.value = 'idle'
     uploadProgress.value = 0
+    currentResult.value = null
     currentTaskId.value = null
     error.value = null
+    warning.value = null
   }
 
   return {
@@ -212,6 +254,7 @@ export const useEvaluationStore = defineStore('evaluation', () => {
     currentTaskId,
     error,
     warning,
+    paperType,
     isIdle,
     isUploading,
     isProcessing,

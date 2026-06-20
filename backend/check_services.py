@@ -15,7 +15,7 @@ def check_redis():
     print("=" * 60)
     try:
         import redis
-        r = redis.Redis(host='localhost', port=6379, db=0, socket_connect_timeout=2)
+        r = redis.Redis(host='localhost', port=26301, db=15, password='jzmNDJAF7b', socket_connect_timeout=2)
         pong = r.ping()
         if pong:
             print("✅ Redis 连接成功")

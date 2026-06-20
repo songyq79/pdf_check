@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VRonly — 定价</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,600;1,600&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green:      #006C49;
+      --green-mid:  #00875C;
+      --green-pale: #E8F5EE;
+      --green-pale2:#F0FAF5;
+      --dark:       #111B14;
+      --muted:      #7A8C82;
+      --border:     #E2EBE6;
+      --text:       #1A2E20;
+      --mid:        #3D5244;
+      --orange:     #E8840A;
+      --font:       'Noto Sans SC', sans-serif;
+      --font-d:     'Newsreader', serif;
+      --radius:     24px;
+    }
+    body { font-family: var(--font); color: var(--text); background: #fff; }
+
+    /* ── Header ── */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 68px; background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(14px); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center;
+    }
+    .h-inner { max-width: 1160px; margin: 0 auto; padding: 0 32px; width: 100%; display: flex; align-items: center; gap: 32px; }
+    .logo { font-family: var(--font-d); font-style: italic; font-size: 22px; color: var(--dark); text-decoration: none; font-weight: 600; }
+    .h-nav { display: flex; gap: 28px; flex: 1; }
+    .h-nav a { font-size: 14px; color: var(--muted); text-decoration: none; font-weight: 500; }
+    .h-nav a:hover, .h-nav a.active { color: var(--green); }
+    .h-btns { display: flex; gap: 10px; }
+    .btn-sm { padding: 7px 18px; border-radius: 100px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; border: none; transition: all 0.15s; }
+    .btn-ghost { border: 1.5px solid var(--border); color: var(--mid); background: transparent; }
+    .btn-ghost:hover { border-color: var(--green); color: var(--green); }
+    .btn-solid { background: var(--green); color: #fff; }
+    .btn-solid:hover { background: var(--green-mid); }
+
+    /* ── Hero ── */
+    .hero { padding: 120px 32px 64px; text-align: center; background: linear-gradient(180deg, #F4FAF7 0%, #fff 100%); }
+    .hero-tag { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: var(--green); background: var(--green-pale); padding: 5px 14px; border-radius: 100px; margin-bottom: 16px; }
+    h1 { font-family: var(--font-d); font-size: 52px; font-weight: 600; color: var(--dark); margin-bottom: 14px; line-height: 1.15; }
+    .hero-sub { font-size: 17px; color: var(--muted); margin-bottom: 36px; }
+
+    /* Toggle: 个人 / 机构 */
+    .plan-toggle {
+      display: inline-flex; background: #F0F4F2; border-radius: 100px;
+      padding: 4px; gap: 2px; margin-bottom: 56px;
+    }
+    .toggle-btn {
+      padding: 10px 28px; border-radius: 100px; font-size: 14px; font-weight: 600;
+      cursor: pointer; border: none; background: transparent; color: var(--muted);
+      transition: all 0.2s; font-family: var(--font);
+    }
+    .toggle-btn.active { background: #fff; color: var(--green); box-shadow: 0 2px 8px rgba(0,0,0,0.10); }
+    .badge-new {
+      font-size: 10px; font-weight: 700; color: var(--orange);
+      background: #FFF3CD; padding: 2px 7px; border-radius: 100px;
+      margin-left: 6px; vertical-align: middle;
+    }
+
+    /* ── Pricing sections ── */
+    .pricing-section { max-width: 1100px; margin: 0 auto; padding: 0 32px 80px; }
+    .pricing-section.hidden { display: none; }
+
+    /* period toggle */
+    .period-row { display: flex; justify-content: center; gap: 0; margin-bottom: 40px; }
+    .period-tabs { display: flex; background: #F0F4F2; border-radius: 100px; padding: 4px; }
+    .period-tab {
+      padding: 8px 22px; border-radius: 100px; font-size: 13px; font-weight: 600;
+      cursor: pointer; border: none; background: transparent; color: var(--muted);
+      font-family: var(--font); transition: all 0.15s; position: relative;
+    }
+    .period-tab.active { background: #fff; color: var(--green); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .save-tag {
+      position: absolute; top: -8px; right: -4px;
+      font-size: 10px; font-weight: 700; background: var(--orange); color: #fff;
+      padding: 2px 6px; border-radius: 100px;
+    }
+
+    /* cards grid */
+    .cards { display: grid; gap: 20px; }
+    .cards-4 { grid-template-columns: repeat(4, 1fr); }
+    .cards-3 { grid-template-columns: repeat(3, 1fr); }
+
+    .price-card {
+      border-radius: var(--radius); border: 1.5px solid var(--border);
+      padding: 32px 28px; position: relative; transition: all 0.2s;
+      background: #fff;
+    }
+    .price-card:hover { border-color: rgba(0,108,73,0.3); box-shadow: 0 8px 32px rgba(0,108,73,0.10); transform: translateY(-2px); }
+    .price-card.popular { background: var(--green); border-color: var(--green); }
+    .price-card.popular * { color: #fff !important; }
+    .popular-badge {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: var(--orange); color: #fff !important; font-size: 11px; font-weight: 700;
+      padding: 4px 14px; border-radius: 100px; white-space: nowrap;
+    }
+    .plan-name { font-size: 13px; font-weight: 700; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+    .plan-price { font-family: var(--font-d); font-size: 44px; font-weight: 600; color: var(--dark); line-height: 1; margin: 12px 0 4px; }
+    .plan-price sub { font-size: 18px; font-weight: 400; vertical-align: baseline; color: var(--muted); }
+    .plan-price .unit { font-size: 16px; font-weight: 400; color: var(--muted); }
+    .plan-period { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+    .plan-divider { height: 1px; background: var(--border); margin: 20px 0; }
+    .price-card.popular .plan-divider { background: rgba(255,255,255,0.20); }
+    .plan-credits { font-size: 24px; font-weight: 700; color: var(--green); margin-bottom: 4px; }
+    .price-card.popular .plan-credits { color: #fff; }
+    .plan-credits-label { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+    .plan-features { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+    .feat { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--mid); line-height: 1.45; }
+    .feat::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+    .price-card.popular .feat::before { color: rgba(255,255,255,0.80); }
+    .feat.miss { color: #C0CCC6; }
+    .feat.miss::before { content: '—'; color: #C0CCC6; }
+    .plan-btn {
+      display: block; width: 100%; padding: 12px; border-radius: 100px;
+      font-size: 14px; font-weight: 700; cursor: pointer; border: none;
+      text-align: center; text-decoration: none; transition: all 0.15s;
+      font-family: var(--font);
+    }
+    .btn-green-outline { background: var(--green-pale); color: var(--green); }
+    .btn-green-outline:hover { background: var(--green); color: #fff; }
+    .btn-white { background: #fff; color: var(--green); }
+    .btn-white:hover { background: #F0FAF5; }
+    .btn-dark { background: rgba(255,255,255,0.15); color: #fff; }
+    .btn-dark:hover { background: rgba(255,255,255,0.25); }
+
+    /* institution pricing */
+    .inst-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .inst-card {
+      background: var(--dark); border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 36px 32px; position: relative; overflow: hidden; transition: all 0.2s;
+    }
+    .inst-card:hover { border-color: rgba(0,108,73,0.5); transform: translateY(-3px); }
+    .inst-card.highlight { background: var(--green); border-color: var(--green); }
+    .inst-badge {
+      position: absolute; top: 20px; right: 20px;
+      font-size: 11px; font-weight: 700; background: rgba(255,255,255,0.20);
+      color: #fff; padding: 3px 10px; border-radius: 100px;
+    }
+    .inst-tier { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #5DD9A4; text-transform: uppercase; margin-bottom: 10px; }
+    .inst-card.highlight .inst-tier { color: rgba(255,255,255,0.70); }
+    .inst-name { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 14px; }
+    .inst-price { font-family: var(--font-d); font-size: 52px; font-weight: 600; color: #fff; line-height: 1; }
+    .inst-price-unit { font-size: 14px; color: rgba(255,255,255,0.55); margin: 4px 0 24px; }
+    .inst-divider { height: 1px; background: rgba(255,255,255,0.12); margin: 20px 0; }
+    .inst-feats { display: flex; flex-direction: column; gap: 11px; margin-bottom: 28px; }
+    .inst-feat { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: rgba(255,255,255,0.75); line-height: 1.45; }
+    .inst-feat::before { content: '✓'; color: #5DD9A4; font-weight: 700; flex-shrink: 0; }
+    .inst-btn {
+      display: block; width: 100%; padding: 13px; border-radius: 100px;
+      font-size: 14px; font-weight: 700; text-align: center;
+      text-decoration: none; cursor: pointer; border: none; font-family: var(--font);
+      transition: all 0.15s;
+    }
+    .inst-btn-outline { background: rgba(255,255,255,0.10); color: #fff; }
+    .inst-btn-outline:hover { background: rgba(255,255,255,0.20); }
+    .inst-btn-white { background: #fff; color: var(--green); }
+    .inst-btn-white:hover { background: #F0FAF5; }
+
+    /* compare table */
+    .compare-wrap { max-width: 900px; margin: 0 auto 80px; padding: 0 32px; }
+    .compare-title { text-align: center; font-family: var(--font-d); font-size: 32px; font-weight: 600; color: var(--dark); margin-bottom: 32px; }
+    .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .compare-table th {
+      padding: 12px 16px; background: var(--dark); color: #fff;
+      font-weight: 700; text-align: center;
+    }
+    .compare-table th:first-child { text-align: left; border-radius: 12px 0 0 0; }
+    .compare-table th:last-child { border-radius: 0 12px 0 0; background: var(--green); }
+    .compare-table td { padding: 12px 16px; text-align: center; border-bottom: 1px solid var(--border); color: var(--mid); }
+    .compare-table td:first-child { text-align: left; color: var(--text); font-weight: 500; }
+    .compare-table tr:last-child td { border-bottom: none; }
+    .compare-table tr:nth-child(even) td { background: #FAFBFA; }
+    .compare-table td:last-child { font-weight: 700; color: var(--green); }
+    .c-check { color: var(--green); font-size: 16px; }
+    .c-cross { color: #C0CCC6; font-size: 16px; }
+
+    /* FAQ */
+    .faq-wrap { max-width: 720px; margin: 0 auto; padding: 0 32px 96px; }
+    .faq-title { text-align: center; font-family: var(--font-d); font-size: 32px; font-weight: 600; color: var(--dark); margin-bottom: 32px; }
+    .faq-item { border-bottom: 1px solid var(--border); padding: 20px 0; }
+    .faq-item:last-child { border-bottom: none; }
+    .faq-q { font-size: 15px; font-weight: 700; color: var(--text); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+    .faq-q::after { content: '+'; font-size: 20px; color: var(--muted); font-weight: 400; }
+    .faq-a { font-size: 14px; color: var(--muted); line-height: 1.7; margin-top: 12px; display: none; }
+    .faq-item.open .faq-q::after { content: '−'; color: var(--green); }
+    .faq-item.open .faq-a { display: block; }
+
+    /* CTA */
+    .cta-section { background: var(--dark); padding: 72px 32px; text-align: center; }
+    .cta-title { font-family: var(--font-d); font-size: 38px; font-weight: 600; color: #fff; margin-bottom: 12px; }
+    .cta-sub { font-size: 16px; color: rgba(255,255,255,0.55); margin-bottom: 32px; }
+    .cta-btns { display: flex; gap: 14px; justify-content: center; }
+    .cta-btn {
+      padding: 13px 32px; border-radius: 100px; font-size: 15px; font-weight: 700;
+      cursor: pointer; text-decoration: none; border: none; font-family: var(--font); transition: all 0.15s;
+    }
+    .cta-btn-green { background: var(--green); color: #fff; }
+    .cta-btn-green:hover { background: var(--green-mid); }
+    .cta-btn-outline { background: transparent; border: 2px solid rgba(255,255,255,0.35); color: #fff; }
+    .cta-btn-outline:hover { border-color: #fff; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="h-inner">
+    <a class="logo" href="#">VRonly</a>
+    <nav class="h-nav">
+      <a href="#">功能</a>
+      <a href="#" class="active">定价</a>
+      <a href="#">高校版</a>
+      <a href="#">帮助</a>
+    </nav>
+    <div class="h-btns">
+      <a class="btn-sm btn-ghost" href="#">登录</a>
+      <a class="btn-sm btn-solid" href="#">免费开始</a>
+    </div>
+  </div>
+</header>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-tag">透明定价，按需购买</div>
+  <h1>简单易懂的定价</h1>
+  <div class="hero-sub">个人免费起步，按需升级；学校整体采购更划算</div>
+
+  <div class="plan-toggle">
+    <button class="toggle-btn active" onclick="switchPlan('personal', this)">个人 / 学生</button>
+    <button class="toggle-btn" onclick="switchPlan('institution', this)">高校机构 <span class="badge-new">企业版</span></button>
+  </div>
+</div>
+
+<!-- ══ 个人定价 ══ -->
+<div class="pricing-section" id="plan-personal">
+  <!-- period toggle -->
+  <div class="period-row">
+    <div class="period-tabs">
+      <button class="period-tab active" onclick="switchPeriod('month', this)">按月</button>
+      <button class="period-tab" onclick="switchPeriod('year', this)">按年 <span class="save-tag">省40%</span></button>
+    </div>
+  </div>
+
+  <!-- 4-col cards -->
+  <div class="cards cards-4" id="month-cards">
+    <!-- Free -->
+    <div class="price-card">
+      <div class="plan-name">免费体验</div>
+      <div class="plan-price">¥<span>0</span></div>
+      <div class="plan-period">永久免费</div>
+      <div class="plan-divider"></div>
+      <div class="plan-credits">5 次</div>
+      <div class="plan-credits-label">注册赠送，永不过期</div>
+      <div class="plan-features">
+        <div class="feat">所有功能均可体验</div>
+        <div class="feat">评价 / 校对 / 查重各 1–2 次</div>
+        <div class="feat">Word 报告下载</div>
+        <div class="feat miss">额度用完后需付费续充</div>
+        <div class="feat miss">无邀请奖励机制</div>
+      </div>
+      <a class="plan-btn btn-green-outline" href="#">免费注册</a>
+    </div>
+
+    <!-- Basic -->
+    <div class="price-card">
+      <div class="plan-name">基础版</div>
+      <div class="plan-price">¥<span>39</span><span class="unit">/月</span></div>
+      <div class="plan-period">适合偶尔使用</div>
+      <div class="plan-divider"></div>
+      <div class="plan-credits">50 次</div>
+      <div class="plan-credits-label">每月重置，当月有效</div>
+      <div class="plan-features">
+        <div class="feat">全部 8 个功能模块</div>
+        <div class="feat">Word 报告 + 下载历史</div>
+        <div class="feat">邀请好友各得 5 次</div>
+        <div class="feat miss">API 接入</div>
+        <div class="feat miss">批量上传</div>
+      </div>
+      <a class="plan-btn btn-green-outline" href="#">选择基础版</a>
+    </div>
+
+    <!-- Pro (popular) -->
+    <div class="price-card popular">
+      <div class="popular-badge">🔥 最多人选择</div>
+      <div class="plan-name">专业版</div>
+      <div class="plan-price">¥<span>99</span><span class="unit">/月</span></div>
+      <div class="plan-period">适合论文密集期</div>
+      <div class="plan-divider"></div>
+      <div class="plan-credits">200 次</div>
+      <div class="plan-credits-label">每月重置，未用可滚存 1 个月</div>
+      <div class="plan-features">
+        <div class="feat">全部 8 个功能模块</div>
+        <div class="feat">Word 报告 + 历史记录</div>
+        <div class="feat">邀请好友各得 10 次</div>
+        <div class="feat">额度滚存（最多存 1 个月）</div>
+        <div class="feat miss">API 接入</div>
+      </div>
+      <a class="plan-btn btn-dark" href="#">选择专业版</a>
+    </div>
+
+    <!-- Unlimited -->
+    <div class="price-card">
+      <div class="plan-name">无限版</div>
+      <div class="plan-price">¥<span>299</span><span class="unit">/月</span></div>
+      <div class="plan-period">适合导师 / 研究团队</div>
+      <div class="plan-divider"></div>
+      <div class="plan-credits">不限次数</div>
+      <div class="plan-credits-label">真正无限，无额度焦虑</div>
+      <div class="plan-features">
+        <div class="feat">全部 8 个功能模块</div>
+        <div class="feat">无限制批量上传</div>
+        <div class="feat">API 接入权限（Beta）</div>
+        <div class="feat">优先客服响应</div>
+        <div class="feat">多设备同步</div>
+      </div>
+      <a class="plan-btn btn-green-outline" href="#">选择无限版</a>
+    </div>
+  </div>
+
+  <!-- 年费cards（隐藏） -->
+  <div class="cards cards-4" id="year-cards" style="display:none;">
+    <div class="price-card">
+      <div class="plan-name">免费体验</div>
+      <div class="plan-price">¥<span>0</span></div>
+      <div class="plan-period">永久免费</div>
+      <div class="plan-divider"></div>
+      <div class="plan-credits">5 次</div>
+      <div class="plan-credits-label">注册赠送，永不过期</div>
+      <div class="plan-features">
+        <div class="feat">所有功能均可体验</div>
+        <div class="feat">评价 / 校对 / 查重各 1–2 次</div>
+        <div class="feat">Word 报告下载</div>
+        <div class="feat miss">额度用完后需付费续充</div>
+      </div>
+      <a class="plan-btn btn-green-outline" href="#">免费注册</a>
+    </div>
+    <div class="price-card">
+      <div class="plan-name">基础版 年付</div>
+      <div class="plan-price">¥<span>23</span><span class="unit">/月</span></div>
+      <div class="plan-period">¥276/年，省 ¥192</div>
+      <div class="plan-divider"></div>
+      <div class="plan-credits">50 次/月</div>
+      <div class="plan-credits-label">600 次/年，当月未用不累积</div>
+      <div class="plan-features">
+        <div class="feat">全部 8 个功能模块</div>
+        <div class="feat">Word 报告 + 下载历史</div>
+        <div class="feat">邀请好友各得 5 次</div>
+      </div>
+      <a class="plan-btn btn-green-outline" href="#">选择基础年付</a>
+    </div>
+    <div class="price-card popular">
+      <div class="popular-badge">🔥 年付最划算</div>
+      <div class="plan-name">专业版 年付</div>
+      <div class="plan-price">¥<span>59</span><span class="unit">/月</span></div>
+      <div class="plan-period">¥708/年，省 ¥480</div>
+      <div class="plan-divider"></div>
+      <div class="plan-credits">200 次/月</div>
+      <div class="plan-credits-label">2400 次/年，可滚存最多 200 次</div>
+      <div class="plan-features">
+        <div class="feat">全部 8 个功能模块</div>
+        <div class="feat">邀请好友各得 10 次</div>
+        <div class="feat">额度跨月滚存</div>
+        <div class="feat">专属年度使用报告</div>
+      </div>
+      <a class="plan-btn btn-dark" href="#">选择专业年付</a>
+    </div>
+    <div class="price-card">
+      <div class="plan-name">无限版 年付</div>
+      <div class="plan-price">¥<span>179</span><span class="unit">/月</span></div>
+      <div class="plan-period">¥2,148/年，省 ¥1,440</div>
+      <div class="plan-divider"></div>
+      <div class="plan-credits">不限次数</div>
+      <div class="plan-credits-label">全年无限，含 API 接入</div>
+      <div class="plan-features">
+        <div class="feat">全部 8 个功能模块</div>
+        <div class="feat">无限批量上传</div>
+        <div class="feat">API 接入权限</div>
+        <div class="feat">优先客服 + 专属经理</div>
+      </div>
+      <a class="plan-btn btn-green-outline" href="#">选择无限年付</a>
+    </div>
+  </div>
+
+  <!-- 次数包加购 -->
+  <div style="margin-top: 48px; text-align:center;">
+    <div style="font-size: 14px; font-weight: 700; color: var(--mid); margin-bottom: 16px;">额度不够用？单独加购次数包</div>
+    <div style="display: flex; gap: 12px; justify-content: center; flex-wrap:wrap;">
+      <div style="background:#F4F7F5;border:1.5px solid var(--border);border-radius:14px;padding:16px 24px;text-align:center;min-width:120px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='#006C49'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-family:var(--font-d);font-size:28px;font-weight:600;color:var(--green);">10次</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin:4px 0;">¥19</div>
+        <div style="font-size:11px;color:var(--muted);">¥1.9/次</div>
+      </div>
+      <div style="background:#F4F7F5;border:1.5px solid var(--border);border-radius:14px;padding:16px 24px;text-align:center;min-width:120px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='#006C49'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-family:var(--font-d);font-size:28px;font-weight:600;color:var(--green);">30次</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin:4px 0;">¥49</div>
+        <div style="font-size:11px;color:var(--muted);">¥1.6/次</div>
+      </div>
+      <div style="background:var(--green-pale);border:1.5px solid rgba(0,108,73,0.25);border-radius:14px;padding:16px 24px;text-align:center;min-width:120px;cursor:pointer;position:relative;">
+        <div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--orange);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;white-space:nowrap;">最划算</div>
+        <div style="font-family:var(--font-d);font-size:28px;font-weight:600;color:var(--green);">100次</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin:4px 0;">¥129</div>
+        <div style="font-size:11px;color:var(--muted);">¥1.29/次</div>
+      </div>
+      <div style="background:#F4F7F5;border:1.5px solid var(--border);border-radius:14px;padding:16px 24px;text-align:center;min-width:120px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='#006C49'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-family:var(--font-d);font-size:28px;font-weight:600;color:var(--green);">300次</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin:4px 0;">¥299</div>
+        <div style="font-size:11px;color:var(--muted);">¥1.0/次</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 机构定价 ══ -->
+<div class="pricing-section hidden" id="plan-institution">
+  <div style="text-align:center;margin-bottom:48px;">
+    <div style="font-size:15px;color:var(--muted);max-width:560px;margin:0 auto;">透明年费制，按学校规模选择套餐。合同期内核心功能不限次数，<br/>无需担心学期末超量。</div>
+  </div>
+  <div class="inst-cards">
+    <div class="inst-card">
+      <div class="inst-tier">基础版</div>
+      <div class="inst-name">小型院校</div>
+      <div class="inst-price">¥10<span style="font-size:22px;font-weight:400;opacity:0.6;">万</span></div>
+      <div class="inst-price-unit">元 / 年 · 适合 3,000 名学生以下</div>
+      <div class="inst-divider"></div>
+      <div class="inst-feats">
+        <div class="inst-feat">5,000 次/年 论文评价</div>
+        <div class="inst-feat">3,000 次/年 论文校对</div>
+        <div class="inst-feat">3,000 次/年 格式排版</div>
+        <div class="inst-feat">选题评估 &amp; 文献综述（共享池 2,000 次）</div>
+        <div class="inst-feat">5 个管理员账号</div>
+        <div class="inst-feat">工作日客服支持</div>
+      </div>
+      <a class="inst-btn inst-btn-outline" href="#">联系销售</a>
+    </div>
+    <div class="inst-card highlight">
+      <div class="inst-badge">最受欢迎</div>
+      <div class="inst-tier">标准版</div>
+      <div class="inst-name">中型院校</div>
+      <div class="inst-price">¥30<span style="font-size:22px;font-weight:400;opacity:0.8;">万</span></div>
+      <div class="inst-price-unit">元 / 年 · 适合 3,000–10,000 名学生</div>
+      <div class="inst-divider" style="background:rgba(255,255,255,0.20);"></div>
+      <div class="inst-feats">
+        <div class="inst-feat">20,000 次/年 论文评价</div>
+        <div class="inst-feat">12,000 次/年 论文校对</div>
+        <div class="inst-feat">格式排版不限次</div>
+        <div class="inst-feat">选题评估 &amp; 文献综述不限量</div>
+        <div class="inst-feat">论文查重（中英文双引擎）</div>
+        <div class="inst-feat">20 个管理员 + 专属客户经理</div>
+        <div class="inst-feat">月度数据报告自动推送</div>
+      </div>
+      <a class="inst-btn inst-btn-white" href="#">申请演示 →</a>
+    </div>
+    <div class="inst-card">
+      <div class="inst-tier">旗舰版</div>
+      <div class="inst-name">大型 / 985 院校</div>
+      <div class="inst-price">¥50<span style="font-size:22px;font-weight:400;opacity:0.6;">万</span><span style="font-size:18px;opacity:0.5;">起</span></div>
+      <div class="inst-price-unit">元 / 年 · 1 万+ 学生，定制配置</div>
+      <div class="inst-divider"></div>
+      <div class="inst-feats">
+        <div class="inst-feat">全功能模块不限量使用</div>
+        <div class="inst-feat">私有化部署可选</div>
+        <div class="inst-feat">教务系统 SSO 对接</div>
+        <div class="inst-feat">Open API 深度集成</div>
+        <div class="inst-feat">院校品牌定制报告</div>
+        <div class="inst-feat">SLA 保障 + 7×12 技术支持</div>
+        <div class="inst-feat">数据安全审计报告</div>
+      </div>
+      <a class="inst-btn inst-btn-outline" href="#">获取定制方案</a>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:40px;font-size:13px;color:var(--muted);">
+    所有机构版均支持对公转账、学校采购流程、电子合同签署
+    &nbsp;·&nbsp; <a href="#" style="color:var(--green);">申请演示</a>
+    &nbsp;·&nbsp; <a href="#" style="color:var(--green);">联系销售团队</a>
+  </div>
+</div>
+
+<!-- 功能对比表（个人版） -->
+<div class="compare-wrap" id="compare-personal">
+  <div class="compare-title">各套餐功能对比</div>
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>功能</th>
+        <th>免费</th>
+        <th>基础 ¥39</th>
+        <th>专业 ¥99</th>
+        <th>无限 ¥299</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>🎯 选题评估</td><td>1次</td><td>✓</td><td>✓</td><td class="c-check">✓</td></tr>
+      <tr><td>📚 文献综述生成</td><td>1次</td><td>✓</td><td>✓</td><td class="c-check">✓</td></tr>
+      <tr><td>✍️ 写作辅助</td><td>2次</td><td>✓</td><td>✓</td><td class="c-check">✓</td></tr>
+      <tr><td>⭐ 智能评价（Word报告）</td><td>1次</td><td>✓</td><td>✓</td><td class="c-check">✓</td></tr>
+      <tr><td>🔍 论文校对（修订标记）</td><td>1次</td><td>✓</td><td>✓</td><td class="c-check">✓</td></tr>
+      <tr><td>📐 模板排版</td><td>1次</td><td>✓</td><td>✓</td><td class="c-check">✓</td></tr>
+      <tr><td>🛡️ 论文查重（中英文）</td><td>1次</td><td>✓</td><td>✓</td><td class="c-check">✓</td></tr>
+      <tr><td>📰 期刊投稿指导</td><td class="c-cross">—</td><td>✓</td><td>✓</td><td class="c-check">✓</td></tr>
+      <tr><td>额度滚存至下月</td><td class="c-cross">—</td><td class="c-cross">—</td><td>✓</td><td class="c-check">✓</td></tr>
+      <tr><td>批量上传处理</td><td class="c-cross">—</td><td class="c-cross">—</td><td class="c-cross">—</td><td class="c-check">✓</td></tr>
+      <tr><td>API 接入</td><td class="c-cross">—</td><td class="c-cross">—</td><td class="c-cross">—</td><td class="c-check">✓</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- FAQ -->
+<div class="faq-wrap">
+  <div class="faq-title">常见问题</div>
+  <div class="faq-item open">
+    <div class="faq-q" onclick="this.parentNode.classList.toggle('open')">次数是怎么计算的？</div>
+    <div class="faq-a">每次使用一个功能消耗 1–5 次额度，具体为：论文评价 1次、论文校对 1次、排版 1次、中文查重 1次、英文查重 2次、选题评估 3次、文献综述 5次、写作辅助 2次。上传文件不消耗次数，只有 AI 处理时才扣减。</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q" onclick="this.parentNode.classList.toggle('open')">我的论文数据安全吗？</div>
+    <div class="faq-a">你的论文数据加密传输和存储，仅用于完成你请求的服务处理，不会用于 AI 模型训练，也不会共享给第三方。处理完成后的临时文件会在 24 小时内自动删除。</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q" onclick="this.parentNode.classList.toggle('open')">我的学校已购买机构版，我还需要自己购买吗？</div>
+    <div class="faq-a">不需要。如果你的学校已采购机构版，管理员开通账号后，你可以使用学校的配额池，无需个人付费。如果学校配额用完，你可以自行购买次数包作为补充。</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q" onclick="this.parentNode.classList.toggle('open')">可以随时取消订阅吗？</div>
+    <div class="faq-a">可以，随时在账号设置中取消。取消后当前计费周期仍有效，周期结束后不再续费，剩余额度可继续使用至周期结束。</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q" onclick="this.parentNode.classList.toggle('open')">机构版支持哪些采购方式？</div>
+    <div class="faq-a">支持对公银行转账、学校采购平台（含政采云）、电子合同签署。提供增值税专用发票。大型院校可联系销售团队定制合同条款和付款方式。</div>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="cta-section">
+  <div class="cta-title">现在开始，免费体验 5 次</div>
+  <div class="cta-sub">不需要信用卡，注册即可使用全部功能</div>
+  <div class="cta-btns">
+    <a class="cta-btn cta-btn-green" href="#">免费注册</a>
+    <a class="cta-btn cta-btn-outline" href="#">了解机构采购</a>
+  </div>
+</div>
+
+<script>
+  function switchPlan(plan, btn) {
+    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('plan-personal').classList.toggle('hidden', plan !== 'personal');
+    document.getElementById('plan-institution').classList.toggle('hidden', plan !== 'institution');
+    document.getElementById('compare-personal').style.display = plan === 'personal' ? 'block' : 'none';
+  }
+
+  function switchPeriod(period, btn) {
+    document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('month-cards').style.display = period === 'month' ? 'grid' : 'none';
+    document.getElementById('year-cards').style.display = period === 'year' ? 'grid' : 'none';
+  }
+</script>
+</body>
+</html>

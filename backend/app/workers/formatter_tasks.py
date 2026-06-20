@@ -12,6 +12,19 @@ from app.config import settings
 from app.core.formatter import FormatEngine
 
 
+# ── Worker 级别单例，避免每次任务重复初始化（扫描模板目录、构建索引） ──
+_engine: FormatEngine = None
+
+
+def _get_engine() -> FormatEngine:
+    global _engine
+    if _engine is None:
+        template_dir = settings.STORAGE_PATH.parent / "templates"
+        _engine = FormatEngine(template_dir=template_dir, use_ai=settings.USE_AI)
+        logger.info("[Worker] FormatEngine 单例初始化完成")
+    return _engine
+
+
 class FormatterTask(Task):
     abstract = True
 
@@ -40,11 +53,21 @@ def run_formatting(
     """Celery 格式化任务"""
     logger.info(f"[Worker] 开始格式化 task_id={task_id} template={template_id}")
 
-    template_dir = settings.STORAGE_PATH.parent / "templates"
-    engine = FormatEngine(template_dir=template_dir, use_ai=settings.USE_AI)
+    engine = _get_engine()
+
+    def _progress(progress: int, stage: str):
+        try:
+            self.update_state(
+                state="PROGRESS",
+                meta={"progress": progress, "stage": stage, "task_id": task_id},
+            )
+        except Exception as e:
+            logger.debug(f"[Worker] update_state 失败 progress={progress}: {e}")
 
     try:
-        result = engine.format_document(input_path, output_path, template_id)
+        result = engine.format_document(
+            input_path, output_path, template_id, progress_cb=_progress
+        )
 
         if result.get("success"):
             # 检查是否有警告信息（降级处理）

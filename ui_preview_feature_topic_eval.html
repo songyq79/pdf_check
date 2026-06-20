@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VRonly — 选题评估</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@1,600&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green:      #006C49;
+      --green-mid:  #00875C;
+      --green-pale: #E8F5EE;
+      --green-pale2:#F0FAF5;
+      --sidebar-bg: #FFFFFF;
+      --sidebar-w:  220px;
+      --body-bg:    #F4F7F5;
+      --card:       #FFFFFF;
+      --text:       #1A2E20;
+      --mid:        #3D5244;
+      --muted:      #7A8C82;
+      --border:     #E2EBE6;
+      --orange:     #E8840A;
+      --blue:       #2563EB;
+      --red:        #DC3545;
+      --radius:     18px;
+      --radius-sm:  10px;
+      --shadow:     0 2px 16px rgba(0,60,40,0.07);
+      --font:       'Noto Sans SC', sans-serif;
+      --font-d:     'Newsreader', serif;
+    }
+    html, body { height: 100%; }
+    body { font-family: var(--font); background: var(--body-bg); color: var(--text); display: flex; font-size: 14px; }
+
+    /* ── Sidebar (简版，复用学生工作台) ── */
+    .sidebar {
+      width: var(--sidebar-w); min-height: 100vh;
+      background: var(--sidebar-bg); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; bottom: 0; z-index: 50;
+    }
+    .sidebar-logo { padding: 22px 18px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+    .logo-text { font-family: var(--font-d); font-style: italic; font-size: 20px; color: var(--text); font-weight: 600; }
+    .logo-badge { font-size: 10px; font-weight: 700; background: var(--green); color: #fff; padding: 2px 7px; border-radius: 100px; }
+    .nav-group { padding: 14px 10px 4px; }
+    .nav-label { font-size: 10px; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; color: var(--muted); padding: 0 8px; margin-bottom: 6px; }
+    .nav-item { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border-radius: 10px; color: var(--muted); font-size: 13.5px; font-weight: 500; text-decoration: none; cursor: pointer; transition: all 0.15s; margin-bottom: 2px; }
+    .nav-item:hover { background: var(--green-pale); color: var(--green); }
+    .nav-item.active { background: var(--green-pale); color: var(--green); font-weight: 700; }
+    .nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+    .nav-new { margin-left: auto; font-size: 10px; font-weight: 700; background: var(--orange); color: #fff; padding: 1px 6px; border-radius: 100px; }
+    .sidebar-bottom { margin-top: auto; padding: 14px 10px; border-top: 1px solid var(--border); }
+    .user-card { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 10px; cursor: pointer; }
+    .user-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--green) 0%, #00A870 100%); color: #fff; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+    .user-name { font-size: 13px; font-weight: 700; color: var(--text); }
+    .user-info { font-size: 11px; color: var(--muted); }
+
+    /* ── Main ── */
+    .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; }
+    .topbar { height: 58px; background: var(--card); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 28px; gap: 10px; position: sticky; top: 0; z-index: 40; }
+    .breadcrumb { font-size: 13px; color: var(--muted); flex: 1; }
+    .breadcrumb a { color: var(--muted); text-decoration: none; }
+    .breadcrumb span { color: var(--green); font-weight: 600; }
+    .quota-chip { font-size: 12px; font-weight: 600; color: var(--green); background: var(--green-pale); padding: 5px 12px; border-radius: 100px; }
+
+    /* ── Page states ── */
+    .page-state { display: none; }
+    .page-state.active { display: block; }
+
+    /* ══ STATE 1: Form ══ */
+    .form-layout { max-width: 760px; margin: 0 auto; padding: 28px 28px 60px; }
+    .page-header { margin-bottom: 28px; }
+    .page-icon { font-size: 32px; margin-bottom: 10px; }
+    .page-title { font-family: var(--font-d); font-size: 28px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .page-desc { font-size: 14px; color: var(--muted); line-height: 1.6; }
+    .cost-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--orange); background: #FFF3CD; padding: 4px 12px; border-radius: 100px; margin-top: 10px; }
+
+    .form-card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); padding: 32px; margin-bottom: 16px; }
+    .form-section-title { font-size: 13px; font-weight: 700; color: var(--mid); margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
+    .form-section-title::before { content: ''; width: 3px; height: 14px; background: var(--green); border-radius: 2px; display: inline-block; }
+
+    .form-group { margin-bottom: 20px; }
+    .form-group:last-child { margin-bottom: 0; }
+    label { display: block; font-size: 12px; font-weight: 700; color: var(--mid); margin-bottom: 7px; letter-spacing: 0.03em; }
+    .label-hint { font-size: 11px; color: var(--muted); font-weight: 400; margin-left: 6px; }
+    input[type=text], textarea, select {
+      width: 100%; padding: 11px 14px; border-radius: 10px;
+      border: 1.5px solid var(--border); background: #FAFBFA;
+      font-size: 14px; color: var(--text); font-family: var(--font);
+      outline: none; transition: border-color 0.15s; resize: none;
+    }
+    input[type=text]:focus, textarea:focus, select:focus { border-color: var(--green); background: #fff; }
+    input::placeholder, textarea::placeholder { color: #B0BDB5; }
+    .char-count { font-size: 11px; color: var(--muted); text-align: right; margin-top: 4px; }
+
+    .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+    /* radio group */
+    .radio-group { display: flex; gap: 10px; flex-wrap: wrap; }
+    .radio-opt {
+      padding: 9px 18px; border-radius: 10px; border: 1.5px solid var(--border);
+      font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer;
+      transition: all 0.15s; background: #FAFBFA;
+    }
+    .radio-opt:hover { border-color: var(--green); color: var(--green); }
+    .radio-opt.selected { border-color: var(--green); background: var(--green-pale); color: var(--green); }
+
+    /* tips box */
+    .tips-box { background: #EEF8FF; border: 1px solid rgba(37,99,235,0.15); border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 16px; }
+    .tips-box-title { font-size: 12px; font-weight: 700; color: var(--blue); margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
+    .tips-list { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+    .tips-list li { font-size: 12px; color: #3B5B8E; line-height: 1.5; padding-left: 14px; position: relative; }
+    .tips-list li::before { content: '·'; position: absolute; left: 4px; color: var(--blue); font-weight: 700; }
+
+    /* submit area */
+    .submit-area { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); padding: 24px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .submit-info { font-size: 13px; color: var(--muted); }
+    .submit-info strong { color: var(--text); }
+    .submit-btn { padding: 13px 36px; border-radius: 100px; background: var(--green); color: #fff; border: none; font-size: 15px; font-weight: 700; cursor: pointer; font-family: var(--font); transition: all 0.15s; white-space: nowrap; }
+    .submit-btn:hover { background: var(--green-mid); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,108,73,0.25); }
+
+    /* ══ STATE 2: Processing ══ */
+    .processing-layout { max-width: 600px; margin: 0 auto; padding: 60px 28px; text-align: center; }
+    .proc-icon { font-size: 56px; margin-bottom: 20px; animation: spin 3s linear infinite; }
+    @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+    .proc-title { font-family: var(--font-d); font-size: 26px; font-weight: 600; color: var(--text); margin-bottom: 10px; }
+    .proc-desc { font-size: 14px; color: var(--muted); line-height: 1.7; margin-bottom: 32px; }
+    .proc-steps { text-align: left; background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); padding: 24px 28px; box-shadow: var(--shadow); }
+    .proc-step { display: flex; align-items: center; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .proc-step:last-child { border-bottom: none; }
+    .proc-step-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+    .proc-step-icon.done { background: var(--green-pale); }
+    .proc-step-icon.active { background: #FFF3CD; animation: pulse 1.4s infinite; }
+    .proc-step-icon.todo { background: #F4F7F5; }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+    .proc-step-text { flex: 1; }
+    .proc-step-name { font-size: 13px; font-weight: 600; color: var(--text); }
+    .proc-step-hint { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .proc-step-status { font-size: 12px; font-weight: 700; flex-shrink: 0; }
+    .proc-step-status.done { color: var(--green); }
+    .proc-step-status.active { color: var(--orange); }
+    .proc-step-status.todo { color: var(--muted); }
+    .proc-progress-bar { background: var(--border); border-radius: 100px; height: 6px; overflow: hidden; margin: 20px 0 8px; }
+    .proc-progress-fill { height: 100%; border-radius: 100px; background: linear-gradient(90deg, var(--green) 0%, #00C47A 100%); transition: width 0.5s; }
+    .proc-progress-label { font-size: 12px; color: var(--muted); text-align: center; }
+
+    /* ══ STATE 3: Result ══ */
+    .result-layout { max-width: 860px; margin: 0 auto; padding: 28px 28px 60px; }
+
+    /* result header */
+    .result-header { background: linear-gradient(135deg, var(--green) 0%, #009962 100%); border-radius: var(--radius); padding: 28px 32px; color: #fff; margin-bottom: 20px; display: flex; align-items: center; gap: 24px; }
+    .rh-left { flex: 1; }
+    .rh-tag { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; background: rgba(255,255,255,0.20); padding: 3px 10px; border-radius: 100px; margin-bottom: 10px; display: inline-block; }
+    .rh-title { font-family: var(--font-d); font-size: 22px; font-weight: 600; line-height: 1.3; margin-bottom: 8px; }
+    .rh-meta { font-size: 12px; opacity: 0.70; display: flex; gap: 16px; }
+    .rh-score { text-align: center; }
+    .rh-score-num { font-family: var(--font-d); font-size: 56px; font-weight: 600; line-height: 1; }
+    .rh-score-label { font-size: 12px; opacity: 0.70; margin-top: 4px; }
+    .rh-verdict { display: inline-block; margin-top: 6px; background: rgba(255,255,255,0.25); padding: 3px 12px; border-radius: 100px; font-size: 12px; font-weight: 700; }
+
+    /* three score cards */
+    .score-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px; }
+    .score-card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); padding: 22px 20px; }
+    .sc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .sc-label { font-size: 13px; font-weight: 700; color: var(--mid); display: flex; align-items: center; gap: 6px; }
+    .sc-score { font-family: var(--font-d); font-size: 36px; font-weight: 600; line-height: 1; }
+    .sc-score.high { color: var(--green); }
+    .sc-score.mid { color: var(--blue); }
+    .sc-score.low { color: var(--orange); }
+    .sc-bar { background: var(--border); border-radius: 100px; height: 8px; overflow: hidden; margin-bottom: 12px; }
+    .sc-bar-fill { height: 100%; border-radius: 100px; }
+    .sc-bar-fill.high { background: var(--green); }
+    .sc-bar-fill.mid { background: var(--blue); }
+    .sc-bar-fill.low { background: var(--orange); }
+    .sc-desc { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+    /* analysis sections */
+    .analysis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    .analysis-card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); padding: 22px; }
+    .ac-title { font-size: 13px; font-weight: 700; color: var(--mid); margin-bottom: 14px; display: flex; align-items: center; gap: 7px; }
+    .ac-list { display: flex; flex-direction: column; gap: 8px; }
+    .ac-item { font-size: 13px; color: var(--text); line-height: 1.55; padding-left: 16px; position: relative; }
+    .ac-item::before { content: '•'; position: absolute; left: 3px; color: var(--green); font-weight: 700; }
+    .ac-item.warn::before { color: var(--orange); }
+    .ac-item.ok::before { color: var(--green); }
+
+    /* literature section */
+    .lit-card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 20px; }
+    .lit-head { padding: 16px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .lit-title { font-size: 14px; font-weight: 700; color: var(--text); }
+    .lit-count { font-size: 12px; color: var(--muted); }
+    .lit-list { padding: 4px 0; }
+    .lit-item { padding: 14px 22px; border-bottom: 1px solid var(--border); display: flex; gap: 14px; align-items: flex-start; }
+    .lit-item:last-child { border-bottom: none; }
+    .lit-num { font-family: var(--font-d); font-size: 18px; font-weight: 600; color: var(--green); flex-shrink: 0; min-width: 24px; line-height: 1.2; }
+    .lit-body { flex: 1; }
+    .lit-paper-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; line-height: 1.4; }
+    .lit-paper-meta { font-size: 11px; color: var(--muted); display: flex; gap: 12px; flex-wrap: wrap; }
+    .lit-tag { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 100px; background: var(--green-pale); color: var(--green); }
+    .lit-relevance { font-size: 11px; font-weight: 700; color: var(--green); flex-shrink: 0; }
+
+    /* suggestions */
+    .suggest-card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); padding: 22px; margin-bottom: 20px; }
+    .suggest-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; gap: 7px; }
+    .suggest-list { display: flex; flex-direction: column; gap: 12px; }
+    .suggest-item { display: flex; gap: 12px; align-items: flex-start; background: var(--body-bg); border-radius: 10px; padding: 14px; }
+    .si-num { width: 24px; height: 24px; border-radius: 50%; background: var(--green); color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .si-text { font-size: 13px; color: var(--text); line-height: 1.6; }
+
+    /* action bar */
+    .action-bar { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); padding: 20px 28px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+    .ab-left { font-size: 13px; color: var(--muted); }
+    .ab-left strong { color: var(--text); }
+    .ab-btns { display: flex; gap: 10px; }
+    .ab-btn { padding: 10px 22px; border-radius: 100px; font-size: 13px; font-weight: 700; cursor: pointer; border: none; font-family: var(--font); transition: all 0.15s; text-decoration: none; }
+    .ab-btn-outline { background: var(--green-pale); color: var(--green); }
+    .ab-btn-outline:hover { background: var(--green); color: #fff; }
+    .ab-btn-solid { background: var(--green); color: #fff; }
+    .ab-btn-solid:hover { background: var(--green-mid); }
+  </style>
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-text">VRonly</span>
+    <span class="logo-badge">学生版</span>
+  </div>
+  <div class="nav-group">
+    <div class="nav-label">工作台</div>
+    <a class="nav-item" href="#">🏠 我的主页</a>
+    <a class="nav-item" href="#">📄 我的论文</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-label">AI 助手</div>
+    <a class="nav-item active" href="#">🎯 选题评估</a>
+    <a class="nav-item" href="#">📚 文献综述 <span class="nav-new">NEW</span></a>
+    <a class="nav-item" href="#">✍️ 写作辅助 <span class="nav-new">NEW</span></a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-label">论文工具</div>
+    <a class="nav-item" href="#">⭐ 智能评价</a>
+    <a class="nav-item" href="#">🔍 论文校对</a>
+    <a class="nav-item" href="#">📐 模板排版</a>
+    <a class="nav-item" href="#">🛡️ 论文查重</a>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="user-card">
+      <div class="user-avatar">李</div>
+      <div>
+        <div class="user-name">李明</div>
+        <div class="user-info">剩余 18 次额度</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ── Main ── -->
+<div class="main">
+  <div class="topbar">
+    <div class="breadcrumb"><a href="#">工作台</a> / <span>选题评估</span></div>
+    <div class="quota-chip">🎫 剩余 18 次 · 本功能消耗 3 次</div>
+    <!-- 状态切换按钮（仅演示用） -->
+    <div style="display:flex;gap:6px;margin-left:12px;">
+      <button onclick="showState('form')" style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);cursor:pointer;background:#fff;color:var(--mid);">① 填写</button>
+      <button onclick="showState('processing')" style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);cursor:pointer;background:#fff;color:var(--mid);">② 处理中</button>
+      <button onclick="showState('result')" style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);cursor:pointer;background:#fff;color:var(--mid);">③ 结果</button>
+    </div>
+  </div>
+
+  <!-- ══ STATE 1: 填写表单 ══ -->
+  <div id="state-form" class="page-state active">
+    <div class="form-layout">
+      <div class="page-header">
+        <div class="page-icon">🎯</div>
+        <div class="page-title">选题评估</div>
+        <div class="page-desc">输入你的研究方向，AI 将从<strong>创新性、可行性、重要性</strong>三个维度深度分析，并检索相关文献支撑评估，最终生成 Word 评估报告。</div>
+        <div class="cost-badge">⚡ 本次消耗 3 次额度 · 生成 Word 报告</div>
+      </div>
+
+      <div class="tips-box">
+        <div class="tips-box-title">💡 如何填写才能获得更准确的评估？</div>
+        <ul class="tips-list">
+          <li>研究问题越具体越好，例如「基于 BERT 的中文医疗文本命名实体识别」优于「自然语言处理研究」</li>
+          <li>描述部分建议说明你已有的资源（数据集、导师方向、实验条件），方便评估可行性</li>
+          <li>如果有初步设想的研究方法，也可以在描述中提及</li>
+        </ul>
+      </div>
+
+      <div class="form-card">
+        <div class="form-section-title">研究选题基本信息</div>
+
+        <div class="form-group">
+          <label>研究问题 / 选题标题 <span class="label-hint">必填</span></label>
+          <input type="text" placeholder="例：基于深度学习的中文情感分析在电商评论中的应用研究" value="基于深度学习的中文情感分析在电商评论中的应用研究" />
+          <div class="char-count">23 / 100 字</div>
+        </div>
+
+        <div class="form-group">
+          <label>研究背景与动机 <span class="label-hint">选填，但填写后评估更准确</span></label>
+          <textarea rows="4" placeholder="简述你为什么选择这个题目，你想解决什么问题，已有哪些初步了解…">随着电商平台的快速发展，用户评论中蕴含大量情感信息，但现有方法在中文情感极性判断上准确率有限。本研究拟结合 BERT 预训练模型与领域特定数据集，探索在垂直领域的迁移学习效果。</textarea>
+          <div class="char-count">118 / 500 字</div>
+        </div>
+
+        <div class="form-group">
+          <label>初步构想的研究方法 <span class="label-hint">选填</span></label>
+          <textarea rows="3" placeholder="你打算用什么方法研究？例如：文献综述、问卷调查、实验研究、案例分析…">拟收集淘宝、京东评论数据约 10 万条，采用 BERT-wwm 预训练模型进行微调，对比基线方法（TextCNN, BiLSTM）的分类准确率。</textarea>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-section-title">论文背景信息</div>
+
+        <div class="form-row-2">
+          <div class="form-group" style="margin-bottom:0;">
+            <label>学科领域</label>
+            <select>
+              <option>计算机科学与技术</option>
+              <option>人工智能</option>
+              <option>软件工程</option>
+              <option>数据科学</option>
+              <option>其他</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label>论文类型</label>
+            <select>
+              <option>本科毕业论文</option>
+              <option>硕士学位论文</option>
+              <option>博士学位论文</option>
+              <option>期刊投稿论文</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top:20px;">
+          <label>论文类别</label>
+          <div class="radio-group">
+            <div class="radio-opt" onclick="selectRadio(this, 'type')">人文社科类</div>
+            <div class="radio-opt selected" onclick="selectRadio(this, 'type')">理工农医类</div>
+            <div class="radio-opt" onclick="selectRadio(this, 'type')">艺术类</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>检索文献范围 <span class="label-hint">AI 将搜索哪些数据库</span></label>
+          <div class="radio-group">
+            <div class="radio-opt selected" onclick="selectRadio(this, 'db')">PubMed + Semantic Scholar</div>
+            <div class="radio-opt" onclick="selectRadio(this, 'db')">仅 PubMed（医学类优先）</div>
+            <div class="radio-opt" onclick="selectRadio(this, 'db')">仅 Semantic Scholar</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>关键词 <span class="label-hint">最多 5 个，帮助更精准检索（选填）</span></label>
+          <input type="text" placeholder="例：情感分析、BERT、中文文本、电商评论（回车添加）" value="情感分析, BERT, 中文NLP, 电商评论" />
+        </div>
+      </div>
+
+      <div class="submit-area">
+        <div class="submit-info">
+          本次评估将消耗 <strong>3 次额度</strong>（你还剩 18 次），预计耗时 <strong>60–90 秒</strong>
+        </div>
+        <button class="submit-btn" onclick="showState('processing')">开始评估 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STATE 2: 处理中 ══ -->
+  <div id="state-processing" class="page-state">
+    <div class="processing-layout">
+      <div class="proc-icon">⚙️</div>
+      <div class="proc-title">AI 正在分析你的选题…</div>
+      <div class="proc-desc">通常需要 60–90 秒，请勿关闭页面。<br/>你可以先去做别的事，完成后会自动显示结果。</div>
+
+      <div class="proc-steps">
+        <div style="margin-bottom:14px;">
+          <div class="proc-progress-bar"><div class="proc-progress-fill" style="width:55%;"></div></div>
+          <div class="proc-progress-label">第 2 步 / 共 3 步 · 已用时 42 秒</div>
+        </div>
+        <div class="proc-step">
+          <div class="proc-step-icon done">✅</div>
+          <div class="proc-step-text">
+            <div class="proc-step-name">解析选题核心</div>
+            <div class="proc-step-hint">提取研究问题、学科领域、关键词</div>
+          </div>
+          <div class="proc-step-status done">完成</div>
+        </div>
+        <div class="proc-step">
+          <div class="proc-step-icon active">🔍</div>
+          <div class="proc-step-text">
+            <div class="proc-step-name">检索相关文献</div>
+            <div class="proc-step-hint">正在搜索 PubMed 和 Semantic Scholar…</div>
+          </div>
+          <div class="proc-step-status active">进行中</div>
+        </div>
+        <div class="proc-step">
+          <div class="proc-step-icon todo">📊</div>
+          <div class="proc-step-text">
+            <div class="proc-step-name">生成评估报告</div>
+            <div class="proc-step-hint">三维度打分 + 改进建议 + Word 报告</div>
+          </div>
+          <div class="proc-step-status todo">等待中</div>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;">
+        <button onclick="showState('result')" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:9px 20px;border-radius:100px;font-size:13px;cursor:pointer;font-family:var(--font);">⏭ 直接查看结果（演示）</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STATE 3: 评估结果 ══ -->
+  <div id="state-result" class="page-state">
+    <div class="result-layout">
+
+      <!-- 结果 Header -->
+      <div class="result-header">
+        <div class="rh-left">
+          <div class="rh-tag">🎯 选题评估报告</div>
+          <div class="rh-title">基于深度学习的中文情感分析<br/>在电商评论中的应用研究</div>
+          <div class="rh-meta">
+            <span>理工农医类 · 本科毕业论文</span>
+            <span>计算机科学与技术</span>
+            <span>2026-06-20 生成</span>
+          </div>
+        </div>
+        <div class="rh-score">
+          <div class="rh-score-num">7.8</div>
+          <div class="rh-score-label">综合评分（满分 10）</div>
+          <div class="rh-verdict">✅ 高度可行，建议采纳</div>
+        </div>
+      </div>
+
+      <!-- 三维度评分 -->
+      <div class="score-3">
+        <div class="score-card">
+          <div class="sc-header">
+            <div class="sc-label">💡 创新性</div>
+            <div class="sc-score high">8<span style="font-size:18px;color:var(--muted);">/10</span></div>
+          </div>
+          <div class="sc-bar"><div class="sc-bar-fill high" style="width:80%;"></div></div>
+          <div class="sc-desc">将 BERT 迁移学习应用于电商中文情感分析，结合垂直领域数据集具有一定新颖性。现有研究多聚焦通用领域，电商垂直场景的领域适应研究相对空白。</div>
+        </div>
+        <div class="score-card">
+          <div class="sc-header">
+            <div class="sc-label">⚙️ 可行性</div>
+            <div class="sc-score high">9<span style="font-size:18px;color:var(--muted);">/10</span></div>
+          </div>
+          <div class="sc-bar"><div class="sc-bar-fill high" style="width:90%;"></div></div>
+          <div class="sc-desc">公开数据集（Amazon Reviews、外卖评论等）丰富易获取；BERT-wwm 等预训练权重免费开放；PyTorch/TensorFlow 框架成熟，本科阶段完全可实现。</div>
+        </div>
+        <div class="score-card">
+          <div class="sc-header">
+            <div class="sc-label">🌟 重要性</div>
+            <div class="sc-score mid">7<span style="font-size:18px;color:var(--muted);">/10</span></div>
+          </div>
+          <div class="sc-bar"><div class="sc-bar-fill mid" style="width:70%;"></div></div>
+          <div class="sc-desc">情感分析具有广泛的商业应用价值，但中文电商领域已有较多研究积累。重要性中等偏上，建议进一步聚焦具体场景（如小红书种草评论）提升差异化价值。</div>
+        </div>
+      </div>
+
+      <!-- 分析详情 -->
+      <div class="analysis-grid">
+        <div class="analysis-card">
+          <div class="ac-title">✅ 主要亮点（核心优势）</div>
+          <div class="ac-list">
+            <div class="ac-item ok">聚焦电商垂直场景，有清晰的应用背景和真实需求</div>
+            <div class="ac-item ok">BERT 预训练模型技术路线成熟，风险可控</div>
+            <div class="ac-item ok">中英文情感词差异问题有文献先验，可借鉴路径清晰</div>
+            <div class="ac-item ok">10 万条数据量对本科论文而言规模合适</div>
+          </div>
+        </div>
+        <div class="analysis-card">
+          <div class="ac-title">⚠️ 潜在挑战（建议关注）</div>
+          <div class="ac-list">
+            <div class="ac-item warn">情感分析赛道竞争激烈，创新难度较大，需明确差异化定位</div>
+            <div class="ac-item warn">电商评论数据存在隐式情感（讽刺、比较句），处理难度高</div>
+            <div class="ac-item warn">GPU 算力需求较高，建议提前申请学校/云端资源</div>
+            <div class="ac-item warn">若对比实验较多，时间安排需留有余量</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 相关文献 -->
+      <div class="lit-card">
+        <div class="lit-head">
+          <div class="lit-title">📚 相关文献检索结果</div>
+          <div class="lit-count">检索到 8 篇高相关文献 · 来源：Semantic Scholar + PubMed</div>
+        </div>
+        <div class="lit-list">
+          <div class="lit-item">
+            <div class="lit-num">1</div>
+            <div class="lit-body">
+              <div class="lit-paper-title">BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding</div>
+              <div class="lit-paper-meta">
+                <span>Devlin et al. · 2019</span>
+                <span>Google Research</span>
+                <span style="color:var(--blue);">Semantic Scholar</span>
+                <span class="lit-tag">基础方法</span>
+              </div>
+            </div>
+            <div class="lit-relevance">相关度 98%</div>
+          </div>
+          <div class="lit-item">
+            <div class="lit-num">2</div>
+            <div class="lit-body">
+              <div class="lit-paper-title">Chinese BERT with Whole Word Masking for Question Answering and Sentiment Classification</div>
+              <div class="lit-paper-meta">
+                <span>Cui et al. · 2021</span>
+                <span>哈工大讯飞联合实验室</span>
+                <span style="color:var(--blue);">Semantic Scholar</span>
+                <span class="lit-tag">中文预训练</span>
+              </div>
+            </div>
+            <div class="lit-relevance">相关度 95%</div>
+          </div>
+          <div class="lit-item">
+            <div class="lit-num">3</div>
+            <div class="lit-body">
+              <div class="lit-paper-title">Sentiment Analysis for E-Commerce Reviews Using Domain-Adapted Transformer Models</div>
+              <div class="lit-paper-meta">
+                <span>Zhang & Liu · 2023</span>
+                <span>ACL 2023</span>
+                <span style="color:var(--blue);">Semantic Scholar</span>
+                <span class="lit-tag">领域适应</span>
+              </div>
+            </div>
+            <div class="lit-relevance">相关度 91%</div>
+          </div>
+          <div class="lit-item">
+            <div class="lit-num">4</div>
+            <div class="lit-body">
+              <div class="lit-paper-title">Aspect-Based Sentiment Analysis in Chinese E-Commerce: A Survey</div>
+              <div class="lit-paper-meta">
+                <span>Wang et al. · 2022</span>
+                <span>Information Processing & Management</span>
+                <span style="color:var(--blue);">Semantic Scholar</span>
+                <span class="lit-tag">综述</span>
+              </div>
+            </div>
+            <div class="lit-relevance">相关度 89%</div>
+          </div>
+          <div class="lit-item" style="padding:10px 22px;background:#FAFBFA;">
+            <div style="font-size:12px;color:var(--muted);">还有 4 篇文献已包含在 Word 报告中…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 改进建议 -->
+      <div class="suggest-card">
+        <div class="suggest-title">🚀 AI 改进建议（3 条优先行动）</div>
+        <div class="suggest-list">
+          <div class="suggest-item">
+            <div class="si-num">1</div>
+            <div class="si-text">
+              <strong>聚焦细分场景提升创新点</strong>：建议将研究范围从「电商评论」进一步聚焦到「美妆/3C/生鲜」等特定品类，或关注「小红书/抖音短评」等新兴平台，有助于形成更鲜明的研究差异化。
+            </div>
+          </div>
+          <div class="suggest-item">
+            <div class="si-num">2</div>
+            <div class="si-text">
+              <strong>增加隐式情感分析作为挑战点</strong>：在研究内容中专门设立「隐式情感识别」子任务（如反讽、比较句），这是当前学界关注热点，能有效提升论文的学术价值。
+            </div>
+          </div>
+          <div class="suggest-item">
+            <div class="si-num">3</div>
+            <div class="si-text">
+              <strong>明确对比基线并设计消融实验</strong>：研究方案中建议设置至少 3 个对比基线（TextCNN / BiLSTM / RoBERTa），并设计消融实验验证各组件贡献，增强论文说服力。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 操作栏 -->
+      <div class="action-bar">
+        <div class="ab-left">报告生成于 2026-06-20 14:47 · 报告编号 <strong>#TE-2847</strong></div>
+        <div class="ab-btns">
+          <a class="ab-btn ab-btn-outline" href="#">📚 立即生成文献综述</a>
+          <a class="ab-btn ab-btn-outline" href="#">🔄 调整选题重新评估</a>
+          <a class="ab-btn ab-btn-solid" href="#">⬇ 下载 Word 报告</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+  function showState(state) {
+    document.querySelectorAll('.page-state').forEach(el => el.classList.remove('active'));
+    document.getElementById('state-' + state).classList.add('active');
+  }
+  function selectRadio(el, group) {
+    el.closest('.radio-group').querySelectorAll('.radio-opt').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+</script>
+</body>
+</html>
