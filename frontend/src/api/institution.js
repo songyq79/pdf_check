@@ -1,6 +1,10 @@
 import request from './index'
 
 const institutionAPI = {
+  // 学生用机构邀请码自助注册（公开，需后续管理员审批）
+  registerStudent(payload) {
+    return request({ url: '/api/v1/institution/register-student', method: 'post', data: payload })
+  },
   info() {
     return request({ url: '/api/v1/institution/info', method: 'get' })
   },

@@ -9,20 +9,20 @@
           <router-link to="/" class="nav-item" :class="{ active: $route.path === '/' }">
             首页
           </router-link>
-          <router-link to="/evaluation" class="nav-item" :class="{ active: $route.path === '/evaluation' }">
-            智能评价
-          </router-link>
           <router-link to="/topic-evaluation" class="nav-item" :class="{ active: $route.path === '/topic-evaluation' }">
             选题评估
           </router-link>
           <router-link to="/literature-review" class="nav-item" :class="{ active: $route.path === '/literature-review' }">
             文献综述
           </router-link>
+          <router-link to="/experiment-review" class="nav-item" :class="{ active: $route.path === '/experiment-review' }">
+            实验评审
+          </router-link>
           <router-link to="/writing-assistant" class="nav-item" :class="{ active: $route.path === '/writing-assistant' }">
             写作辅助
           </router-link>
-          <router-link to="/experiment-review" class="nav-item" :class="{ active: $route.path === '/experiment-review' }">
-            实验评审
+          <router-link to="/evaluation" class="nav-item" :class="{ active: $route.path === '/evaluation' }">
+            智能评价
           </router-link>
           <router-link to="/spell-check" class="nav-item" :class="{ active: $route.path === '/spell-check' }">
             错别字检查

@@ -35,6 +35,24 @@
         <p class="feature-desc">上传论文列表或输入关键词，自动补检文献、按主题聚类，生成可二次编辑的文献综述初稿与 GB/T 7714 参考文献。</p>
       </div>
 
+      <div class="feature-card" @click="navigateTo('/experiment-review')">
+        <span class="new-badge">新</span>
+        <div class="feature-icon-wrap" style="background:rgba(39,226,159,0.10);">
+          <span style="font-size: 32px;">🔬</span>
+        </div>
+        <h3 class="feature-title">实验评审</h3>
+        <p class="feature-desc">粘贴实验方案，AI 评估科学性与完整性，对照「毁掉研究的结构性错误清单」排查伪重复、混杂、批次效应，并给出改进建议（理工科）。</p>
+      </div>
+
+      <div class="feature-card" @click="navigateTo('/writing-assistant')">
+        <span class="new-badge">新</span>
+        <div class="feature-icon-wrap" style="background:rgba(39,226,159,0.10);">
+          <span style="font-size: 32px;">✍️</span>
+        </div>
+        <h3 class="feature-title">写作辅助</h3>
+        <p class="feature-desc">论文段落实时检查，从语法、风格、逻辑、论证四个维度给出具体修改建议，边写边改，让初稿更扎实。</p>
+      </div>
+
       <div class="feature-card" @click="navigateTo('/evaluation')">
         <div class="feature-icon-wrap" style="background:rgba(39,226,159,0.10);">
           <EvaluationIcon style="font-size: 36px; color: #006D4A" />
