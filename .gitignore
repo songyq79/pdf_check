@@ -28,6 +28,12 @@ backend/test_report_*.png
 backend/test_*.png
 *.pdf
 
+# 压缩包 / 二进制归档（非源代码，绝不提交）
+*.rar
+*.zip
+*.7z
+*.tar.gz
+
 # Node.js
 node_modules/
 frontend/dist/
