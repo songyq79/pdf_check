@@ -5,20 +5,26 @@
       <p>开启无限可能的学术之旅</p>
     </div>
 
+    <!-- 计费口径说明 -->
+    <div class="billing-note">
+      计费以 <strong>credit（次）</strong> 为单位：<strong>¥{{ pricePerUse }}/credit</strong>。
+      不同功能消耗的 credit 数不同，详见下表。
+    </div>
+
     <div class="pricing-container">
       <!-- 按次购买 -->
       <div class="pricing-card pay-per-use">
         <div class="card-title">
           <h3>按次购买</h3>
           <p class="price">
-            <span class="currency">¥</span><span class="amount">{{ pricePerUse }}</span><span class="unit">/次</span>
+            <span class="currency">¥</span><span class="amount">{{ pricePerUse }}</span><span class="unit">/credit</span>
           </p>
         </div>
         <div class="card-content">
           <p class="desc">随用随买，灵活使用</p>
           <div class="features">
-            <div class="feature">✓ 任意功能可用</div>
-            <div class="feature">✓ 使用即扣</div>
+            <div class="feature">✓ 全部功能可用</div>
+            <div class="feature">✓ 按功能消耗 credit（见下表）</div>
             <div class="feature">✓ 无过期限制</div>
           </div>
           <el-input-number v-model="perUseQuantity" :min="1" :max="100" :precision="0" :step="1" :value-on-clear="1" style="width: 100%; margin-bottom: 15px;">
@@ -39,9 +45,9 @@
           </p>
         </div>
         <div class="card-content">
-          <p class="desc">每月 20 次使用额度</p>
+          <p class="desc">每月 {{ monthlyLimit }} credits 额度</p>
           <div class="features">
-            <div class="feature">✓ 每月 20 次额度</div>
+            <div class="feature">✓ 每月 {{ monthlyLimit }} credits 额度</div>
             <div class="feature">✓ 优先客服支持</div>
             <div class="feature">✓ 30天有效期</div>
             <div class="feature">✓ 支持续费累计</div>
@@ -50,6 +56,24 @@
             @click="buyMonthly" :loading="buyLoading">
             立即订阅
           </el-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 各功能消耗对照表 -->
+    <div class="cost-table-section">
+      <h2>各功能消耗对照</h2>
+      <p class="cost-table-sub">每次使用扣除对应 credit；包月套餐同样按此消耗每月额度。</p>
+      <div class="cost-table">
+        <div class="cost-row cost-head">
+          <span class="c-name">功能</span>
+          <span class="c-credits">消耗</span>
+          <span class="c-yuan">按次价</span>
+        </div>
+        <div class="cost-row" v-for="item in featureCostItems" :key="item.action">
+          <span class="c-name">{{ item.label }}</span>
+          <span class="c-credits">{{ item.credits }} credit{{ item.credits > 1 ? 's' : '' }}</span>
+          <span class="c-yuan">¥{{ item.yuan }}</span>
         </div>
       </div>
     </div>
@@ -140,13 +164,24 @@ const priceMonthly = computed(() => {
   return billingStore.pricing?.monthly_yuan || '69.90'
 })
 
+const monthlyLimit = computed(() => {
+  return billingStore.pricing?.monthly_limit || 20
+})
+
+const featureCostItems = computed(() => {
+  return billingStore.featureCosts?.items || []
+})
+
 const perUsePrice = computed(() => {
   const price = parseFloat(pricePerUse.value) * perUseQuantity.value
   return price.toFixed(2)
 })
 
 onMounted(async () => {
-  await billingStore.loadPricing()
+  await Promise.all([
+    billingStore.loadPricing(),
+    billingStore.loadFeatureCosts(),
+  ])
   if (!authStore.isLoggedIn) {
     ElMessage.warning('请先登录')
   }
@@ -287,12 +322,91 @@ const pollPaymentStatus = (orderNo) => {
   font-size: 16px;
 }
 
+.billing-note {
+  max-width: 1000px;
+  margin: 0 auto 28px;
+  padding: 14px 20px;
+  background: rgba(0, 108, 73, 0.06);
+  border: 1px solid rgba(0, 108, 73, 0.18);
+  border-radius: 14px;
+  color: rgb(59, 74, 65);
+  font-size: 14px;
+  line-height: 22px;
+  text-align: center;
+}
+
+.billing-note strong {
+  color: rgb(0, 108, 73);
+  font-weight: 600;
+}
+
 .pricing-container {
   max-width: 1000px;
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 32px;
+}
+
+/* 各功能消耗对照表 */
+.cost-table-section {
+  max-width: 680px;
+  margin: 56px auto 0;
+  text-align: center;
+}
+
+.cost-table-section h2 {
+  font-size: 24px;
+  font-weight: 400;
+  color: rgb(26, 28, 28);
+  margin-bottom: 8px;
+}
+
+.cost-table-sub {
+  color: rgb(107, 114, 128);
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+.cost-table {
+  border: 1px solid rgba(186, 202, 191, 0.4);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.cost-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  align-items: center;
+  padding: 14px 24px;
+  font-size: 15px;
+  color: rgb(26, 28, 28);
+  border-bottom: 1px solid rgba(186, 202, 191, 0.25);
+}
+
+.cost-row:last-child {
+  border-bottom: none;
+}
+
+.cost-row.cost-head {
+  background: rgb(243, 243, 244);
+  font-weight: 600;
+  color: rgb(59, 74, 65);
+  font-size: 14px;
+}
+
+.cost-row .c-name {
+  text-align: left;
+}
+
+.cost-row .c-credits {
+  color: rgb(0, 108, 73);
+  font-weight: 500;
+}
+
+.cost-row .c-yuan {
+  text-align: right;
+  color: rgb(59, 74, 65);
 }
 
 .pricing-card {

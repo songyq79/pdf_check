@@ -27,6 +27,13 @@ export function getPricing() {
 }
 
 /**
+ * 获取各功能消耗的 credit 对照表（公开）
+ */
+export function getFeatureCosts() {
+  return api.get('/feature-costs')
+}
+
+/**
  * 获取我的配额
  */
 export function getMyQuota() {

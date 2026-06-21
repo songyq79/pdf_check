@@ -71,6 +71,9 @@
         仅支持 .docx（排版需操作文档样式结构，PDF 不适用）
       </div>
       <div v-if="!selectedTemplateId" class="tip-text">请先选择模板，再上传文件</div>
+      <div style="text-align:center; margin-top:12px;">
+        <CostHint action="formatter" />
+      </div>
     </div>
 
     <!-- 处理中 -->
@@ -332,6 +335,7 @@ import {
   Upload, Delete, UploadFilled, EditPen, Memo,
 } from '@element-plus/icons-vue'
 import FileUpload from '@/components/common/FileUpload.vue'
+import CostHint from '@/components/common/CostHint.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import formattingAPI from '@/api/formatting'
 import { useFormattingStore } from '@/store/modules/formatting'

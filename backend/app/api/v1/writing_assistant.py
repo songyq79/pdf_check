@@ -12,11 +12,12 @@ from app.config import settings
 from app.models.user import get_db
 from app.api.v1.deps import require_quota, QuotaContext
 from app.services.billing_service import consume_quota
+from app.models.pricing import get_feature_cost
 from app.core.writing_assistant.analyzer import analyze_paragraph
 
 router = APIRouter()
 
-_QUOTA_COST = 2
+_QUOTA_COST = get_feature_cost("writing_assist")
 _VALID_TYPES = ("humanities", "science_engineering", "arts")
 _MAX_LEN = 2000
 

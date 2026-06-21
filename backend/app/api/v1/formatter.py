@@ -23,6 +23,7 @@ from app.config import settings
 from app.models.user import get_db
 from app.api.v1.deps import require_quota, QuotaContext
 from app.services.billing_service import consume_quota
+from app.models.pricing import get_feature_cost
 from app.core.formatter import FormatEngine
 from app.workers.celery_app import celery_app
 from app.workers.formatter_tasks import run_formatting
@@ -68,7 +69,8 @@ async def format_paper(
     logger.info(f"[formatter] 任务已提交 task_id={task_id} template={template_id}")
 
     if ctx.billing_on:
-        consume_quota(db, ctx.user.id, "formatter", task_id=task_id)
+        consume_quota(db, ctx.user.id, "formatter", task_id=task_id,
+                      cost=get_feature_cost("formatter"))
 
     return {
         "success": True,

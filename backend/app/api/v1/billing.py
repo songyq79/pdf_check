@@ -16,6 +16,9 @@ from app.schemas.billing import (
 )
 from app.services import billing_service
 from app.services import payment_service
+from app.models.pricing import (
+    FEATURE_COSTS, FEATURE_LABELS, FREE_TRIAL_COUNT, REFERRAL_REWARD_COUNT,
+)
 
 router = APIRouter()
 
@@ -35,9 +38,29 @@ def get_pricing(db: Session = Depends(get_db)):
         per_use_yuan=f"{per_use / 100:.2f}",
         monthly_yuan=f"{monthly / 100:.2f}",
         monthly_limit=monthly_limit,
-        free_trial_count=int(config.get("free_trial_count", "1")),
-        referral_reward_count=int(config.get("referral_reward_count", "3")),
+        free_trial_count=int(config.get("free_trial_count", str(FREE_TRIAL_COUNT))),
+        referral_reward_count=int(config.get("referral_reward_count", str(REFERRAL_REWARD_COUNT))),
     )
+
+
+# ── 各功能消耗对照表（公开，唯一真相源）────────────────────────
+
+
+@router.get("/feature-costs", summary="各功能消耗的 credit 数")
+def get_feature_costs(db: Session = Depends(get_db)):
+    """前端定价页/各功能提交前展示。金额按当前 per_use 单价折算。"""
+    per_use = int(billing_service.get_config(db, "price_per_use", "990"))
+    unit_yuan = per_use / 100
+    items = [
+        {
+            "action": action,
+            "label": FEATURE_LABELS.get(action, action),
+            "credits": cost,
+            "yuan": f"{unit_yuan * cost:.2f}",
+        }
+        for action, cost in FEATURE_COSTS.items()
+    ]
+    return {"per_use_yuan": f"{unit_yuan:.2f}", "items": items}
 
 
 # ── 我的配额 ──────────────────────────────────────────────────

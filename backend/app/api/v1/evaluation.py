@@ -26,6 +26,7 @@ from app.services.file_service import save_upload_file, validate_file
 from app.services.pdf_extractor import PdfExtractionError, extract_text_from_pdf
 from app.services.docx_normalizer import clean_control_chars, normalize_docx
 from app.services.billing_service import consume_quota
+from app.models.pricing import get_feature_cost
 from app.workers.celery_app import celery_app
 from app.workers.evaluation_tasks import run_evaluation
 from app.core.evaluator.journal_matcher import JournalMatcher
@@ -591,7 +592,8 @@ async def evaluate_paper(
 
     # 扣减配额（任务提交成功后扣）
     if ctx.billing_on:
-        consume_quota(db, ctx.user.id, "evaluation", task_id=celery_result.id)
+        consume_quota(db, ctx.user.id, "evaluation", task_id=celery_result.id,
+                      cost=get_feature_cost("evaluation"))
 
     response = {
         "task_id":     celery_result.id,

@@ -44,6 +44,7 @@
               </el-form-item>
             </el-form>
             <div class="upload-actions">
+              <CostHint :credits="1" />
               <el-button type="primary" size="large" :disabled="!selectedFile" @click="handleStart">
                 <el-icon><Search /></el-icon> 开始检测(中文)
               </el-button>
@@ -84,11 +85,12 @@
                 >
                   <el-icon class="upload-icon" :size="48"><Upload /></el-icon>
                   <div class="upload-text">拖拽文件到此处,或 <em>点击上传</em></div>
-                  <div class="upload-hint">消耗 2 次额度 · 基于摘要级比对,正文中段改写可能漏检</div>
+                  <div class="upload-hint">基于摘要级比对,正文中段改写可能漏检</div>
                 </el-upload>
               </el-form-item>
             </el-form>
             <div class="upload-actions">
+              <CostHint :credits="enLanguage === 'en' ? 2 : 1" />
               <el-button type="primary" size="large" :disabled="!selectedFile" @click="handleStart">
                 <el-icon><Search /></el-icon> 开始检测(外文)
               </el-button>
@@ -366,6 +368,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { Upload, Search, Loading, Download } from '@element-plus/icons-vue'
 import { usePlagiarismStore } from '@/store/modules/plagiarism'
+import CostHint from '@/components/common/CostHint.vue'
 import FallbackBanner from '@/components/plagiarism/FallbackBanner.vue'
 import ProgressStages from '@/components/plagiarism/ProgressStages.vue'
 import CopyDoiList from '@/components/plagiarism/CopyDoiList.vue'

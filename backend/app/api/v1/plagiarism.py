@@ -14,7 +14,8 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.models.user import get_db
 from app.api.v1.deps import require_quota, QuotaContext
-from app.services.billing_service import consume_quota, check_quota
+from app.services.billing_service import consume_quota, check_quota, get_total_remaining
+from app.models.pricing import get_feature_cost
 from app.services.file_service import save_upload_file, validate_file
 from app.workers.celery_app import celery_app
 from app.workers.plagiarism_tasks import run_plagiarism_check
@@ -52,24 +53,20 @@ async def upload_and_check(
     file_path = await save_upload_file(file, settings.UPLOAD_PATH)
     logger.info(f"[plagiarism] 文件已保存 language={language}: {file_path}")
 
-    # 计算本次扣费:显式 en → 2;其他(含 auto 即便检测为 en) → 1,用户友好
-    quota_cost = 2 if language == "en" else 1
+    # 计算本次扣费:显式 en → plagiarism_en;其他(含 auto 即便检测为 en) → plagiarism_cn,用户友好
+    quota_cost = get_feature_cost("plagiarism_en" if language == "en" else "plagiarism_cn")
 
-    # EN 路径预检:若配额不够扣 2 次,提前拒绝
+    # 多扣费路径预检:若配额不够扣 quota_cost 次,提前拒绝
     if ctx.billing_on and quota_cost > 1:
         quota_info = check_quota(db, ctx.user.id)
         # admin/billing_off 放行
         if quota_info["source"] not in ("admin", "billing_off"):
-            from app.models.billing import QuotaBalance
-            total = db.query(QuotaBalance).filter(
-                QuotaBalance.user_id == ctx.user.id,
-            ).all()
-            if sum(b.remaining for b in total) < quota_cost:
+            if get_total_remaining(db, ctx.user.id) < quota_cost:
                 raise HTTPException(
                     status_code=402,
                     detail={
                         "code": "NO_QUOTA",
-                        "message": f"外文查重需要 {quota_cost} 次额度,请先充值",
+                        "message": f"本次查重需要 {quota_cost} 次额度,请先充值",
                         "pricing_url": "/api/v1/billing/pricing",
                     },
                 )

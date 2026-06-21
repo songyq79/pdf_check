@@ -19,12 +19,13 @@ from app.models.user import get_db
 from app.models.billing import QuotaBalance
 from app.api.v1.deps import require_quota, QuotaContext
 from app.services.billing_service import consume_quota, get_total_remaining
+from app.models.pricing import get_feature_cost
 from app.workers.celery_app import celery_app
 from app.workers.literature_review_tasks import run_literature_review
 
 router = APIRouter()
 
-_QUOTA_COST = 5
+_QUOTA_COST = get_feature_cost("literature_review")
 _VALID_TYPES = ("humanities", "science_engineering", "arts")
 _EXT_FORMAT = {".txt": "txt", ".csv": "csv", ".bib": "bib"}
 

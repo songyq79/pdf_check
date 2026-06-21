@@ -56,7 +56,7 @@
         </el-form>
 
         <div class="submit-bar">
-          <span class="cost-hint">本次生成消耗 <strong>5</strong> 次额度</span>
+          <CostHint action="literature_review" />
           <el-button type="primary" size="large" :loading="submitting" @click="handleSubmit">
             生成综述初稿
           </el-button>
@@ -150,6 +150,7 @@ import { ref, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Loading, RefreshLeft, Download, UploadFilled } from '@element-plus/icons-vue'
 import litAPI from '@/api/literatureReview'
+import CostHint from '@/components/common/CostHint.vue'
 
 const state = ref('form')
 const inputMode = ref('file')

@@ -8,6 +8,7 @@ import * as billingApi from '@/api/billing'
 export const useBillingStore = defineStore('billing', () => {
   // 状态
   const pricing = ref(null)
+  const featureCosts = ref(null)
   const quota = ref(null)
   const orders = ref([])
   const inviteCodes = ref([])
@@ -26,6 +27,16 @@ export const useBillingStore = defineStore('billing', () => {
       pricing.value = res.data
     } catch (e) {
       console.error('加载定价失败:', e)
+    }
+  }
+
+  // 加载各功能消耗对照表
+  const loadFeatureCosts = async () => {
+    try {
+      const res = await billingApi.getFeatureCosts()
+      featureCosts.value = res.data
+    } catch (e) {
+      console.error('加载功能消耗表失败:', e)
     }
   }
 
@@ -95,6 +106,7 @@ export const useBillingStore = defineStore('billing', () => {
   return {
     // 状态
     pricing,
+    featureCosts,
     quota,
     orders,
     inviteCodes,
@@ -106,6 +118,7 @@ export const useBillingStore = defineStore('billing', () => {
     subscription,
     // 方法
     loadPricing,
+    loadFeatureCosts,
     loadQuota,
     loadOrders,
     createOrder,

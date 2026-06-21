@@ -24,7 +24,7 @@
           placeholder="粘贴或输入要检查的论文段落（单段，≤2000 字）..."
         />
         <div class="wa-submit">
-          <span class="cost-hint">本段检查消耗 <strong>2</strong> 次额度</span>
+          <CostHint action="writing_assist" />
           <el-button type="primary" :loading="loading" :disabled="!paragraph.trim()" @click="handleCheck">
             检查本段
           </el-button>
@@ -63,6 +63,7 @@ import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { EditPen } from '@element-plus/icons-vue'
 import writingAPI from '@/api/writingAssistant'
+import CostHint from '@/components/common/CostHint.vue'
 
 const paragraph = ref('')
 const paperType = ref('humanities')

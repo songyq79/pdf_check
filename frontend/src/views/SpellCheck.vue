@@ -15,6 +15,9 @@
       <div class="upload-tip">
         仅支持 .docx（校对结果需以 Word 修订模式返回，PDF 不适用）
       </div>
+      <div style="text-align:center; margin-top:12px;">
+        <CostHint action="proofread" />
+      </div>
     </div>
 
     <!-- 处理中 -->
@@ -128,6 +131,7 @@ import {
   Document, Clock, RefreshLeft, Download, CircleClose,
 } from '@element-plus/icons-vue'
 import FileUpload from '@/components/common/FileUpload.vue'
+import CostHint from '@/components/common/CostHint.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import spellCheckAPI from '@/api/spellCheck'
 import { useSpellCheckStore } from '@/store/modules/spellCheck'

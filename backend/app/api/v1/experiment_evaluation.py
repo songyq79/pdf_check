@@ -16,12 +16,13 @@ from app.models.user import get_db
 from app.models.billing import QuotaBalance
 from app.api.v1.deps import require_quota, QuotaContext
 from app.services.billing_service import consume_quota, get_total_remaining
+from app.models.pricing import get_feature_cost
 from app.workers.celery_app import celery_app
 from app.workers.experiment_evaluation_tasks import run_experiment_evaluation
 
 router = APIRouter()
 
-_QUOTA_COST = 3
+_QUOTA_COST = get_feature_cost("experiment_evaluation")
 
 
 @router.post("/upload", summary="提交实验设计评审任务")

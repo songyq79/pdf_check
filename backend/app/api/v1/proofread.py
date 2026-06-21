@@ -26,6 +26,7 @@ from app.config import settings
 from app.models.user import get_db
 from app.api.v1.deps import require_quota, QuotaContext
 from app.services.billing_service import consume_quota
+from app.models.pricing import get_feature_cost
 from app.workers.celery_app import celery_app
 from app.workers.proofread_tasks import run_proofread
 from app.services.task_store import get_task_result_from_db
@@ -66,7 +67,8 @@ async def upload_for_proofread(
     logger.info(f"[proofread] 任务已提交 task_id={task_id} file={file.filename}")
 
     if ctx.billing_on:
-        consume_quota(db, ctx.user.id, "proofread", task_id=task_id)
+        consume_quota(db, ctx.user.id, "proofread", task_id=task_id,
+                      cost=get_feature_cost("proofread"))
 
     return {
         "task_id": task_id,

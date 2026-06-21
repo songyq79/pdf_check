@@ -41,6 +41,9 @@
       <div class="upload-tip">
         支持 .docx 和 .pdf(文字版),扫描版 PDF 无法解析
       </div>
+      <div style="text-align:center; margin-top:12px;">
+        <CostHint action="evaluation" />
+      </div>
     </div>
 
     <!-- UPLOADING/PROCESSING状态：加载中 -->
@@ -218,6 +221,7 @@ import { useHistoryStore } from '@/store/modules/history'
 import { useRoute } from 'vue-router'
 import FileUpload from '@/components/common/FileUpload.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import CostHint from '@/components/common/CostHint.vue'
 import RadarChart from '@/components/charts/RadarChart.vue'
 import BarChart from '@/components/charts/BarChart.vue'
 import ScoreCard from '@/components/evaluation/ScoreCard.vue'

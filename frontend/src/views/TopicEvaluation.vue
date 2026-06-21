@@ -52,7 +52,7 @@
         </el-form>
 
         <div class="submit-bar">
-          <span class="cost-hint">本次评估消耗 <strong>3</strong> 次额度</span>
+          <CostHint action="topic_evaluation" />
           <el-button type="primary" size="large" :loading="submitting" @click="handleSubmit">
             开始评估
           </el-button>
@@ -152,6 +152,7 @@ import { ref, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Loading, RefreshLeft, Download } from '@element-plus/icons-vue'
 import topicAPI from '@/api/topicEvaluation'
+import CostHint from '@/components/common/CostHint.vue'
 
 const state = ref('form')          // form | processing | failed | result
 const submitting = ref(false)
