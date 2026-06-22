@@ -52,7 +52,7 @@ class CoreSource(ExternalSource):
                 title=it.get("title") or "",
                 abstract=abstract,
                 doi=doi,
-                url=it.get("downloadUrl") or it.get("sourceFulltextUrls", [None])[0]
+                url=it.get("downloadUrl") or (it.get("sourceFulltextUrls") or [None])[0]
                     or (f"https://doi.org/{doi}" if doi else None),
                 authors=authors,
                 year=it.get("yearPublished"),

@@ -14,6 +14,7 @@ from app.core.plagiarism.external.aggregator import (
     ExternalSourceAggregatorAllFailedError,
 )
 from app.core.plagiarism.external.base_source import CandidatePaper
+from app.core.plagiarism.external.reranker import rerank_papers
 
 
 class LiteratureSearcher:
@@ -43,6 +44,12 @@ class LiteratureSearcher:
                 key = p.doi or (p.title or "").strip().lower()
                 if key and key not in merged:
                     merged[key] = p
-        results = list(merged.values())[:max_results]
-        logger.info(f"[topic.search] 检索到 {len(results)} 篇相关文献")
+
+        # 语义重排去噪：外部源是关键词检索会混入跑题论文，
+        # 用 query 与各篇 title+abstract 的相似度重排+砍噪声（编码器不可用则原序降级）。
+        candidates = list(merged.values())
+        results = rerank_papers(" ".join(queries), candidates, top_k=max_results)
+        logger.info(
+            f"[topic.search] 检索 {len(candidates)} 篇 → 重排去噪后 {len(results)} 篇"
+        )
         return results

@@ -34,6 +34,11 @@ backend/test_*.png
 *.7z
 *.tar.gz
 
+# AI 模型缓存（运行时下载，几百 MB，绝不提交）
+backend/models/
+*.safetensors
+*.bin
+
 # Node.js
 node_modules/
 frontend/dist/
