@@ -6,7 +6,13 @@
         <p class="logo-sub">论文评价检验系统</p>
       </div>
 
-      <el-form v-if="!showAdminLogin && !showInstReg" :model="phoneForm" :rules="phoneRules" ref="phoneFormRef">
+      <!-- 登录方式 Tab（一眼可选，少一次点击） -->
+      <div v-if="mode !== 'inst-reg'" class="login-tabs">
+        <button class="ltab" :class="{ active: mode === 'phone' }" @click="mode = 'phone'">手机验证码</button>
+        <button class="ltab" :class="{ active: mode === 'account' }" @click="mode = 'account'">账号密码</button>
+      </div>
+
+      <el-form v-if="mode === 'phone'" :model="phoneForm" :rules="phoneRules" ref="phoneFormRef">
         <el-form-item prop="phone">
           <el-input v-model="phoneForm.phone" placeholder="请输入手机号" size="large" prefix-icon="Phone" />
         </el-form-item>
@@ -31,7 +37,7 @@
       </el-form>
 
       <!-- 其他登录方式 -->
-      <div v-if="!showAdminLogin && !showInstReg" class="other-login-methods">
+      <div v-if="mode === 'phone'" class="other-login-methods">
         <div class="divider-text">其他登录方式</div>
         <div class="login-icons">
           <button class="login-icon wechat" @click="handleWechatLogin" :disabled="loading" title="微信登录">
@@ -43,13 +49,13 @@
       </div>
 
       <!-- 机构学生注册 -->
-      <div v-if="showInstReg" class="admin-login-form">
+      <div v-if="mode === 'inst-reg'" class="admin-login-form">
         <el-divider>机构学生 · 首次注册</el-divider>
         <div v-if="instDone" class="inst-done">
           <div class="inst-done-icon">⏳</div>
           <p class="inst-done-title">注册成功，等待机构管理员审批</p>
           <p class="inst-done-sub">审批通过后，用你刚设置的<b>用户名 + 密码</b>登录即可使用（额度由学校统一提供）。</p>
-          <el-button type="primary" plain style="margin-top:12px" @click="goPasswordLogin">去登录 →</el-button>
+          <el-button type="primary" plain style="margin-top:12px" @click="mode = 'account'">去登录 →</el-button>
         </div>
         <template v-else>
           <p class="form-tip">用学校发放的<b>邀请码</b>创建账号；注册后需管理员审批。</p>
@@ -71,14 +77,12 @@
               注册（需机构审批）
             </el-button>
           </el-form>
-          <p class="switch-line">已注册过？<a @click="goPasswordLogin">用账号密码登录 →</a></p>
+          <p class="switch-line">已注册过？<a @click="mode = 'account'">用账号密码登录 →</a></p>
         </template>
       </div>
 
       <!-- 账号密码登录（管理员 / 已注册的机构学生 通用） -->
-      <div v-if="showAdminLogin" class="admin-login-form">
-        <el-divider>账号密码登录</el-divider>
-        <p class="form-tip">机构学生、管理员均用此处登录（用户名 + 密码）。</p>
+      <div v-if="mode === 'account'" class="acct-login-form">
         <el-form :model="loginForm" :rules="loginRules" ref="loginFormRef">
           <el-form-item prop="username">
             <el-input v-model="loginForm.username" placeholder="用户名" size="large" prefix-icon="User" />
@@ -91,19 +95,17 @@
             登录
           </el-button>
         </el-form>
-        <p class="switch-line">没有账号？<a @click="goInstReg">机构学生用邀请码注册 →</a></p>
+        <p class="switch-line">机构学生首次使用？<a @click="mode = 'inst-reg'">用邀请码注册 →</a></p>
       </div>
 
       <div class="back-link">
         <el-button link @click="router.push('/')">← 返回首页</el-button>
-        <div class="entry-btns">
-          <el-button link class="admin-entry-btn" @click="toggleAdmin">
-            🔑 {{ showAdminLogin ? '收起' : '账号密码登录' }}
-          </el-button>
-          <el-button link class="admin-entry-btn" @click="toggleInstReg">
-            🏫 {{ showInstReg ? '收起' : '机构学生注册' }}
-          </el-button>
-        </div>
+        <el-button v-if="mode !== 'inst-reg'" link class="admin-entry-btn" @click="mode = 'inst-reg'">
+          🏫 机构学生注册
+        </el-button>
+        <el-button v-else link class="admin-entry-btn" @click="mode = 'account'">
+          ← 去登录
+        </el-button>
       </div>
     </div>
   </div>
@@ -122,20 +124,16 @@ const route = useRoute()
 const authStore = useAuthStore()
 const loading = ref(false)
 
-// 从营销页带 query 进来时，自动展开对应表单
+// 登录模式：phone（手机验证码）| account（账号密码）| inst-reg（机构学生注册）
+const mode = ref('phone')
+
+// 从营销页/守卫带 query 进来时，直接定位到对应模式
 onMounted(() => {
-  if (route.query.tab === 'inst-student') {
-    showInstReg.value = true
-    showAdminLogin.value = false
-  } else if (route.query.tab === 'account') {
-    // 机构管理员 / 已注册学生：直接展开账号密码登录
-    showAdminLogin.value = true
-    showInstReg.value = false
-  }
+  if (route.query.tab === 'inst-student') mode.value = 'inst-reg'
+  else if (route.query.tab === 'account') mode.value = 'account'
 })
 
 // 机构学生注册
-const showInstReg = ref(false)
 const instDone = ref(false)
 const instFormRef = ref()
 const instForm = reactive({ invite_code: '', username: '', password: '', student_id: '', college: '' })
@@ -143,26 +141,6 @@ const instRules = {
   invite_code: [{ required: true, message: '请输入机构邀请码', trigger: 'blur' }],
   username: [{ required: true, message: '请设置用户名', trigger: 'blur' }],
   password: [{ required: true, min: 6, message: '密码至少 6 位', trigger: 'blur' }],
-}
-
-function toggleInstReg() {
-  showInstReg.value = !showInstReg.value
-  if (showInstReg.value) showAdminLogin.value = false
-  instDone.value = false
-}
-function toggleAdmin() {
-  showAdminLogin.value = !showAdminLogin.value
-  if (showAdminLogin.value) showInstReg.value = false
-}
-// 在注册区/登录区之间切换
-function goPasswordLogin() {
-  showAdminLogin.value = true
-  showInstReg.value = false
-}
-function goInstReg() {
-  showInstReg.value = true
-  showAdminLogin.value = false
-  instDone.value = false
 }
 
 async function handleInstRegister() {
@@ -180,8 +158,7 @@ async function handleInstRegister() {
   }
 }
 
-// 管理员登录
-const showAdminLogin = ref(false)
+// 账号密码登录
 const loginFormRef = ref()
 const loginForm = reactive({ username: '', password: '' })
 const loginRules = {
@@ -353,8 +330,36 @@ onUnmounted(() => {
   border-color: rgb(0, 90, 60);
 }
 
-.admin-login-form {
-  margin-top: 16px;
+.login-tabs {
+  display: flex;
+  gap: 4px;
+  background: #f3f4f6;
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 20px;
+}
+.ltab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 9px 0;
+  border-radius: 9px;
+  font-size: 14px;
+  color: rgb(107, 114, 128);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.18s;
+}
+.ltab.active {
+  background: #fff;
+  color: rgb(0, 108, 73);
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.admin-login-form,
+.acct-login-form {
+  margin-top: 4px;
 }
 
 .entry-btns {

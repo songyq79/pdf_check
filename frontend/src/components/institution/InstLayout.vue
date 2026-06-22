@@ -46,6 +46,18 @@
         </div>
         <div class="tb-actions">
           <slot name="actions" />
+          <el-dropdown @command="onUserCommand" trigger="click">
+            <span class="tb-user">
+              <span class="tb-user-dot"></span>{{ userName }} <el-icon><ArrowDown /></el-icon>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="home">返回首页</el-dropdown-item>
+                <el-dropdown-item command="account">用户中心</el-dropdown-item>
+                <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
       </header>
 
@@ -57,6 +69,11 @@
 </template>
 
 <script setup>
+import { ElMessage } from 'element-plus'
+import { ArrowDown } from '@element-plus/icons-vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/store/modules/auth'
+
 const props = defineProps({
   variant: { type: String, default: 'admin' },   // admin | student
   brandSub: { type: String, default: '' },
@@ -68,9 +85,21 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['nav'])
+const router = useRouter()
+const authStore = useAuthStore()
 
 function onNav(item) {
   emit('nav', item)
+}
+
+function onUserCommand(cmd) {
+  if (cmd === 'home') router.push(props.variant === 'student' ? '/workspace' : '/')
+  else if (cmd === 'account') router.push('/user-center')
+  else if (cmd === 'logout') {
+    authStore.logout()
+    ElMessage.success('已退出登录')
+    router.push('/')
+  }
 }
 </script>
 
@@ -92,7 +121,7 @@ function onNav(item) {
   --font-d: 'Newsreader', serif;
 
   display: flex;
-  min-height: calc(100vh - 80px);
+  min-height: 100vh;
   background: var(--body-bg);
   font-size: 14px;
   color: var(--text);
@@ -105,9 +134,9 @@ function onNav(item) {
   display: flex;
   flex-direction: column;
   position: sticky;
-  top: 80px;
+  top: 0;
   align-self: flex-start;
-  height: calc(100vh - 80px);
+  height: 100vh;
 }
 .variant-admin .inst-sidebar { background: #003D28; }
 .variant-student .inst-sidebar { background: #fff; border-right: 1px solid var(--border); }
@@ -216,13 +245,20 @@ function onNav(item) {
   padding: 0 28px;
   gap: 16px;
   position: sticky;
-  top: 80px;
+  top: 0;
   z-index: 10;
 }
 .tb-titlewrap { flex: 1; }
 .tb-title { font-size: 16px; font-weight: 700; color: var(--text); }
 .tb-path { font-size: 13px; color: var(--muted); margin-top: 1px; }
 .tb-actions { display: flex; gap: 10px; align-items: center; }
+.tb-user {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--text); cursor: pointer; font-weight: 500;
+  padding: 5px 10px; border-radius: 100px; outline: none;
+}
+.tb-user:hover { background: var(--green-pale); color: var(--green); }
+.tb-user-dot { width: 22px; height: 22px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
 
 .inst-content { padding: 24px 28px; flex: 1; }
 

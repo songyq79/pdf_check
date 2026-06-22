@@ -13,9 +13,9 @@
       <!-- 已开通高校的入口（轻量文字链接） -->
       <p class="entry-line">
         已开通的高校：
-        <router-link :to="{ path: '/login', query: { tab: 'account' } }">机构管理员登录</router-link>
+        <router-link :to="{ path: '/login', query: { tab: 'account' } }">登录（管理员/学生）</router-link>
         <span class="dot">·</span>
-        <router-link :to="{ path: '/login', query: { tab: 'inst-student' } }">学生凭邀请码注册</router-link>
+        <router-link :to="{ path: '/login', query: { tab: 'inst-student' } }">新生用邀请码注册</router-link>
       </p>
     </section>
 

@@ -41,7 +41,7 @@ const routes = [
     path: '/institution',
     name: 'InstitutionDashboard',
     component: () => import('@/views/InstitutionDashboard.vue'),
-    meta: { title: '机构管理', requiresAuth: true }
+    meta: { title: '机构管理', requiresAuth: true, fullscreen: true }
   },
   {
     path: '/institutions',
@@ -53,7 +53,7 @@ const routes = [
     path: '/workspace',
     name: 'StudentWorkspace',
     component: () => import('@/views/StudentWorkspace.vue'),
-    meta: { title: '我的工作台', requiresAuth: true }
+    meta: { title: '我的工作台', requiresAuth: true, fullscreen: true }
   },
   {
     path: '/spell-check',

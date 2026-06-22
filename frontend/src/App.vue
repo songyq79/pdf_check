@@ -1,7 +1,11 @@
 <template>
   <div id="app">
-    <!-- 顶部导航栏 - 新设计 -->
-    <header class="modern-header">
+    <!-- 机构学生：持久侧边栏外壳包住所有页面（功能页也在外壳内，不再露出 C端 顶栏） -->
+    <InstShell v-if="useInstShell" />
+
+    <template v-else>
+    <!-- 顶部导航栏 - 新设计（机构全屏页隐藏） -->
+    <header v-if="!isFullscreen" class="modern-header">
       <div class="header-container">
         <router-link to="/" class="logo">VRonly</router-link>
 
@@ -67,7 +71,7 @@
     </header>
 
     <!-- 主内容区域 -->
-    <main class="main-content">
+    <main class="main-content" :class="{ 'main-fullscreen': isFullscreen }">
       <router-view v-slot="{ Component }" :key="$route.fullPath">
         <transition name="fade" mode="out-in">
           <component :is="Component" />
@@ -75,8 +79,9 @@
       </router-view>
     </main>
 
-    <!-- 页脚 -->
-    <Footer />
+    <!-- 页脚（机构全屏页隐藏） -->
+    <Footer v-if="!isFullscreen" />
+    </template>
   </div>
 </template>
 
@@ -86,6 +91,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowDown } from '@element-plus/icons-vue'
 import Footer from '@/components/common/Footer.vue'
+import InstShell from '@/components/institution/InstShell.vue'
 import { useAuthStore } from '@/store/modules/auth'
 
 const route = useRoute()
@@ -93,6 +99,10 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 const activeMenu = computed(() => route.path)
+// 机构控制台为全屏独立布局，隐藏 C端 顶栏与页脚
+const isFullscreen = computed(() => route.meta.fullscreen === true)
+// 机构学生：全程用持久侧边栏外壳（含功能页），不再出现 C端 顶栏
+const useInstShell = computed(() => authStore.isLoggedIn && authStore.userType === 'institution_student')
 
 let checkUserStatusInterval = null
 
@@ -146,6 +156,11 @@ function handleUserCommand(cmd) {
 .main-content {
   flex: 1;
   margin-top: 80px;
+}
+
+/* 全屏布局：去掉顶栏留白，铺满 */
+.main-content.main-fullscreen {
+  margin-top: 0;
 }
 
 /* 现代化导航栏 */
