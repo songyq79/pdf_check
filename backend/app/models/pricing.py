@@ -23,7 +23,8 @@ FEATURE_COSTS = {
     "plagiarism_en": 2,         # 论文查重（英文）
     "topic_evaluation": 3,      # 选题评估
     "experiment_evaluation": 3, # 实验设计评审
-    "writing_assist": 2,        # 写作辅助（每次检查）
+    "writing_assist": 2,        # 写作辅助（单段检查）
+    "writing_whole": 10,        # 写作辅助（整篇，一次性分析全文）
     "literature_review": 5,     # 文献综述生成
 }
 
@@ -36,7 +37,8 @@ FEATURE_LABELS = {
     "plagiarism_en": "论文查重（英文）",
     "topic_evaluation": "选题评估",
     "experiment_evaluation": "实验设计评审",
-    "writing_assist": "写作辅助",
+    "writing_assist": "写作辅助（单段）",
+    "writing_whole": "写作辅助（整篇）",
     "literature_review": "文献综述生成",
 }
 
