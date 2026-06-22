@@ -30,14 +30,26 @@ def require_system_admin(user: User = Depends(get_current_user)) -> User:
 
 
 def require_inst_admin(
+    institution_id: Optional[int] = None,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> Tuple[User, Institution]:
-    """机构管理员（或系统管理员）+ 其所属机构。"""
+    """
+    机构管理员 + 其所属机构。
+    系统管理员（is_admin）可通过 query 参数 institution_id 查看/管理任意机构。
+    机构管理员忽略 institution_id，始终只能操作自己绑定的机构。
+    """
+    # 系统管理员：可指定机构
+    if user.is_admin and institution_id:
+        inst = svc.get_institution(db, institution_id)
+        if not inst:
+            raise HTTPException(404, "机构不存在")
+        return user, inst
+    # 机构管理员：只能操作自己的机构
     if user.user_type not in ("institution_admin", "super_admin") and not user.is_admin:
         raise HTTPException(403, "需要机构管理员权限")
     if not user.institution_id:
-        raise HTTPException(400, "当前账号未绑定机构")
+        raise HTTPException(400, "当前账号未绑定机构（系统管理员请从机构列表点「进入控制台」）")
     inst = svc.get_institution(db, user.institution_id)
     if not inst:
         raise HTTPException(404, "机构不存在")
@@ -52,6 +64,8 @@ class CreateInstitutionReq(BaseModel):
     subscription_level: str = "small"
     quota_total: int = 0
     admin_user_id: Optional[int] = None
+    admin_username: str = ""      # 优先：账号不存在则当场创建并设为管理员
+    admin_password: str = ""
 
 
 class StudentItem(BaseModel):
@@ -91,11 +105,18 @@ def create_institution(req: CreateInstitutionReq, _: User = Depends(require_syst
         db, name=req.name, domain=req.domain,
         subscription_level=req.subscription_level,
         quota_total=req.quota_total, admin_user_id=req.admin_user_id,
+        admin_username=req.admin_username, admin_password=req.admin_password,
     )
     return {
         "id": inst.id, "name": inst.name, "invite_code": inst.invite_code,
         "quota_total": inst.quota_total, "subscription_level": inst.subscription_level,
+        "admin": getattr(inst, "_admin_info", None),
     }
+
+
+@router.get("/list", summary="所有机构列表（系统管理员）")
+def list_institutions(_: User = Depends(require_system_admin), db: Session = Depends(get_db)):
+    return {"institutions": svc.list_institutions(db)}
 
 
 @router.get("/info", summary="当前机构信息（机构管理员）")

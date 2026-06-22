@@ -29,32 +29,86 @@ def _hash_pw(pw: str) -> str:
 def create_institution(db: Session, name: str, domain: str = "",
                        subscription_level: str = "small",
                        quota_total: int = 0,
-                       admin_user_id: Optional[int] = None) -> Institution:
+                       admin_user_id: Optional[int] = None,
+                       admin_username: str = "",
+                       admin_password: str = "") -> Institution:
+    """
+    创建机构。指派机构管理员有两种方式（admin_username 优先）：
+      - admin_username(+admin_password)：账号不存在则当场创建并设为管理员，存在则提升。
+      - admin_user_id：把已存在的用户提升为机构管理员。
+    返回的 Institution 上附带 _admin_info（dict）供 API 回显。
+    """
     code = _gen_invite_code()
     while db.query(Institution).filter(Institution.invite_code == code).first():
         code = _gen_invite_code()
     inst = Institution(
         name=name, domain=domain or None, subscription_level=subscription_level,
         quota_total=quota_total, quota_used=0, invite_code=code,
-        admin_user_ids=str(admin_user_id) if admin_user_id else None,
         is_active=True,
     )
     db.add(inst)
     db.commit()
     db.refresh(inst)
-    # 绑定管理员
-    if admin_user_id:
+
+    # 解析/创建管理员账号
+    admin = None
+    admin_created = False
+    admin_username = (admin_username or "").strip()
+    if admin_username:
+        admin = db.query(User).filter(User.username == admin_username).first()
+        if not admin:
+            if not admin_password:
+                admin_password = secrets.token_hex(6)
+            admin = User(
+                username=admin_username, hashed_password=_hash_pw(admin_password),
+                is_active=True, is_approved=True,
+            )
+            db.add(admin)
+            db.flush()
+            admin_created = True
+    elif admin_user_id:
         admin = db.query(User).filter(User.id == admin_user_id).first()
-        if admin:
-            admin.institution_id = inst.id
-            admin.user_type = "institution_admin"
-            db.commit()
-    logger.info(f"[inst] 创建机构 id={inst.id} name={name} invite={code}")
+
+    admin_info = None
+    if admin:
+        admin.institution_id = inst.id
+        admin.user_type = "institution_admin"
+        inst.admin_user_ids = str(admin.id)
+        db.commit()
+        admin_info = {"id": admin.id, "username": admin.username, "created": admin_created}
+
+    inst._admin_info = admin_info  # 临时属性，仅供本次响应
+    logger.info(f"[inst] 创建机构 id={inst.id} name={name} invite={code} admin={admin_info}")
     return inst
 
 
 def get_institution(db: Session, institution_id: int) -> Optional[Institution]:
     return db.query(Institution).filter(Institution.id == institution_id).first()
+
+
+def list_institutions(db: Session) -> List[dict]:
+    """列出所有机构（系统管理员）。附带各机构管理员账号信息。"""
+    rows = db.query(Institution).order_by(Institution.id.desc()).all()
+    out = []
+    for inst in rows:
+        admins = []
+        if inst.admin_user_ids:
+            for aid in str(inst.admin_user_ids).split(","):
+                aid = aid.strip()
+                if not aid:
+                    continue
+                u = db.query(User).filter(User.id == int(aid)).first()
+                if u:
+                    admins.append({"id": u.id, "username": u.username})
+        out.append({
+            "id": inst.id, "name": inst.name, "domain": inst.domain,
+            "subscription_level": inst.subscription_level,
+            "quota_total": inst.quota_total, "quota_used": inst.quota_used,
+            "quota_remaining": inst.quota_remaining,
+            "student_count": inst.student_count, "invite_code": inst.invite_code,
+            "is_active": inst.is_active, "admins": admins,
+        })
+    return out
 
 
 def get_by_invite(db: Session, invite_code: str) -> Optional[Institution]:

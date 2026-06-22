@@ -346,7 +346,90 @@
           />
         </el-card>
       </el-tab-pane>
+
+      <!-- 机构管理 Tab（B端） -->
+      <el-tab-pane name="institutions">
+        <template #label><span>🏫 机构管理</span></template>
+
+        <div style="margin-bottom: 20px;">
+          <el-button type="primary" @click="showCreateInst = true">+ 新建机构</el-button>
+          <span class="inst-hint">建机构时指派的「管理员账号 ID」，将自动成为该机构管理员，登录后在头像菜单可见「机构管理」控制台。</span>
+        </div>
+
+        <el-card class="admin-card">
+          <template #header>全部机构</template>
+          <el-table :data="institutions" stripe>
+            <el-table-column prop="id" label="ID" width="60" />
+            <el-table-column prop="name" label="机构名称" min-width="140" />
+            <el-table-column label="规模" width="90">
+              <template #default="{ row }">{{ instLevelLabel(row.subscription_level) }}</template>
+            </el-table-column>
+            <el-table-column label="配额" width="140">
+              <template #default="{ row }">{{ row.quota_used }} / {{ row.quota_total }}（剩 {{ row.quota_remaining }}）</template>
+            </el-table-column>
+            <el-table-column prop="student_count" label="学生数" width="80" />
+            <el-table-column label="邀请码" width="120">
+              <template #default="{ row }">
+                <el-tag type="success" size="small" style="cursor:pointer" @click="copyText(row.invite_code)">{{ row.invite_code }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="管理员" min-width="120">
+              <template #default="{ row }">
+                <span v-if="row.admins && row.admins.length">
+                  {{ row.admins.map(a => a.username + '(#' + a.id + ')').join(', ') }}
+                </span>
+                <span v-else style="color:#999;font-size:12px;">未指派</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="状态" width="80">
+              <template #default="{ row }">
+                <el-tag v-if="row.is_active" type="success" size="small">启用</el-tag>
+                <el-tag v-else type="info" size="small">停用</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="120">
+              <template #default="{ row }">
+                <el-button type="primary" size="small" link @click="enterConsole(row)">进入控制台</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-card>
+      </el-tab-pane>
     </el-tabs>
+
+    <!-- 新建机构弹窗 -->
+    <el-dialog v-model="showCreateInst" title="新建机构" width="480px">
+      <el-form label-width="120px">
+        <el-form-item label="机构名称" required>
+          <el-input v-model="instForm.name" placeholder="如：浙江大学" />
+        </el-form-item>
+        <el-form-item label="校域名（可选）">
+          <el-input v-model="instForm.domain" placeholder="如：zju.edu.cn" />
+        </el-form-item>
+        <el-form-item label="规模">
+          <el-select v-model="instForm.subscription_level" style="width:100%">
+            <el-option label="小规模（<100 学生）" value="small" />
+            <el-option label="中规模（100-500）" value="medium" />
+            <el-option label="大规模（>500）" value="large" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="配额池总额">
+          <el-input-number v-model="instForm.quota_total" :min="0" :step="100" />
+          <span class="inst-hint">机构学生共用，单位 credit</span>
+        </el-form-item>
+        <el-form-item label="管理员用户名">
+          <el-input v-model="instForm.admin_username" placeholder="如：zju_admin" />
+          <span class="inst-hint">账号不存在则按下方密码当场创建并设为管理员；已存在则直接提升</span>
+        </el-form-item>
+        <el-form-item label="管理员密码">
+          <el-input v-model="instForm.admin_password" placeholder="新建账号时使用（≥6位）；提升已有账号可留空" show-password />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showCreateInst = false">取消</el-button>
+        <el-button type="primary" :loading="instCreating" @click="handleCreateInst">创建</el-button>
+      </template>
+    </el-dialog>
 
     <!-- 论文详情弹窗 -->
     <el-dialog v-model="showPaperDetail" title="论文详情" width="660px" :close-on-click-modal="true">
@@ -471,6 +554,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/modules/auth'
 import * as adminApi from '@/api/admin'
+import institutionAPI from '@/api/institution'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -481,6 +565,12 @@ const showCreate = ref(false)
 const creating = ref(false)
 const createFormRef = ref()
 const createForm = ref({ phone: '', is_admin: false })
+
+// 机构管理（B端）
+const institutions = ref([])
+const showCreateInst = ref(false)
+const instCreating = ref(false)
+const instForm = ref({ name: '', domain: '', subscription_level: 'small', quota_total: 1000, admin_username: '', admin_password: '' })
 
 // 充值管理
 const activeTab = ref('users')
@@ -832,11 +922,73 @@ async function handleRebuild() {
   }
 }
 
-// 切换到论文库 tab 时自动加载
+// ── 机构管理 ──────────────────────────────────────────────
+const instLevelMap = { small: '小规模', medium: '中规模', large: '大规模' }
+function instLevelLabel(v) { return instLevelMap[v] || v || '—' }
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text)
+    ElMessage.success('已复制邀请码：' + text)
+  } catch {
+    ElMessage.info('邀请码：' + text)
+  }
+}
+
+function enterConsole(row) {
+  router.push({ path: '/institution', query: { id: row.id } })
+}
+
+async function loadInstitutions() {
+  try {
+    const res = await institutionAPI.list()
+    institutions.value = res.institutions || []
+  } catch (e) {
+    ElMessage.error(e.response?.data?.detail || '加载机构列表失败')
+  }
+}
+
+async function handleCreateInst() {
+  if (!instForm.value.name.trim()) {
+    ElMessage.warning('请填写机构名称')
+    return
+  }
+  instCreating.value = true
+  try {
+    const payload = {
+      name: instForm.value.name.trim(),
+      domain: instForm.value.domain.trim(),
+      subscription_level: instForm.value.subscription_level,
+      quota_total: instForm.value.quota_total,
+      admin_username: instForm.value.admin_username.trim(),
+      admin_password: instForm.value.admin_password,
+    }
+    const res = await institutionAPI.create(payload)
+    const a = res.admin
+    let msg = `机构「${res.name}」已创建，邀请码：${res.invite_code}`
+    if (a) {
+      msg += a.created
+        ? `；管理员账号「${a.username}」已创建，请把账号密码交给对方登录`
+        : `；已将「${a.username}」设为机构管理员`
+    }
+    ElMessageBox.alert(msg, '创建成功', { confirmButtonText: '知道了' })
+    showCreateInst.value = false
+    instForm.value = { name: '', domain: '', subscription_level: 'small', quota_total: 1000, admin_username: '', admin_password: '' }
+    await loadInstitutions()
+  } catch (e) {
+    ElMessage.error(e.response?.data?.detail || '创建机构失败')
+  } finally {
+    instCreating.value = false
+  }
+}
+
+// 切换 tab 时自动加载
 watch(activeTab, (val) => {
   if (val === 'papers') {
     loadPaperStats()
     loadPapers(1)
+  } else if (val === 'institutions') {
+    loadInstitutions()
   }
 })
 
@@ -867,6 +1019,12 @@ onMounted(() => {
   font-size: 30px;
   font-weight: 400;
   color: rgb(18, 18, 18);
+}
+
+.inst-hint {
+  margin-left: 12px;
+  font-size: 12px;
+  color: rgb(107, 114, 128);
 }
 
 .admin-stats {

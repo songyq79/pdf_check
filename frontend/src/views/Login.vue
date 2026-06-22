@@ -6,7 +6,7 @@
         <p class="logo-sub">论文评价检验系统</p>
       </div>
 
-      <el-form :model="phoneForm" :rules="phoneRules" ref="phoneFormRef">
+      <el-form v-if="!showAdminLogin && !showInstReg" :model="phoneForm" :rules="phoneRules" ref="phoneFormRef">
         <el-form-item prop="phone">
           <el-input v-model="phoneForm.phone" placeholder="请输入手机号" size="large" prefix-icon="Phone" />
         </el-form-item>
@@ -31,7 +31,7 @@
       </el-form>
 
       <!-- 其他登录方式 -->
-      <div class="other-login-methods">
+      <div v-if="!showAdminLogin && !showInstReg" class="other-login-methods">
         <div class="divider-text">其他登录方式</div>
         <div class="login-icons">
           <button class="login-icon wechat" @click="handleWechatLogin" :disabled="loading" title="微信登录">
@@ -44,35 +44,41 @@
 
       <!-- 机构学生注册 -->
       <div v-if="showInstReg" class="admin-login-form">
-        <el-divider>机构学生注册</el-divider>
+        <el-divider>机构学生 · 首次注册</el-divider>
         <div v-if="instDone" class="inst-done">
           <div class="inst-done-icon">⏳</div>
           <p class="inst-done-title">注册成功，等待机构管理员审批</p>
-          <p class="inst-done-sub">审批通过后，用下方「机构账号登录」即可使用（额度由学校统一提供）。</p>
+          <p class="inst-done-sub">审批通过后，用你刚设置的<b>用户名 + 密码</b>登录即可使用（额度由学校统一提供）。</p>
+          <el-button type="primary" plain style="margin-top:12px" @click="goPasswordLogin">去登录 →</el-button>
         </div>
-        <el-form v-else :model="instForm" :rules="instRules" ref="instFormRef">
-          <el-form-item prop="invite_code">
-            <el-input v-model="instForm.invite_code" placeholder="机构邀请码（学校发放，8 位）" size="large" />
-          </el-form-item>
-          <el-form-item prop="username">
-            <el-input v-model="instForm.username" placeholder="设置用户名" size="large" prefix-icon="User" />
-          </el-form-item>
-          <el-form-item prop="password">
-            <el-input v-model="instForm.password" type="password" placeholder="设置密码（≥6位）" size="large" prefix-icon="Lock" show-password />
-          </el-form-item>
-          <div class="code-input-group">
-            <el-input v-model="instForm.student_id" placeholder="学号（选填）" size="large" />
-            <el-input v-model="instForm.college" placeholder="学院（选填）" size="large" />
-          </div>
-          <el-button type="primary" size="large" style="width:100%; margin-top:16px" :loading="loading" @click="handleInstRegister">
-            注册（需机构审批）
-          </el-button>
-        </el-form>
+        <template v-else>
+          <p class="form-tip">用学校发放的<b>邀请码</b>创建账号；注册后需管理员审批。</p>
+          <el-form :model="instForm" :rules="instRules" ref="instFormRef">
+            <el-form-item prop="invite_code">
+              <el-input v-model="instForm.invite_code" placeholder="机构邀请码（学校发放，8 位）" size="large" />
+            </el-form-item>
+            <el-form-item prop="username">
+              <el-input v-model="instForm.username" placeholder="设置用户名" size="large" prefix-icon="User" />
+            </el-form-item>
+            <el-form-item prop="password">
+              <el-input v-model="instForm.password" type="password" placeholder="设置密码（≥6位）" size="large" prefix-icon="Lock" show-password />
+            </el-form-item>
+            <div class="code-input-group">
+              <el-input v-model="instForm.student_id" placeholder="学号（选填）" size="large" />
+              <el-input v-model="instForm.college" placeholder="学院（选填）" size="large" />
+            </div>
+            <el-button type="primary" size="large" style="width:100%; margin-top:16px" :loading="loading" @click="handleInstRegister">
+              注册（需机构审批）
+            </el-button>
+          </el-form>
+          <p class="switch-line">已注册过？<a @click="goPasswordLogin">用账号密码登录 →</a></p>
+        </template>
       </div>
 
-      <!-- 管理员登录入口 -->
+      <!-- 账号密码登录（管理员 / 已注册的机构学生 通用） -->
       <div v-if="showAdminLogin" class="admin-login-form">
-        <el-divider>管理员登录</el-divider>
+        <el-divider>账号密码登录</el-divider>
+        <p class="form-tip">机构学生、管理员均用此处登录（用户名 + 密码）。</p>
         <el-form :model="loginForm" :rules="loginRules" ref="loginFormRef">
           <el-form-item prop="username">
             <el-input v-model="loginForm.username" placeholder="用户名" size="large" prefix-icon="User" />
@@ -85,16 +91,17 @@
             登录
           </el-button>
         </el-form>
+        <p class="switch-line">没有账号？<a @click="goInstReg">机构学生用邀请码注册 →</a></p>
       </div>
 
       <div class="back-link">
         <el-button link @click="router.push('/')">← 返回首页</el-button>
         <div class="entry-btns">
-          <el-button link class="admin-entry-btn" @click="toggleInstReg">
-            🏫 {{ showInstReg ? '收起' : '机构学生' }}
-          </el-button>
           <el-button link class="admin-entry-btn" @click="toggleAdmin">
-            🔒 {{ showAdminLogin ? '收起' : '账号登录' }}
+            🔑 {{ showAdminLogin ? '收起' : '账号密码登录' }}
+          </el-button>
+          <el-button link class="admin-entry-btn" @click="toggleInstReg">
+            🏫 {{ showInstReg ? '收起' : '机构学生注册' }}
           </el-button>
         </div>
       </div>
@@ -103,16 +110,29 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, computed, onUnmounted, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/store/modules/auth'
 import { sendSmsCode, smsLogin, getWechatLoginUrl } from '@/api/auth'
 import institutionAPI from '@/api/institution'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const loading = ref(false)
+
+// 从营销页带 query 进来时，自动展开对应表单
+onMounted(() => {
+  if (route.query.tab === 'inst-student') {
+    showInstReg.value = true
+    showAdminLogin.value = false
+  } else if (route.query.tab === 'account') {
+    // 机构管理员 / 已注册学生：直接展开账号密码登录
+    showAdminLogin.value = true
+    showInstReg.value = false
+  }
+})
 
 // 机构学生注册
 const showInstReg = ref(false)
@@ -133,6 +153,16 @@ function toggleInstReg() {
 function toggleAdmin() {
   showAdminLogin.value = !showAdminLogin.value
   if (showAdminLogin.value) showInstReg.value = false
+}
+// 在注册区/登录区之间切换
+function goPasswordLogin() {
+  showAdminLogin.value = true
+  showInstReg.value = false
+}
+function goInstReg() {
+  showInstReg.value = true
+  showAdminLogin.value = false
+  instDone.value = false
 }
 
 async function handleInstRegister() {
@@ -159,6 +189,16 @@ const loginRules = {
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
 }
 
+// 登录成功后按角色决定落地页：
+// 显式 redirect 优先 > 机构管理员→控制台 > 机构学生→工作台 > 首页
+function gotoAfterLogin() {
+  const redirect = router.currentRoute.value.query.redirect
+  if (redirect) { router.push(String(redirect)); return }
+  if (authStore.isInstConsole) { router.push('/institution'); return }
+  if (authStore.userType === 'institution_student') { router.push('/workspace'); return }
+  router.push('/')
+}
+
 async function handleLogin() {
   const valid = await loginFormRef.value?.validate().catch(() => false)
   if (!valid) return
@@ -166,8 +206,7 @@ async function handleLogin() {
   try {
     await authStore.loginAction(loginForm.username, loginForm.password)
     ElMessage.success('登录成功')
-    const redirect = router.currentRoute.value.query.redirect
-    router.push(redirect ? String(redirect) : '/')
+    gotoAfterLogin()
   } catch (e) {
     ElMessage.error(e.response?.data?.detail || '登录失败，请检查用户名和密码')
   } finally {
@@ -234,8 +273,7 @@ async function handlePhoneLogin() {
     } else {
       ElMessage.success('登录成功')
     }
-    const redirect = router.currentRoute.value.query.redirect
-    router.push(redirect ? String(redirect) : '/')
+    gotoAfterLogin()
   } catch (e) {
     const msg = e.response?.data?.detail || '登录失败，请检查验证码'
     ElMessage.error(msg)
@@ -323,6 +361,27 @@ onUnmounted(() => {
   display: flex;
   gap: 8px;
 }
+
+.form-tip {
+  font-size: 12px;
+  color: rgb(107, 114, 128);
+  line-height: 1.6;
+  margin: 0 0 14px;
+}
+.form-tip b { color: rgb(0, 108, 73); }
+
+.switch-line {
+  text-align: center;
+  font-size: 13px;
+  color: rgb(107, 114, 128);
+  margin: 14px 0 0;
+}
+.switch-line a {
+  color: rgb(0, 108, 73);
+  cursor: pointer;
+  font-weight: 500;
+}
+.switch-line a:hover { text-decoration: underline; }
 
 .inst-done {
   text-align: center;

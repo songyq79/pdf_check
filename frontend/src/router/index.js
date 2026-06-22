@@ -50,6 +50,12 @@ const routes = [
     meta: { title: '高校版' }
   },
   {
+    path: '/workspace',
+    name: 'StudentWorkspace',
+    component: () => import('@/views/StudentWorkspace.vue'),
+    meta: { title: '我的工作台', requiresAuth: true }
+  },
+  {
     path: '/spell-check',
     name: 'SpellCheck',
     component: () => import('@/views/SpellCheck.vue'),

@@ -9,6 +9,14 @@
         <a class="btn-primary" href="mailto:bd@vronly-dh.com?subject=高校版演示申请">申请演示</a>
         <router-link class="btn-ghost" to="/">← 个人使用</router-link>
       </div>
+
+      <!-- 已开通高校的入口（轻量文字链接） -->
+      <p class="entry-line">
+        已开通的高校：
+        <router-link :to="{ path: '/login', query: { tab: 'account' } }">机构管理员登录</router-link>
+        <span class="dot">·</span>
+        <router-link :to="{ path: '/login', query: { tab: 'inst-student' } }">学生凭邀请码注册</router-link>
+      </p>
     </section>
 
     <!-- 统计带 -->
@@ -80,6 +88,11 @@
 .cta { margin-top: 28px; display: flex; gap: 14px; justify-content: center; align-items: center; }
 .btn-primary { background: #006C49; color: #fff; border-radius: 100px; padding: 12px 28px; text-decoration: none; font-weight: 600; }
 .btn-ghost { color: rgb(75,85,99); text-decoration: none; font-size: 14px; }
+
+.entry-line { margin-top: 22px; font-size: 14px; color: rgb(107,114,128); }
+.entry-line a { color: #006C49; text-decoration: none; font-weight: 500; }
+.entry-line a:hover { text-decoration: underline; }
+.entry-line .dot { margin: 0 8px; color: rgb(203,213,225); }
 
 .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; background: #f8faf9; border-radius: 24px; padding: 28px; margin: 20px 0 48px; text-align: center; }
 .stats b { display: block; font-size: 28px; color: #006C49; font-weight: 700; }

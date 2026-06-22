@@ -18,6 +18,11 @@ export const useAuthStore = defineStore('auth', () => {
   const isInstAdmin = computed(() =>
     user.value?.is_admin ||
     ['institution_admin', 'super_admin'].includes(user.value?.user_type))
+  // 能进入 /institution 控制台的：必须真正绑定了机构的机构管理员
+  // （系统管理员 is_admin 但未绑定机构，应从 /admin 机构管理 tab 建/管机构，不进此控制台）
+  const isInstConsole = computed(() =>
+    !!user.value?.institution_id &&
+    ['institution_admin', 'super_admin'].includes(user.value?.user_type))
 
   /**
    * 登录：保存 token，拉取用户信息
@@ -74,5 +79,5 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('access_token')
   }
 
-  return { token, user, isLoggedIn, username, isAdmin, isApproved, userType, isInstAdmin, loginAction, loginWithToken, fetchMe, logout }
+  return { token, user, isLoggedIn, username, isAdmin, isApproved, userType, isInstAdmin, isInstConsole, loginAction, loginWithToken, fetchMe, logout }
 })
