@@ -191,7 +191,8 @@ const loadError = ref('')
 
 const _ACTION = {
   evaluation: '智能评价', proofread: '论文校对', formatter: '模板排版', plagiarism: '论文查重',
-  topic_evaluation: '选题评估', literature_review: '文献综述', writing_assist: '写作辅助',
+  topic_evaluation: '选题评估', literature_review: '文献综述',
+  writing_assist: '写作辅助（单段）', writing_whole: '写作辅助（整篇）',
   experiment_evaluation: '实验评审',
 }
 function actionLabel(k) { return _ACTION[k] || k }
