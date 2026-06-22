@@ -56,6 +56,32 @@ def _get_model():
             return None
 
 
+def score_texts(query: str, texts: List[str]) -> Optional[List[float]]:
+    """
+    返回 query 与每个 text 的 cosine 相似度列表（多语言模型）。
+    模型不可用 / 异常 / 空输入 → 返回 None（调用方降级）。
+    供期刊主题语义选刊等复用。
+    """
+    if not query or not query.strip() or not texts:
+        return None
+    model = _get_model()
+    if model is None:
+        return None
+    try:
+        vecs = model.encode(
+            [query] + list(texts),
+            batch_size=32,
+            show_progress_bar=False,
+            convert_to_numpy=True,
+            normalize_embeddings=True,
+        )
+        qv, cv = vecs[0], vecs[1:]
+        return [float(s) for s in (cv @ qv)]
+    except Exception as e:
+        logger.warning(f"[rerank] score_texts 失败: {e}")
+        return None
+
+
 def rerank_papers(
     query: str,
     papers: List[CandidatePaper],

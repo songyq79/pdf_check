@@ -116,6 +116,7 @@ const toolFeatures = [
   { key: 'proofread', title: '论文校对', note: '修订标记返回', icon: '📝', to: '/spell-check' },
   { key: 'formatter', title: '模板排版', note: '一键套用格式', icon: '📐', to: '/formatting' },
   { key: 'plagiarism', title: '论文查重', note: '中文1 / 英文2', icon: '🔍', to: '/plagiarism' },
+  { key: 'journal_select', title: '投稿选刊', note: '按主题匹配期刊·免费', icon: '📰', to: '/journal-select' },
 ]
 
 function go(to) { router.push(to) }

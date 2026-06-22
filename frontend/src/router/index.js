@@ -98,6 +98,12 @@ const routes = [
     meta: { title: '论文查重', requiresAuth: true }
   },
   {
+    path: '/journal-select',
+    name: 'JournalSelect',
+    component: () => import('@/views/JournalSelect.vue'),
+    meta: { title: '投稿选刊', requiresAuth: true }
+  },
+  {
     path: '/pricing',
     name: 'Pricing',
     component: () => import('@/views/Pricing.vue'),

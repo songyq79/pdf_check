@@ -37,6 +37,9 @@
           <router-link to="/plagiarism" class="nav-item" :class="{ active: $route.path === '/plagiarism' }">
             论文查重
           </router-link>
+          <router-link to="/journal-select" class="nav-item" :class="{ active: $route.path === '/journal-select' }">
+            投稿选刊
+          </router-link>
         </nav>
 
         <!-- 登录状态区域 -->

@@ -688,6 +688,27 @@ def journal_recommendations(task_id: str, db: Session = Depends(get_db)):
     }
 
 
+@router.post("/journal-select", summary="按论文内容选刊（贴标题/摘要/关键词，免费）")
+def journal_select(
+    title: str = Form(""),
+    abstract: str = Form(""),
+    keywords: str = Form(""),
+    paper_type: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    if not (title.strip() or abstract.strip() or keywords.strip()):
+        raise HTTPException(400, "请至少填写标题、摘要或关键词之一")
+    result = JournalMatcher().select_by_content(
+        db, title=title, abstract=abstract, keywords=keywords,
+        paper_type=paper_type, top_n=8,
+    )
+    return {
+        "count": len(result["journals"]),
+        "matched_by": result["matched_by"],
+        "journals": result["journals"],
+    }
+
+
 @router.get("/journal-details/{journal_id}", summary="期刊详情")
 def journal_details(journal_id: int, db: Session = Depends(get_db)):
     detail = JournalMatcher().get_detail(db, journal_id)

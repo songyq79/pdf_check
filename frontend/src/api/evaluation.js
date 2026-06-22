@@ -54,6 +54,25 @@ const evaluationAPI = {
   },
 
   /**
+   * 按论文内容选刊（贴标题/摘要/关键词，免费）
+   * @param {Object} fields - {title, abstract, keywords, paper_type}
+   */
+  journalSelect(fields) {
+    const form = new FormData()
+    form.append('title', fields.title || '')
+    form.append('abstract', fields.abstract || '')
+    form.append('keywords', fields.keywords || '')
+    form.append('paper_type', fields.paper_type || '')
+    return request({
+      url: '/api/v1/evaluation/journal-select',
+      method: 'post',
+      data: form,
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 60000,
+    })
+  },
+
+  /**
    * 下载评价报告
    * @param {string} reportId
    */

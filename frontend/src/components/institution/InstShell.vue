@@ -68,6 +68,7 @@ const navGroups = computed(() => {
       { icon: '📝', text: '论文校对', to: '/spell-check', active: p === '/spell-check' },
       { icon: '📐', text: '模板排版', to: '/formatting', active: p === '/formatting' },
       { icon: '🔍', text: '论文查重', to: '/plagiarism', active: p === '/plagiarism' },
+      { icon: '📰', text: '投稿选刊', to: '/journal-select', active: p === '/journal-select' },
     ] },
   ]
 })

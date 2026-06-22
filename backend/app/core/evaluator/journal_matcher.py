@@ -14,6 +14,7 @@ from loguru import logger
 from sqlalchemy.orm import Session
 
 from app.models.phase1 import Journal
+from app.core.plagiarism.external.reranker import score_texts
 
 # 论文类别 → 期刊 category 关键词（粗映射，匹配不到则不按类别过滤）
 _TYPE_CATEGORY_KEYWORDS = {
@@ -89,6 +90,65 @@ class JournalMatcher:
 
         scored.sort(key=lambda x: (x["match_score"], x["impact_factor"] or 0), reverse=True)
         return scored[:top_n]
+
+    def select_by_content(self, db: Session, title: str = "", abstract: str = "",
+                          keywords: str = "", paper_type: str = "", top_n: int = 8) -> dict:
+        """
+        维普式「投稿选刊」：按论文内容(标题+摘要+关键词)做主题语义匹配。
+        用多语言模型算 论文 vs 期刊画像(刊名+类别) 的相似度排序。
+        模型不可用时降级为按类别关键词粗匹配。
+        返回 {"journals": [...], "matched_by": "semantic"|"fallback"}。
+        """
+        journals = db.query(Journal).all()
+        if not journals:
+            logger.warning("[journal_select] journals 表为空，请先 seed_journals.py")
+            return {"journals": [], "matched_by": "empty"}
+
+        # 可选按论文类别粗过滤（匹配不到则不过滤）
+        kw = _TYPE_CATEGORY_KEYWORDS.get(paper_type, [])
+        pool = [j for j in journals if not kw or (j.category and any(k in j.category for k in kw))]
+        if not pool:
+            pool = journals
+
+        paper_text = " ".join(x for x in [title, keywords, abstract] if x).strip()[:1500]
+        profiles = [
+            " ".join(x for x in [j.name_zh or "", j.name_en or "", j.category or ""] if x)
+            for j in pool
+        ]
+
+        sims = score_texts(paper_text, profiles) if paper_text else None
+
+        results = []
+        if sims is not None:
+            matched_by = "semantic"
+            for j, s in zip(pool, sims):
+                results.append((j, s))
+            results.sort(key=lambda x: x[1], reverse=True)
+        else:
+            # 降级：无模型/无内容 → 按类别命中 + 影响因子排
+            matched_by = "fallback"
+            for j in pool:
+                hit = 1.0 if (kw and j.category and any(k in j.category for k in kw)) else 0.3
+                results.append((j, hit + (j.impact_factor or 0) / 100))
+            results.sort(key=lambda x: x[1], reverse=True)
+
+        out = []
+        for j, sim in results[:top_n]:
+            # cosine→1-10 匹配度（语义模式）；fallback 时给中性分
+            if matched_by == "semantic":
+                ms = max(1, min(10, round(float(sim) * 14)))
+            else:
+                ms = 6
+            out.append({
+                "id": j.id, "name_zh": j.name_zh, "name_en": j.name_en,
+                "issn": j.issn, "impact_factor": j.impact_factor, "jcr_rank": j.jcr_rank,
+                "category": j.category, "match_score": ms,
+                "similarity": round(float(sim), 3) if matched_by == "semantic" else None,
+                "review_days_avg": j.review_days_avg, "acceptance_rate": j.acceptance_rate,
+                "is_open_access": j.is_open_access, "submission_url": j.submission_url,
+            })
+        logger.info(f"[journal_select] {matched_by} 匹配 → {len(out)} 本期刊")
+        return {"journals": out, "matched_by": matched_by}
 
     def get_detail(self, db: Session, journal_id: int) -> dict:
         j = db.query(Journal).filter(Journal.id == journal_id).first()
