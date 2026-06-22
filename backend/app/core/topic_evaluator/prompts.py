@@ -129,3 +129,51 @@ EVALUATION_FALLBACK = {
 
 def get_type_name(paper_type: str) -> str:
     return _TYPE_NAMES.get(paper_type, "未知类别")
+
+
+# ── 选题推荐：给学科+关键词→生成候选选题（基于真实文献接地，防幻觉）──
+
+def build_recommendation_prompt(discipline: str, paper_type: str,
+                                keywords: str, degree_level: str,
+                                papers: list, count: int = 5) -> str:
+    focus = _TYPE_FOCUS.get(paper_type, _TYPE_FOCUS["humanities"])
+    if papers:
+        lit_lines = []
+        for i, p in enumerate(papers[:10], 1):
+            g = (lambda k: p.get(k) if isinstance(p, dict) else getattr(p, k, None))
+            title = g("title") or ""
+            year = g("year") or ""
+            abs_ = (g("abstract") or "")[:160]
+            lit_lines.append(f"{i}. {title}（{year}）{abs_}")
+        lit_block = "\n".join(lit_lines)
+        lit_hint = (
+            "下面是该领域检索到的真实近期文献，请据此判断研究现状与空白，"
+            "推荐的选题要避开已被充分研究的方向、对准真实空白：\n" + lit_block
+        )
+    else:
+        lit_hint = (
+            "（未检索到相关文献，请基于你的领域常识给方向性建议，"
+            "不要编造具体的论文或数据来支撑选题。）"
+        )
+
+    return f"""你是一位资深学术导师。请为研究者推荐 {count} 个具体、可做的论文选题。
+
+【学科】{discipline or "未指定"}
+【学位阶段】{degree_level or "未指定"}
+【研究兴趣关键词】{keywords or "未指定"}
+【学科侧重】{focus}
+
+{lit_hint}
+
+要求：
+- 每个选题是一个**具体、可落地**的研究题目（不是宽泛领域名）
+- 给出该选题的创新点(innovation)、可行性说明(feasibility)、建议研究方向/切入点(direction)、核心关键词(keywords)
+- 选题之间有区分度，覆盖不同切入角度
+- 务实、可操作，符合 {degree_level or "该学位阶段"} 的工作量
+- 禁止编造看似真实的假文献来源；direction 给方法/数据层面的可操作建议
+
+严格按以下 JSON 输出，不要输出任何其他文字：
+{{"topics": [{{"title": "具体选题题目", "innovation": "创新点", "feasibility": "可行性说明", "direction": "建议切入点/方法", "keywords": ["关键词1", "关键词2"]}}]}}"""
+
+
+RECOMMENDATION_FALLBACK = {"topics": []}

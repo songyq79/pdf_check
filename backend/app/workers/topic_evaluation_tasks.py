@@ -15,6 +15,7 @@ from loguru import logger
 from app.workers.celery_app import celery_app
 from app.services.task_store import save_task_result, save_task_failure
 from app.core.topic_evaluator.evaluator import evaluate_topic
+from app.core.topic_evaluator.recommender import recommend_topics
 from app.core.topic_evaluator.report_generator import generate_topic_report
 
 
@@ -98,4 +99,62 @@ def run_topic_evaluation(
     except Exception as exc:
         logger.error(f"[Worker] 选题评估异常 task_id={task_id} exc={exc}")
         save_task_failure(task_id, "topic_evaluation", str(exc))
+        raise self.retry(exc=exc)
+
+
+@celery_app.task(
+    bind=True,
+    base=TopicEvalBaseTask,
+    queue="topic_eval",
+    name="app.workers.topic_evaluation_tasks.run_topic_recommendation",
+    max_retries=1,
+    default_retry_delay=15,
+    acks_late=True,
+)
+def run_topic_recommendation(
+    self,
+    task_id: str,
+    discipline: str,
+    paper_type: str,
+    keywords: str,
+    degree_level: str,
+    count: int = 5,
+) -> dict:
+    logger.info(f"[Worker] 开始选题推荐 task_id={task_id} type={paper_type}")
+
+    def _progress(pct: int, msg: str):
+        try:
+            self.update_state(state="STARTED", meta={"progress": pct, "message": msg})
+        except Exception:
+            pass
+
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            result = loop.run_until_complete(
+                recommend_topics(
+                    discipline=discipline,
+                    paper_type=paper_type,
+                    keywords=keywords,
+                    degree_level=degree_level,
+                    count=count,
+                    progress_cb=_progress,
+                )
+            )
+        finally:
+            loop.close()
+
+        save_task_result(task_id, "topic_recommend", result)
+        logger.info(f"[Worker] 选题推荐完成 task_id={task_id} 数量={len(result.get('topics', []))}")
+        return result
+
+    except SoftTimeLimitExceeded:
+        logger.error(f"[Worker] 选题推荐超时 task_id={task_id}")
+        save_task_failure(task_id, "topic_recommend", "任务超时")
+        raise
+
+    except Exception as exc:
+        logger.error(f"[Worker] 选题推荐异常 task_id={task_id} exc={exc}")
+        save_task_failure(task_id, "topic_recommend", str(exc))
         raise self.retry(exc=exc)

@@ -21,7 +21,8 @@ FEATURE_COSTS = {
     "formatter": 1,             # 模板排版
     "plagiarism_cn": 1,         # 论文查重（中文）
     "plagiarism_en": 2,         # 论文查重（英文）
-    "topic_evaluation": 3,      # 选题评估
+    "topic_evaluation": 3,      # 选题评估（定题评测）
+    "topic_recommend": 2,       # 选题推荐（生成候选选题）
     "experiment_evaluation": 3, # 实验设计评审
     "writing_assist": 2,        # 写作辅助（单段检查）
     "writing_whole": 10,        # 写作辅助（整篇，一次性分析全文）
@@ -36,6 +37,7 @@ FEATURE_LABELS = {
     "plagiarism_cn": "论文查重（中文）",
     "plagiarism_en": "论文查重（英文）",
     "topic_evaluation": "选题评估",
+    "topic_recommend": "选题推荐",
     "experiment_evaluation": "实验设计评审",
     "writing_assist": "写作辅助（单段）",
     "writing_whole": "写作辅助（整篇）",

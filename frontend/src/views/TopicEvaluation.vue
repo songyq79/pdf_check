@@ -1,10 +1,18 @@
 <template>
   <div class="page-container">
-    <div class="page-title">选题评估</div>
+    <div class="page-title">智能选题</div>
     <div class="page-description">
-      填写你的研究选题，AI 将检索真实相关文献，从创新性、可行性、重要性三个维度评估，并给出改进建议与相关文献（消耗 3 次额度）。
+      选题推荐：给方向→AI 基于真实文献生成候选选题；定题评测：评一个已有选题的创新性/可行性/重要性。
     </div>
 
+    <!-- 模式 Tab -->
+    <div class="te-tabs">
+      <button class="te-tab" :class="{ active: tab === 'recommend' }" @click="tab = 'recommend'">👍 选题推荐</button>
+      <button class="te-tab" :class="{ active: tab === 'eval' }" @click="tab = 'eval'">📝 定题评测</button>
+    </div>
+
+    <!-- ===== 定题评测 ===== -->
+    <div v-show="tab === 'eval'">
     <!-- 表单状态 -->
     <div v-if="state === 'form'">
       <el-card class="mb-20">
@@ -144,6 +152,89 @@
         </el-button>
       </div>
     </div>
+    </div><!-- /定题评测 -->
+
+    <!-- ===== 选题推荐 ===== -->
+    <div v-show="tab === 'recommend'">
+      <el-card class="mb-20" v-if="recState === 'form'">
+        <div class="rec-fill">
+          作为一名
+          <el-input v-model="recForm.discipline" class="rec-inline" placeholder="学科" />
+          领域的研究者，为完成
+          <el-select v-model="recForm.degree_level" class="rec-inline-sel" placeholder="类型">
+            <el-option label="本科论文" value="本科" />
+            <el-option label="硕士论文" value="硕士" />
+            <el-option label="博士论文" value="博士" />
+          </el-select>
+          ，希望了解
+          <el-input v-model="recForm.keywords" class="rec-inline-wide" placeholder="关键词，多个用逗号分隔" />
+          方面的选题
+        </div>
+
+        <div class="rec-type">
+          <span class="rec-type-label">论文类别：</span>
+          <el-radio-group v-model="recForm.paper_type">
+            <el-radio-button value="humanities">人文社科类</el-radio-button>
+            <el-radio-button value="science_engineering">理工农医类</el-radio-button>
+            <el-radio-button value="arts">艺术类</el-radio-button>
+          </el-radio-group>
+        </div>
+
+        <div class="hot-row">
+          🔥 研究热点：
+          <el-tag v-for="h in hotTopics" :key="h" class="hot-chip" @click="recForm.keywords = h">{{ h }}</el-tag>
+        </div>
+
+        <div class="submit-bar">
+          <CostHint action="topic_recommend" />
+          <el-button type="primary" size="large" :loading="recSubmitting" @click="handleRecommend">生成选题</el-button>
+        </div>
+      </el-card>
+
+      <el-card v-else-if="recState === 'processing'" style="text-align:center; padding:40px 20px;">
+        <el-icon class="spin" :size="48" color="#006C49"><Loading /></el-icon>
+        <div style="margin:16px 0 8px; font-size:16px; font-weight:600;">{{ recMsg }}</div>
+        <div style="max-width:420px; margin:16px auto 0;">
+          <el-progress :percentage="recProgress" :stroke-width="10" color="#006C49" />
+        </div>
+        <div class="mt-20"><el-button @click="recState = 'form'">取消</el-button></div>
+      </el-card>
+
+      <div v-else-if="recState === 'result' && recResult">
+        <div class="rec-result-head mb-20">
+          <span>为你生成 <b>{{ recResult.topics.length }}</b> 个候选选题{{ recResult.related_papers.length ? '（基于 ' + recResult.related_papers.length + ' 篇真实文献）' : '' }}</span>
+          <el-button text type="primary" @click="recState = 'form'">重新生成</el-button>
+        </div>
+
+        <el-card v-for="(t, i) in recResult.topics" :key="i" class="rec-topic-card mb-20">
+          <div class="rt-title">{{ i + 1 }}. {{ t.title }}</div>
+          <div class="rt-row" v-if="t.innovation"><b>创新点：</b>{{ t.innovation }}</div>
+          <div class="rt-row" v-if="t.feasibility"><b>可行性：</b>{{ t.feasibility }}</div>
+          <div class="rt-row" v-if="t.direction"><b>切入点：</b>{{ t.direction }}</div>
+          <div class="rt-kw" v-if="t.keywords && t.keywords.length">
+            <el-tag v-for="(k, j) in t.keywords" :key="j" size="small" type="info">{{ k }}</el-tag>
+          </div>
+          <div style="margin-top:10px;">
+            <el-button text type="primary" @click="useTopicForEval(t)">用这个去「定题评测」 →</el-button>
+          </div>
+        </el-card>
+
+        <el-card v-if="recResult.related_papers.length" class="mb-20">
+          <div class="block-title">📚 生成所参考的真实文献（{{ recResult.related_papers.length }}）</div>
+          <div v-for="(p, i) in recResult.related_papers" :key="i" class="paper-item">
+            <span class="paper-idx">[{{ i + 1 }}]</span>
+            <span class="paper-title">{{ p.title }}</span>
+            <span class="paper-meta">{{ (p.authors || []).slice(0, 3).join(', ') }} · {{ p.year || '—' }}</span>
+          </div>
+        </el-card>
+      </div>
+
+      <!-- 期刊选题指南（占位，接入期刊数据库后开放，不造假） -->
+      <el-card class="mb-20 soon-card">
+        <div class="block-title">📰 期刊选题指南 <span class="soon-tag">即将上线</span></div>
+        <div class="empty-hint">接入期刊数据库（维普/知网授权）后，这里展示各期刊发布的<strong>真实重点选题方向</strong>。为避免误导，当前不以 AI 编造期刊征稿。</div>
+      </el-card>
+    </div>
   </div>
 </template>
 
@@ -153,6 +244,8 @@ import { ElMessage } from 'element-plus'
 import { Loading, RefreshLeft, Download } from '@element-plus/icons-vue'
 import topicAPI from '@/api/topicEvaluation'
 import CostHint from '@/components/common/CostHint.vue'
+
+const tab = ref('recommend')       // recommend | eval
 
 const state = ref('form')          // form | processing | failed | result
 const submitting = ref(false)
@@ -253,6 +346,73 @@ function handleDownload() {
   ElMessage.success('开始下载报告')
 }
 
+// ── 选题推荐 ──
+const hotTopics = ['固态电池', '柔性传感器', '多模态模型', '无人飞行器', '低空经济']
+const recForm = ref({ discipline: '', degree_level: '', keywords: '', paper_type: 'humanities' })
+const recState = ref('form')       // form | processing | result
+const recSubmitting = ref(false)
+const recProgress = ref(0)
+const recMsg = ref('正在生成...')
+const recResult = ref(null)
+let recTimer = null
+let recTaskId = null
+
+async function handleRecommend() {
+  if (!recForm.value.keywords.trim() && !recForm.value.discipline.trim()) {
+    ElMessage.warning('请至少填写学科或关键词')
+    return
+  }
+  recSubmitting.value = true
+  try {
+    const res = await topicAPI.recommend(recForm.value)
+    recTaskId = res.task_id
+    recState.value = 'processing'
+    recProgress.value = 10
+    recMsg.value = '正在检索领域文献并生成选题...'
+    startRecPolling()
+  } catch (e) {
+    // 402/错误由拦截器处理
+  } finally {
+    recSubmitting.value = false
+  }
+}
+
+function startRecPolling() {
+  stopRecPolling()
+  recTimer = setInterval(async () => {
+    try {
+      const s = await topicAPI.getStatus(recTaskId)
+      if (typeof s.progress === 'number') recProgress.value = s.progress
+      if (s.status === 'completed') {
+        stopRecPolling()
+        const r = await topicAPI.getResult(recTaskId)
+        recResult.value = r
+        recState.value = 'result'
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      } else if (s.status === 'failed') {
+        stopRecPolling()
+        ElMessage.error(s.error || '生成失败')
+        recState.value = 'form'
+      }
+    } catch (e) { /* 轮询错误静默 */ }
+  }, 2000)
+}
+
+function stopRecPolling() {
+  if (recTimer) { clearInterval(recTimer); recTimer = null }
+}
+
+// 把推荐的选题带到「定题评测」预填
+function useTopicForEval(t) {
+  form.value.question = t.title
+  form.value.discipline = recForm.value.discipline
+  form.value.degree_level = recForm.value.degree_level
+  form.value.paper_type = recForm.value.paper_type
+  state.value = 'form'
+  tab.value = 'eval'
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
 function handleReset() {
   stopPolling()
   taskId = null
@@ -262,7 +422,7 @@ function handleReset() {
   state.value = 'form'
 }
 
-onBeforeUnmount(stopPolling)
+onBeforeUnmount(() => { stopPolling(); stopRecPolling() })
 </script>
 
 <style scoped>
@@ -319,4 +479,28 @@ ul li { font-size: 14px; line-height: 1.8; color: rgb(55,65,81); }
   color: rgb(0, 108, 73);
   box-shadow: -1px 0 0 0 rgb(0,108,73);
 }
+
+/* 选题推荐 */
+.te-tabs { display: inline-flex; gap: 4px; background: #f3f4f6; border-radius: 12px; padding: 4px; margin-bottom: 20px; }
+.te-tab { border: none; background: transparent; padding: 8px 22px; border-radius: 9px; font-size: 14px; color: rgb(107,114,128); cursor: pointer; font-weight: 500; }
+.te-tab.active { background: #fff; color: #006C49; font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+
+.rec-fill { font-size: 15px; line-height: 2.4; color: rgb(55,65,81); }
+.rec-inline { width: 150px; margin: 0 4px; display: inline-block; }
+.rec-inline-sel { width: 140px; margin: 0 4px; display: inline-block; }
+.rec-inline-wide { width: 280px; margin: 0 4px; display: inline-block; }
+.rec-type { margin: 18px 0; display: flex; align-items: center; gap: 8px; }
+.rec-type-label { font-size: 14px; color: rgb(55,65,81); }
+.hot-row { margin: 8px 0 4px; font-size: 13px; color: rgb(107,114,128); }
+.hot-chip { margin-left: 8px; cursor: pointer; }
+.hot-chip:hover { color: #006C49; border-color: #006C49; }
+
+.rec-result-head { display: flex; justify-content: space-between; align-items: center; font-size: 15px; color: rgb(31,41,55); }
+.rec-topic-card .rt-title { font-size: 16px; font-weight: 700; color: rgb(17,24,39); margin-bottom: 10px; }
+.rt-row { font-size: 14px; color: rgb(55,65,81); line-height: 1.7; margin-bottom: 4px; }
+.rt-row b { color: #006C49; }
+.rt-kw { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+
+.soon-card { background: #fafafa; }
+.soon-tag { font-size: 11px; background: #E8F5EE; color: #006C49; padding: 2px 8px; border-radius: 100px; font-weight: 600; margin-left: 6px; }
 </style>

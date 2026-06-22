@@ -19,11 +19,12 @@ from app.api.v1.deps import require_quota, QuotaContext
 from app.services.billing_service import consume_quota, check_quota, get_total_remaining
 from app.models.pricing import get_feature_cost
 from app.workers.celery_app import celery_app
-from app.workers.topic_evaluation_tasks import run_topic_evaluation
+from app.workers.topic_evaluation_tasks import run_topic_evaluation, run_topic_recommendation
 
 router = APIRouter()
 
 _QUOTA_COST = get_feature_cost("topic_evaluation")
+_RECOMMEND_COST = get_feature_cost("topic_recommend")
 _VALID_TYPES = ("humanities", "science_engineering", "arts")
 
 
@@ -74,6 +75,53 @@ async def submit_topic(
         "status_url": f"/api/v1/topic-evaluation/status/{task_id}",
         "result_url": f"/api/v1/topic-evaluation/result/{task_id}",
         "message": "选题评估任务已提交，正在后台执行",
+    }
+
+
+@router.post("/recommend", summary="提交选题推荐任务（生成候选选题）")
+async def submit_recommend(
+    discipline: str = Form("", description="学科"),
+    paper_type: str = Form("humanities", description="论文类别"),
+    keywords: str = Form("", description="研究兴趣关键词，逗号分隔"),
+    degree_level: str = Form("", description="学位阶段"),
+    count: int = Form(5, description="候选选题数 3-8"),
+    ctx: QuotaContext = Depends(require_quota("topic_recommend")),
+    db: Session = Depends(get_db),
+):
+    if not settings.BAILIAN_API_KEY and not settings.DEEPSEEK_API_KEY:
+        raise HTTPException(503, "AI 服务未配置")
+    if paper_type not in _VALID_TYPES:
+        paper_type = "humanities"
+    count = max(3, min(8, count))
+
+    if ctx.billing_on and ctx.quota_info.get("source") not in ("admin", "billing_off"):
+        if get_total_remaining(db, ctx.user.id) < _RECOMMEND_COST:
+            raise HTTPException(
+                status_code=402,
+                detail={
+                    "code": "NO_QUOTA",
+                    "message": f"选题推荐需要 {_RECOMMEND_COST} 次额度，请先充值",
+                    "pricing_url": "/api/v1/billing/pricing",
+                },
+            )
+
+    task_id = str(uuid.uuid4())
+    run_topic_recommendation.apply_async(
+        args=[task_id, discipline, paper_type, keywords, degree_level, count],
+        task_id=task_id,
+    )
+    logger.info(f"[topic-recommend] 任务入队 task_id={task_id} type={paper_type}")
+
+    if ctx.billing_on:
+        consume_quota(db, ctx.user.id, "topic_recommend", task_id=task_id, cost=_RECOMMEND_COST)
+
+    return {
+        "task_id": task_id,
+        "status": "pending",
+        "quota_cost": _RECOMMEND_COST,
+        "status_url": f"/api/v1/topic-evaluation/status/{task_id}",
+        "result_url": f"/api/v1/topic-evaluation/result/{task_id}",
+        "message": "选题推荐任务已提交，正在后台执行",
     }
 
 

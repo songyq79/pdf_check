@@ -22,6 +22,26 @@ const topicEvaluationAPI = {
     })
   },
 
+  /**
+   * 提交选题推荐任务（生成候选选题）
+   * @param {Object} fields - {discipline, paper_type, keywords, degree_level, count}
+   */
+  recommend(fields) {
+    const formData = new FormData()
+    formData.append('discipline', fields.discipline || '')
+    formData.append('paper_type', fields.paper_type || 'humanities')
+    formData.append('keywords', fields.keywords || '')
+    formData.append('degree_level', fields.degree_level || '')
+    formData.append('count', fields.count || 5)
+    return request({
+      url: '/api/v1/topic-evaluation/recommend',
+      method: 'post',
+      data: formData,
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 60000,
+    })
+  },
+
   getStatus(taskId) {
     return request({
       url: `/api/v1/topic-evaluation/status/${taskId}`,
