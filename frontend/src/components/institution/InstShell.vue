@@ -61,6 +61,7 @@ const navGroups = computed(() => {
       { icon: '🎯', text: '选题评估', to: '/topic-evaluation', active: p === '/topic-evaluation' },
       { icon: '📚', text: '文献综述', to: '/literature-review', active: p === '/literature-review' },
       { icon: '✍️', text: '写作辅助', to: '/writing-assistant', active: p === '/writing-assistant' },
+      { icon: '🧪', text: '实验评审', to: '/experiment-review', active: p === '/experiment-review' },
     ] },
     { label: '论文工具', items: [
       { icon: '⭐', text: '智能评价', to: '/evaluation', active: p === '/evaluation' },

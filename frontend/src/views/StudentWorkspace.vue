@@ -12,7 +12,7 @@
 
     <!-- AI 新功能 -->
     <div class="section-label">✨ AI 助手 · 论文全程帮手</div>
-    <div class="feat-grid feat-grid-3">
+    <div class="feat-grid feat-grid-4">
       <a v-for="f in aiFeatures" :key="f.key" class="feat-card featured" @click="go(f.to)">
         <div class="fc-icon" :style="{ background: f.bg }">{{ f.icon }}</div>
         <div class="fc-title">{{ f.title }}</div>
@@ -108,6 +108,7 @@ const aiFeatures = [
   { key: 'topic_evaluation', title: '选题评估', desc: 'AI 评估创新性/可行性/重要性，帮你定一个好题目', cost: 'topic_evaluation', icon: '🎯', bg: '#FFF8E1', to: '/topic-evaluation' },
   { key: 'literature_review', title: '文献综述生成', desc: '检索学术库、主题分类，生成综述初稿+参考文献', cost: 'literature_review', icon: '📚', bg: '#E0F7FA', to: '/literature-review' },
   { key: 'writing_assist', title: '写作辅助', desc: '语法/逻辑/学术表达逐段润色，保留你的原始观点', cost: 'writing_assist', icon: '✍️', bg: '#F3E8FF', to: '/writing-assistant' },
+  { key: 'experiment_evaluation', title: '实验评审', desc: '评审实验方案的科学性/完整性/风险（理工科）', cost: 'experiment_evaluation', icon: '🧪', bg: '#FCE7F3', to: '/experiment-review' },
 ]
 const toolFeatures = [
   { key: 'evaluation', title: '智能评价', note: 'Word 报告 + 雷达图', icon: '⭐', to: '/evaluation' },
