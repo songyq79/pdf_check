@@ -12,6 +12,7 @@ from app.core.plagiarism.external.aggregator import (
     ExternalSourceAggregator,
     ExternalSourceAggregatorAllFailedError,
 )
+from app.core.plagiarism.external.reranker import rerank_papers
 
 
 def _paper_to_dict(p) -> dict:
@@ -51,9 +52,11 @@ async def enrich(
     if queries:
         try:
             grouped = await ExternalSourceAggregator().batch_search(queries, limit_per_q=5)
-            for group in grouped:
-                for p in group:
-                    new_papers.append(_paper_to_dict(p))
+            raw = [p for group in grouped for p in group]
+            # 语义重排去噪：补检候选按与 query 的相关度排序，取相关度高的（多给一倍缓冲，
+            # 供后续与输入文献去重后仍够 max_new）。重排不可用则原序降级。
+            ranked = rerank_papers(" ".join(queries), raw, top_k=max(max_new * 2, max_new))
+            new_papers = [_paper_to_dict(p) for p in ranked]
         except ExternalSourceAggregatorAllFailedError:
             logger.warning("[lit.enrich] 所有外部源失败，仅用输入文献")
         except Exception as e:
