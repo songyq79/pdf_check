@@ -53,6 +53,21 @@
               <el-radio-button value="arts">艺术类</el-radio-button>
             </el-radio-group>
           </el-form-item>
+
+          <div class="form-row">
+            <el-form-item label="输出模式" class="form-col">
+              <el-radio-group v-model="form.length_mode">
+                <el-radio-button value="short">短文（1500+）</el-radio-button>
+                <el-radio-button value="long">长文（4000+）</el-radio-button>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item label="输出语言" class="form-col">
+              <el-radio-group v-model="form.language">
+                <el-radio-button value="zh">中文</el-radio-button>
+                <el-radio-button value="en">English</el-radio-button>
+              </el-radio-group>
+            </el-form-item>
+          </div>
         </el-form>
 
         <div class="submit-bar">
@@ -170,6 +185,8 @@ const form = ref({
   discipline: '',
   paper_type: 'humanities',
   citation_style: 'gbt7714',
+  length_mode: 'short',
+  language: 'zh',
 })
 
 function onFileChange(uploadFile) {

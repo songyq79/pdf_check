@@ -38,11 +38,17 @@ async def submit_review(
     discipline: str = Form("", description="学科"),
     paper_type: str = Form("humanities"),
     citation_style: str = Form("gbt7714"),
+    length_mode: str = Form("short", description="short 短文 / long 长文"),
+    language: str = Form("zh", description="zh 中文 / en 英文"),
     ctx: QuotaContext = Depends(require_quota("literature_review")),
     db: Session = Depends(get_db),
 ):
     if paper_type not in _VALID_TYPES:
         paper_type = "humanities"
+    if length_mode not in ("short", "long"):
+        length_mode = "short"
+    if language not in ("zh", "en"):
+        language = "zh"
     if not settings.BAILIAN_API_KEY and not settings.DEEPSEEK_API_KEY:
         raise HTTPException(503, "AI 服务未配置：请在 .env 配置 BAILIAN_API_KEY 或 DEEPSEEK_API_KEY")
 
@@ -75,7 +81,8 @@ async def submit_review(
     task_id = str(uuid.uuid4())
     run_literature_review.apply_async(
         args=[task_id, input_text, input_format, keywords, topic, discipline,
-              paper_type, citation_style, str(settings.OUTPUT_PATH)],
+              paper_type, citation_style, str(settings.OUTPUT_PATH),
+              length_mode, language],
         task_id=task_id,
     )
     logger.info(f"[lit-review] 任务入队 task_id={task_id} type={paper_type}")

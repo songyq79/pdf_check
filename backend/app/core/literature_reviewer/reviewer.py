@@ -27,6 +27,8 @@ async def generate_review(
     discipline: str = "",
     paper_type: str = "humanities",
     citation_style: str = "gbt7714",
+    length_mode: str = "short",
+    language: str = "zh",
     progress_cb: Optional[Callable[[int, str], None]] = None,
 ) -> dict:
     def _progress(pct: int, msg: str):
@@ -51,7 +53,8 @@ async def generate_review(
 
     # ④ 初稿
     _progress(85, "生成综述初稿")
-    draft = await generate_draft(categorization, papers, topic, discipline, paper_type)
+    draft = await generate_draft(categorization, papers, topic, discipline, paper_type,
+                                 length_mode=length_mode, language=language)
 
     _progress(100, "完成")
     return {
@@ -61,6 +64,8 @@ async def generate_review(
             "discipline": discipline,
             "paper_type": paper_type,
             "citation_style": citation_style,
+            "length_mode": length_mode,
+            "language": language,
             "papers_identified": len(input_papers),
             "papers_total": len(papers),
         },

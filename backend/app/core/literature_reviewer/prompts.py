@@ -52,8 +52,19 @@ CATEGORIZE_FALLBACK = {
 
 # ── Step 4：生成综述初稿 ─────────────────────────────────────
 
+_LENGTH_SPEC = {
+    "short": ("1500-2500字", "精炼，3-4 个小节，每节聚焦核心"),
+    "long": ("4000-6000字", "充分展开，5-7 个小节，每节深入比较多篇文献"),
+}
+_LANG_SPEC = {
+    "zh": ("中文", '可在句中以"（作者, 年份）"形式提及文献'),
+    "en": ("English", 'cite inline as "(Author, Year)"; write the entire review in academic English'),
+}
+
+
 def build_draft_prompt(categorization: dict, papers: list, topic: str,
-                       discipline: str, paper_type: str = "humanities") -> str:
+                       discipline: str, paper_type: str = "humanities",
+                       length_mode: str = "short", language: str = "zh") -> str:
     focus = _TYPE_FOCUS.get(paper_type, _TYPE_FOCUS["humanities"])
     cats = categorization.get("categories", [])
     cat_block = "\n".join(
@@ -61,7 +72,15 @@ def build_draft_prompt(categorization: dict, papers: list, topic: str,
     ) or "（无分类）"
     gaps = "；".join(categorization.get("research_gaps", [])) or "（未识别）"
 
-    return f"""你是一位{discipline or "该领域"}的学者。请基于下方分类与文献，撰写一篇文献综述初稿（1500-3000字）。
+    word_target, structure_hint = _LENGTH_SPEC.get(length_mode, _LENGTH_SPEC["short"])
+    lang_name, cite_hint = _LANG_SPEC.get(language, _LANG_SPEC["zh"])
+    lang_line = (
+        f"4. 全文用{lang_name}撰写，{cite_hint}。"
+        if language == "zh"
+        else f"4. Write the ENTIRE review in {lang_name}; {cite_hint}."
+    )
+
+    return f"""你是一位{discipline or "该领域"}的学者。请基于下方分类与文献，撰写一篇文献综述初稿（篇幅约 {word_target}，{structure_hint}）。
 
 【领域特点】{focus}
 【综述主题】{topic or "（未指定，按文献归纳）"}
@@ -75,8 +94,9 @@ def build_draft_prompt(categorization: dict, papers: list, topic: str,
 写作要求（参考系统性综述方法论）：
 1. 主题化综合，按研究方向组织段落，而非逐篇罗列。
 2. 比较不同研究的方法与结论，指出共识与争议。
-3. 客观、学术化中文表达，可在句中以"（作者, 年份）"形式提及文献。
-4. 收尾指出研究空白与未来方向。禁止编造文献。
+3. 收尾指出研究空白与未来方向。禁止编造文献。
+{lang_line}
+5. 篇幅贴近 {word_target}，{structure_hint}。
 
 请严格按以下 JSON 输出，不要输出任何其他文字：
 {{"overview": "研究现状总览段落", "sections": [{{"title": "小节标题", "content": "该小节正文"}}], "conclusion": "总结与未来方向"}}"""

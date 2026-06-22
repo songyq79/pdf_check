@@ -13,6 +13,8 @@ const literatureReviewAPI = {
     formData.append('discipline', fields.discipline || '')
     formData.append('paper_type', fields.paper_type || 'humanities')
     formData.append('citation_style', fields.citation_style || 'gbt7714')
+    formData.append('length_mode', fields.length_mode || 'short')
+    formData.append('language', fields.language || 'zh')
     return request({
       url: '/api/v1/literature-review/upload',
       method: 'post',

@@ -48,6 +48,8 @@ def run_literature_review(
     paper_type: str,
     citation_style: str,
     report_output_path: str,
+    length_mode: str = "short",
+    language: str = "zh",
 ) -> dict:
     logger.info(f"[Worker] 开始文献综述 task_id={task_id} type={paper_type}")
 
@@ -70,6 +72,8 @@ def run_literature_review(
                     discipline=discipline,
                     paper_type=paper_type,
                     citation_style=citation_style,
+                    length_mode=length_mode,
+                    language=language,
                     progress_cb=_progress,
                 )
             )
