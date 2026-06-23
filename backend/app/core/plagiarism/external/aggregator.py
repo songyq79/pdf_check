@@ -17,6 +17,7 @@ from app.core.plagiarism.external.base_source import (
     ExternalSourceError,
 )
 from app.core.plagiarism.external.core_api import CoreSource
+from app.core.plagiarism.external.cqvip import CqvipSource
 from app.core.plagiarism.external.openalex import OpenAlexSource
 from app.core.plagiarism.external.pubmed import PubMedSource
 from app.core.plagiarism.external.semantic_scholar import SemanticScholarSource
@@ -38,6 +39,7 @@ class ExternalSourceAggregator:
             CoreSource(),
             PubMedSource(),
             OpenAlexSource(),  # 中文+多语言覆盖,选题评估/文献综述/查重共享
+            CqvipSource(),     # 维普:中文文献主力源(需 VIP_API_KEY;未配置则静默跳过)
         ]
 
     async def search(self, query: str, limit: int = 10) -> List[CandidatePaper]:

@@ -155,6 +155,11 @@ class Settings(BaseSettings):
     PUBMED_BASE_URL: str = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
     PUBMED_TIMEOUT: int = 10
 
+    # ── 维普 CQVIP（中文文献主力源）─────────────────────────
+    VIP_API_KEY: str = ""
+    VIP_BASE_URL: str = "https://superapi.cqvip.com"
+    VIP_TIMEOUT: int = 15
+
     # ── 英文查重通用(LEVELS_EN 未命中档位时的 fallback)─────
     ENGLISH_CHECK_KEY_SENTENCES: int = 10
     ENGLISH_CHECK_CANDIDATES_PER_SENTENCE: int = 5
