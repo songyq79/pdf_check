@@ -30,8 +30,13 @@
                   <div class="paper-type-hint" v-if="currentTypeHint">ℹ {{ currentTypeHint }}</div>
                 </div>
               </el-form-item>
-              <el-form-item label="上传文件">
+              <el-form-item label="检测内容">
+                <el-radio-group v-model="cnInputMode" size="small" style="margin-bottom:10px;">
+                  <el-radio-button value="file">文件上传</el-radio-button>
+                  <el-radio-button value="paste">粘贴文本</el-radio-button>
+                </el-radio-group>
                 <el-upload
+                  v-if="cnInputMode === 'file'"
                   class="upload-dragger" drag :auto-upload="false" :limit="1"
                   accept=".docx,.txt,.pdf"
                   :on-change="handleFileChange"
@@ -41,11 +46,18 @@
                   <div class="upload-text">拖拽文件到此处,或 <em>点击上传</em></div>
                   <div class="upload-hint">通义千问语义查重 · 消耗 1 次额度</div>
                 </el-upload>
+                <el-input
+                  v-else
+                  v-model="pasteText" type="textarea" :rows="10" maxlength="20000" show-word-limit
+                  placeholder="粘贴要检测的论文内容（适合局部/快速自查，至少 50 字）..."
+                />
               </el-form-item>
             </el-form>
             <div class="upload-actions">
               <CostHint :credits="1" />
-              <el-button type="primary" size="large" :disabled="!selectedFile" @click="handleStart">
+              <el-button type="primary" size="large"
+                :disabled="cnInputMode === 'file' ? !selectedFile : pasteText.trim().length < 50"
+                @click="handleStart">
                 <el-icon><Search /></el-icon> 开始检测(中文)
               </el-button>
             </div>
@@ -389,6 +401,8 @@ const store = usePlagiarismStore()
 const router = useRouter()
 
 const selectedFile = ref(null)
+const cnInputMode = ref('file')   // 中文查重输入方式：file 文件 / paste 粘贴文本
+const pasteText = ref('')
 const paperType = ref('')
 const activeTab = ref('highlight')
 const activeSourceId = ref(null)
@@ -430,24 +444,34 @@ function handleFileChange(file) {
 
 // 开始检测
 async function handleStart() {
-  if (!selectedFile.value) return
-
-  // 空文件拦截
-  if (selectedFile.value.size === 0) {
-    ElMessage.error('文件内容为空，请重新选择')
-    return
-  }
-
-  // 超大文件拦截（20MB）
-  const MAX_SIZE = 20 * 1024 * 1024
-  if (selectedFile.value.size > MAX_SIZE) {
-    ElMessage.error('文件大小超过 20MB，请压缩后重试')
-    return
-  }
-
   const lang = checkTab.value === 'en' ? enLanguage.value : 'zh'
+  // 中文 Tab 的「粘贴文本」模式
+  const usePaste = checkTab.value === 'zh' && cnInputMode.value === 'paste'
+
+  if (usePaste) {
+    if (pasteText.value.trim().length < 50) {
+      ElMessage.warning('粘贴内容过短（至少 50 字）')
+      return
+    }
+  } else {
+    if (!selectedFile.value) return
+    if (selectedFile.value.size === 0) {
+      ElMessage.error('文件内容为空，请重新选择')
+      return
+    }
+    const MAX_SIZE = 20 * 1024 * 1024
+    if (selectedFile.value.size > MAX_SIZE) {
+      ElMessage.error('文件大小超过 20MB，请压缩后重试')
+      return
+    }
+  }
+
   try {
-    await store.startCheck(selectedFile.value, paperType.value, lang)
+    await store.startCheck(
+      usePaste ? null : selectedFile.value,
+      paperType.value, lang,
+      usePaste ? pasteText.value.trim() : '',
+    )
   } catch (e) {
     if (e?.response?.status === 402) {
       ElMessageBox.confirm(

@@ -23,9 +23,10 @@ api.interceptors.request.use((config) => {
  * @param {string} paperType 档位(本科/硕士/博士/期刊)
  * @param {string} language auto|zh|en,外文 Tab 传 en
  */
-export function uploadAndCheck(file, paperType = '', language = 'auto') {
+export function uploadAndCheck(file, paperType = '', language = 'auto', content = '') {
   const formData = new FormData()
-  formData.append('file', file)
+  if (file) formData.append('file', file)
+  if (content) formData.append('content', content)
   if (paperType) formData.append('paper_type', paperType)
   formData.append('language', language)
   return api.post('/upload', formData, {

@@ -46,14 +46,14 @@ export const usePlagiarismStore = defineStore('plagiarism', () => {
    * 上传并开始查重
    * language: auto | zh | en
    */
-  async function startCheck(file, paperType, language = 'auto') {
+  async function startCheck(file, paperType, language = 'auto', content = '') {
     reset()
-    fileName.value = file.name
+    fileName.value = file ? file.name : '粘贴文本'
     status.value = 'uploading'
     selectedLanguage.value = language
 
     try {
-      const res = await uploadAndCheck(file, paperType, language)
+      const res = await uploadAndCheck(file, paperType, language, content)
       taskId.value = res.data.task_id
       detectedLanguage.value = res.data.language || null
       quotaCost.value = res.data.quota_cost || 1
