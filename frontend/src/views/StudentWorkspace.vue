@@ -56,13 +56,28 @@
       </div>
 
       <div class="ws-right">
-        <div class="panel placeholder">
-          <div class="panel-head"><div class="panel-title">📍 论文进度路线图</div><span class="soon">即将上线</span></div>
-          <div class="panel-body"><div class="ph-body">🗺️<div class="ph-text">选题→文献→写作→评价→校对→排版→查重→投稿 全流程引导，开发中</div></div></div>
-        </div>
-        <div class="panel placeholder">
-          <div class="panel-head"><div class="panel-title">🏆 我的成就</div><span class="soon">即将上线</span></div>
-          <div class="panel-body"><div class="ph-body">🎯<div class="ph-text">完成各阶段解锁徽章，开发中</div></div></div>
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">📍 论文进度路线图</div>
+            <span class="rm-count">{{ doneCount }}/{{ stages.length }}</span>
+          </div>
+          <div class="panel-body">
+            <div class="roadmap">
+              <div v-for="(s, i) in stages" :key="s.key" class="rm-item" :class="s.status">
+                <div class="rm-dot">
+                  <span v-if="s.status === 'done'">✓</span>
+                  <span v-else>{{ i + 1 }}</span>
+                </div>
+                <div class="rm-body">
+                  <div class="rm-label">{{ s.icon }} {{ s.label }}</div>
+                  <div class="rm-hint" v-if="s.status === 'current'">下一步建议</div>
+                  <div class="rm-hint done" v-else-if="s.status === 'done'">已完成</div>
+                </div>
+                <el-button v-if="s.status === 'current'" size="small" type="primary" class="rm-go" @click="$router.push(s.to)">去这里</el-button>
+              </div>
+            </div>
+            <div class="rm-foot">用过对应功能即点亮该阶段；投稿选刊为免费工具，按需使用。</div>
+          </div>
         </div>
       </div>
     </div>
@@ -81,7 +96,31 @@ const authStore = useAuthStore()
 const billingStore = useBillingStore()
 
 const usageList = ref([])
+const usedActions = ref(new Set())
 const isInstStudent = computed(() => authStore.userType === 'institution_student')
+
+// 论文全流程阶段（用使用记录点亮）
+const _STAGES = [
+  { key: 'topic', label: '选题', icon: '🎯', actions: ['topic_evaluation', 'topic_recommend'], to: '/topic-evaluation' },
+  { key: 'lit', label: '文献', icon: '📚', actions: ['literature_review'], to: '/literature-review' },
+  { key: 'write', label: '写作', icon: '✍️', actions: ['writing_assist', 'writing_whole'], to: '/writing-assistant' },
+  { key: 'eval', label: '评价', icon: '⭐', actions: ['evaluation'], to: '/evaluation' },
+  { key: 'proof', label: '校对', icon: '📝', actions: ['proofread'], to: '/spell-check' },
+  { key: 'format', label: '排版', icon: '📐', actions: ['formatter'], to: '/formatting' },
+  { key: 'plag', label: '查重', icon: '🔍', actions: ['plagiarism'], to: '/plagiarism' },
+  { key: 'submit', label: '投稿', icon: '📰', actions: ['journal_select'], to: '/journal-select' },
+]
+
+const stages = computed(() => {
+  let currentSet = false
+  return _STAGES.map(s => {
+    const done = s.actions.some(a => usedActions.value.has(a))
+    let status = done ? 'done' : 'todo'
+    if (!done && !currentSet) { status = 'current'; currentSet = true }
+    return { ...s, status }
+  })
+})
+const doneCount = computed(() => stages.value.filter(s => s.status === 'done').length)
 
 const _ACTION = {
   evaluation: '智能评价', proofread: '论文校对', formatter: '模板排版', plagiarism: '论文查重',
@@ -131,7 +170,9 @@ onMounted(async () => {
   if (!billingStore.featureCosts) billingStore.loadFeatureCosts()
   try {
     const res = await billingApi.getUsageHistory()
-    usageList.value = (res.data || []).slice(0, 8)
+    const all = res.data || []
+    usageList.value = all.slice(0, 8)
+    usedActions.value = new Set(all.map(r => r.action))
   } catch { /* ignore */ }
 })
 </script>
@@ -188,10 +229,22 @@ onMounted(async () => {
 .rec-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
 .rec-from { font-size: 11px; color: var(--muted); background: var(--green-pale2); padding: 2px 8px; border-radius: 100px; }
 
-.panel.placeholder { opacity: 0.9; }
-.soon { font-size: 11px; background: var(--green-pale); color: var(--green); padding: 2px 8px; border-radius: 100px; font-weight: 600; }
-.ph-body { text-align: center; padding: 24px 12px; color: var(--muted); font-size: 28px; }
-.ph-text { font-size: 12px; margin-top: 8px; line-height: 1.5; }
+/* 进度路线图 */
+.rm-count { font-size: 12px; background: var(--green-pale); color: var(--green); padding: 2px 10px; border-radius: 100px; font-weight: 700; }
+.roadmap { display: flex; flex-direction: column; }
+.rm-item { display: flex; align-items: center; gap: 12px; padding: 9px 0; position: relative; }
+.rm-item:not(:last-child)::after { content: ''; position: absolute; left: 13px; top: 34px; width: 2px; height: calc(100% - 16px); background: var(--border); }
+.rm-dot { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; z-index: 1; }
+.rm-item.done .rm-dot { background: var(--green); color: #fff; }
+.rm-item.current .rm-dot { background: #fff; color: var(--green); border: 2px solid var(--green); box-shadow: 0 0 0 4px rgba(0,108,73,0.12); }
+.rm-item.todo .rm-dot { background: var(--border); color: var(--muted); }
+.rm-body { flex: 1; }
+.rm-label { font-size: 14px; font-weight: 600; color: var(--text); }
+.rm-item.todo .rm-label { color: var(--muted); font-weight: 500; }
+.rm-hint { font-size: 11px; color: var(--green); margin-top: 1px; }
+.rm-hint.done { color: var(--muted); }
+.rm-go { flex-shrink: 0; }
+.rm-foot { font-size: 11px; color: var(--muted); margin-top: 14px; line-height: 1.5; }
 
 @media (max-width: 820px) {
   .feat-grid-3, .feat-grid-4 { grid-template-columns: repeat(2, 1fr); }
