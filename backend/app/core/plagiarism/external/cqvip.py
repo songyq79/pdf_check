@@ -91,14 +91,61 @@ class CqvipSource(ExternalSource):
         wait=wait_exponential(multiplier=1, min=1, max=4),
         reraise=True,
     )
-    async def _post(self, body: dict) -> Optional[dict]:
-        url = f"{self.base_url}/unifiedsearch/search/v1/paper/adv-search"
+    async def _post(self, body: dict,
+                    path: str = "/unifiedsearch/search/v1/paper/adv-search") -> Optional[dict]:
+        url = f"{self.base_url}{path}"
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             resp = await client.post(url, json=body, headers=self._headers())
             if resp.status_code == 404:
                 return None
             resp.raise_for_status()
             return resp.json()
+
+    async def get_journal_full(self, name: str) -> Optional[dict]:
+        """期刊查询(按刊名)→拿 id→期刊详情→归一化。无 key/未命中返回 None。"""
+        if not self.api_key or not (name or "").strip():
+            return None
+        try:
+            q = await self._post(
+                {"page": 1, "size": 1, "searchField": "N", "content": name.strip()[:60]},
+                path="/journal/v1/search",
+            )
+            if not q or q.get("code") != 200 or not q.get("data"):
+                return None
+            base = q["data"][0]
+            jid = base.get("id")
+            detail = base
+            if jid:
+                dd = await self._post({"id": jid}, path="/journal/v1/detail")
+                if dd and dd.get("code") == 200 and dd.get("data"):
+                    detail = dd["data"]
+            return self._normalize_journal(detail)
+        except Exception as e:
+            logger.warning(f"[cqvip] 期刊详情获取失败 name={name}: {e}")
+            return None
+
+    @staticmethod
+    def _normalize_journal(d: dict) -> dict:
+        def _join(v):
+            return "、".join(x for x in (v or []) if x) if isinstance(v, list) else (v or "")
+        return {
+            "id": d.get("id"),
+            "name": d.get("journalName") or "",
+            "issn": d.get("issn") or None,
+            "cnno": d.get("cnno") or None,
+            "impact_factor": d.get("impactFactor") or None,
+            "cas_part": _join(d.get("casPart")) or None,        # 中科院分区
+            "jcr_part": _join(d.get("jcrPart")) or None,        # JCR 分区
+            "jcr_impact": d.get("jcrImpact") or None,
+            "review_speed": d.get("reviewSpeed") or None,       # 审稿周期
+            "pub_period": d.get("journalPubPeriod") or None,    # 发行周期
+            "is_oa": bool(d.get("isOa")),
+            "stopped": d.get("stopBInactive") not in (0, None, "0"),
+            "core_tags": d.get("listJournalSource") or [],      # 核心标签-中文/收录
+            "domain": d.get("domain") or [],
+            "publisher": _join(d.get("publisher")) or None,
+            "intro": (d.get("journalIntro") or "")[:300],
+        }
 
     async def _do_search(self, query: str, limit: int) -> List[CandidatePaper]:
         if not self.api_key:

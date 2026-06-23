@@ -73,6 +73,22 @@ const evaluationAPI = {
   },
 
   /**
+   * 按刊名取维普期刊详情（含后端缓存）
+   * @param {string} name 刊名
+   */
+  journalDetailByName(name) {
+    const form = new FormData()
+    form.append('name', name)
+    return request({
+      url: '/api/v1/evaluation/journal-detail-by-name',
+      method: 'post',
+      data: form,
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 30000,
+    })
+  },
+
+  /**
    * 下载评价报告
    * @param {string} reportId
    */

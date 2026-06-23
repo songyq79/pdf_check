@@ -715,3 +715,38 @@ def journal_details(journal_id: int, db: Session = Depends(get_db)):
     if not detail:
         raise HTTPException(404, "期刊不存在")
     return detail
+
+
+@router.post("/journal-detail-by-name", summary="按刊名取维普期刊详情（含缓存）")
+async def journal_detail_by_name(name: str = Form(...), db: Session = Depends(get_db)):
+    """点开选刊结果某期刊时调用：先查本地缓存(journals 表)，缺失则调维普并缓存。"""
+    from app.models.phase1 import Journal
+    name = (name or "").strip()
+    if not name:
+        raise HTTPException(400, "缺少刊名")
+
+    # 缓存命中（format_requirements 里存维普详情）
+    row = db.query(Journal).filter(Journal.name_zh == name).first()
+    if row and isinstance(row.format_requirements, dict) and row.format_requirements.get("cqvip"):
+        return {"cached": True, **row.format_requirements["cqvip"]}
+
+    from app.core.plagiarism.external.cqvip import CqvipSource
+    d = await CqvipSource().get_journal_full(name)
+    if not d:
+        raise HTTPException(404, "未查询到该期刊")
+
+    # upsert 缓存：关键字段进列 + 全量进 format_requirements
+    if not row:
+        row = Journal(name_zh=name)
+        db.add(row)
+    row.issn = d.get("issn") or row.issn
+    if d.get("impact_factor"):
+        try:
+            row.impact_factor = float(str(d["impact_factor"]).split()[0])
+        except (ValueError, IndexError):
+            pass
+    row.jcr_rank = d.get("cas_part") or d.get("jcr_part") or row.jcr_rank
+    row.is_open_access = bool(d.get("is_oa"))
+    row.format_requirements = {"cqvip": d}
+    db.commit()
+    return {"cached": False, **d}
