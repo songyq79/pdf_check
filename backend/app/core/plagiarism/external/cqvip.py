@@ -73,6 +73,38 @@ class CqvipSource(ExternalSource):
             return []
         return self._parse(data.get("data") or [])
 
+    async def discover_journals(self, topic: str, size: int = 20) -> List[dict]:
+        """
+        投稿选刊「相似文献去向」：按主题检索真实论文，聚合它们发表的期刊。
+        返回 [{name, count, ranges, samples, year}]，按出现频次降序——
+        即"该主题的论文常发表在这些期刊"。无 key/失败返回 []。
+        """
+        if not self.api_key:
+            return []
+        try:
+            body = {"page": 1, "size": min(max(1, size), 20), "searchField": "U",
+                    "content": (topic or "")[:200]}
+            data = await self._post(body)
+        except Exception as e:
+            logger.warning(f"[cqvip] 选刊发现检索失败: {e}")
+            return []
+        if not data or data.get("code") != 200:
+            return []
+
+        agg: dict = {}
+        for p in (data.get("data") or []):
+            ji = p.get("journalInfo") or {}
+            name = (ji.get("name") or "").strip()
+            if not name:
+                continue
+            e = agg.setdefault(name, {"name": name, "count": 0, "ranges": ji.get("range") or [],
+                                      "year": ji.get("year"), "samples": []})
+            e["count"] += 1
+            title = (p.get("title") or "").strip()
+            if title and len(e["samples"]) < 3:
+                e["samples"].append(title)
+        return sorted(agg.values(), key=lambda x: x["count"], reverse=True)
+
     def _parse(self, items: list) -> List[CandidatePaper]:
         results: List[CandidatePaper] = []
         for it in items:

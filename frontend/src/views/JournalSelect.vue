@@ -35,23 +35,28 @@
     <div v-if="journals.length">
       <div class="result-head mb-20">
         匹配到 <b>{{ journals.length }}</b> 本期刊
-        <span class="match-note" v-if="matchedBy === 'semantic'">（按主题语义排序）</span>
+        <span class="match-note" v-if="matchedBy === 'cqvip'">（基于维普「相似文献去向」：该主题论文常发表于这些期刊）</span>
+        <span class="match-note" v-else-if="matchedBy === 'semantic'">（按主题语义排序）</span>
         <span class="match-note" v-else>（语义模型不可用，已按类别粗排）</span>
       </div>
       <el-card v-for="(j, i) in journals" :key="j.id" class="journal-card mb-20">
         <div class="jc-head">
           <span class="jc-rank">{{ i + 1 }}</span>
           <span class="jc-name">{{ j.name_zh || j.name_en || '未命名期刊' }}</span>
-          <span class="jc-match" :style="{ color: matchColor(j.match_score) }">匹配度 {{ j.match_score }}/10</span>
+          <span v-if="j.evidence_count" class="jc-evidence">{{ j.evidence_count }} 篇相似论文发表于此</span>
+          <span v-else class="jc-match" :style="{ color: matchColor(j.match_score) }">匹配度 {{ j.match_score }}/10</span>
         </div>
         <div class="jc-meta">
-          <el-tag v-if="j.category" size="small" type="info">{{ j.category }}</el-tag>
+          <template v-if="j.category">
+            <el-tag v-for="tag in String(j.category).split('、')" :key="tag" size="small" type="info">{{ tag }}</el-tag>
+          </template>
           <el-tag v-if="j.jcr_rank" size="small">{{ j.jcr_rank }}</el-tag>
           <span v-if="j.impact_factor">IF {{ j.impact_factor }}</span>
           <span v-if="j.review_days_avg">审稿约 {{ j.review_days_avg }} 天</span>
           <span v-if="j.acceptance_rate">录取率 {{ (j.acceptance_rate * 100).toFixed(0) }}%</span>
           <el-tag v-if="j.is_open_access" size="small" type="success">OA</el-tag>
         </div>
+        <div v-if="j.samples && j.samples.length" class="jc-sample">例：{{ j.samples[0] }}</div>
         <div class="jc-actions" v-if="j.submission_url">
           <a :href="j.submission_url" target="_blank" rel="noopener" class="jc-link">官方投稿入口 →</a>
         </div>
@@ -107,6 +112,8 @@ async function handleSelect() {
 .jc-rank { width: 24px; height: 24px; border-radius: 50%; background: #006C49; color: #fff; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .jc-name { font-size: 16px; font-weight: 700; color: rgb(17,24,39); flex: 1; }
 .jc-match { font-size: 14px; font-weight: 600; }
+.jc-evidence { font-size: 13px; font-weight: 600; color: #006C49; background: #E8F5EE; padding: 2px 10px; border-radius: 100px; }
+.jc-sample { font-size: 12px; color: rgb(107,114,128); margin-top: 8px; }
 .jc-meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 10px; font-size: 13px; color: rgb(107,114,128); }
 .jc-actions { margin-top: 10px; }
 .jc-link { color: #006C49; font-size: 13px; font-weight: 600; text-decoration: none; }

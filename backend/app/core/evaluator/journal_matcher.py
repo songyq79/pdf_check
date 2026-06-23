@@ -150,6 +150,45 @@ class JournalMatcher:
         logger.info(f"[journal_select] {matched_by} 匹配 → {len(out)} 本期刊")
         return {"journals": out, "matched_by": matched_by}
 
+    async def select_journals(self, db: Session, title: str = "", abstract: str = "",
+                              keywords: str = "", paper_type: str = "", top_n: int = 8) -> dict:
+        """
+        投稿选刊统一入口：
+        - 维普可用 → 「相似文献去向」(真实论文发表期刊聚合),matched_by='cqvip'
+        - 否则 → 本地期刊库主题语义匹配(select_by_content),matched_by='semantic'/'fallback'
+        """
+        from app.config import settings
+        topic = " ".join(x for x in [title, keywords] if x).strip() or (abstract or "")[:120]
+
+        if getattr(settings, "VIP_API_KEY", "") and topic:
+            try:
+                from app.core.plagiarism.external.cqvip import CqvipSource
+                found = await CqvipSource().discover_journals(topic, size=20)
+            except Exception as e:
+                logger.warning(f"[journal_select] 维普发现失败,降级本地: {e}")
+                found = []
+            if found:
+                max_c = found[0]["count"] or 1
+                journals = []
+                for j in found[:top_n]:
+                    journals.append({
+                        "id": None, "name_zh": j["name"], "name_en": None, "issn": None,
+                        "impact_factor": None, "jcr_rank": None,
+                        "category": "、".join(j.get("ranges") or []) or None,
+                        "match_score": max(1, min(10, round(j["count"] / max_c * 10))),
+                        "similarity": None,
+                        "evidence_count": j["count"],            # 相似文献佐证篇数
+                        "samples": j.get("samples") or [],
+                        "review_days_avg": None, "acceptance_rate": None,
+                        "is_open_access": None, "submission_url": None,
+                    })
+                logger.info(f"[journal_select] 维普相似文献去向 → {len(journals)} 本期刊")
+                return {"journals": journals, "matched_by": "cqvip"}
+
+        # 降级：本地期刊库语义匹配
+        return self.select_by_content(db, title=title, abstract=abstract,
+                                      keywords=keywords, paper_type=paper_type, top_n=top_n)
+
     def get_detail(self, db: Session, journal_id: int) -> dict:
         j = db.query(Journal).filter(Journal.id == journal_id).first()
         if not j:

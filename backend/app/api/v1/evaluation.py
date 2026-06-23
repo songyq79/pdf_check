@@ -689,7 +689,7 @@ def journal_recommendations(task_id: str, db: Session = Depends(get_db)):
 
 
 @router.post("/journal-select", summary="按论文内容选刊（贴标题/摘要/关键词，免费）")
-def journal_select(
+async def journal_select(
     title: str = Form(""),
     abstract: str = Form(""),
     keywords: str = Form(""),
@@ -698,7 +698,7 @@ def journal_select(
 ):
     if not (title.strip() or abstract.strip() or keywords.strip()):
         raise HTTPException(400, "请至少填写标题、摘要或关键词之一")
-    result = JournalMatcher().select_by_content(
+    result = await JournalMatcher().select_journals(
         db, title=title, abstract=abstract, keywords=keywords,
         paper_type=paper_type, top_n=8,
     )
