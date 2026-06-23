@@ -152,6 +152,16 @@
         style="margin-bottom: 16px;"
       />
 
+      <!-- 中文 AI 引擎诚实标注 -->
+      <el-alert
+        v-if="store.report.engine && String(store.report.engine).startsWith('hybrid')"
+        title="中文查重为 AI 估算重复率 + 维普真实相似来源参考，非官方逐句检测报告；最终请以学校/期刊官方查重为准"
+        type="info"
+        show-icon
+        :closable="false"
+        style="margin-bottom: 16px;"
+      />
+
       <!-- 外文引擎:降级提示 + 导出功能 -->
       <FallbackBanner v-if="isFallback" />
       <div v-if="isEnEngine" class="en-actions">

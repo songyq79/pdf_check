@@ -24,6 +24,51 @@ from app.core.plagiarism.external.base_source import (
 )
 
 
+def search_sources_sync(query: str, limit: int = 2) -> List[dict]:
+    """
+    同步检索维普真实相似论文（供查重等同步场景：Celery 线程内调用）。
+    返回 [{title, author, year, url, journal}]。无 key/失败返回 []。
+    用于中文查重「相似来源参考」——给可疑段落找真实已发表论文作为出处佐证。
+    """
+    key = getattr(settings, "VIP_API_KEY", "") or ""
+    q = (query or "").strip()
+    if not key or not q:
+        return []
+    base = getattr(settings, "VIP_BASE_URL", "https://superapi.cqvip.com").rstrip("/")
+    url = f"{base}/unifiedsearch/search/v1/paper/adv-search"
+    try:
+        with httpx.Client(timeout=getattr(settings, "VIP_TIMEOUT", 15)) as c:
+            r = c.post(url, json={"page": 1, "size": min(max(1, limit), 5),
+                                  "searchField": "U", "content": q[:200]},
+                       headers={"Authorization": f"Bearer {key}",
+                                "Content-Type": "application/json"})
+            r.raise_for_status()
+            d = r.json()
+    except Exception as e:
+        logger.warning(f"[cqvip] 同步相似来源检索失败: {e}")
+        return []
+    if not d or d.get("code") != 200:
+        return []
+    out: List[dict] = []
+    for it in (d.get("data") or [])[:limit]:
+        title = (it.get("title") or "").strip()
+        if not title:
+            continue
+        authors = [(a.get("name") or "").strip() for a in (it.get("authorInfo") or [])]
+        authors = [a for a in authors if a][:3]
+        doi = (it.get("doi") or "").strip() or None
+        y = it.get("year")
+        year = int(str(y)[:4]) if y and str(y).isdigit() else None
+        out.append({
+            "title": title,
+            "author": "、".join(authors),
+            "year": year,
+            "url": f"https://doi.org/{doi}" if doi else None,
+            "journal": (it.get("journalInfo") or {}).get("name"),
+        })
+    return out
+
+
 class CqvipSource(ExternalSource):
     source_name = "cqvip"
 

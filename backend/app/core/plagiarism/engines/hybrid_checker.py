@@ -239,6 +239,22 @@ class HybridChecker(BaseChecker):
             if candidates else []
         )
 
+        # 真实来源佐证：对 top N 高相似片段查维普真实相似论文（控成本，仅前几条）
+        real_src_for: Dict[tuple, dict] = {}
+        try:
+            from app.core.plagiarism.external.cqvip import search_sources_sync
+            top_confirmed = sorted(
+                [it for it in confirmed if it[3] >= 0.4], key=lambda x: x[3], reverse=True
+            )[:6]
+            for start, end, chunk, final_sim, verdict, source_ref in top_confirmed:
+                reals = search_sources_sync(chunk[:120], limit=1)
+                if reals:
+                    real_src_for[(start, end)] = reals[0]
+            if real_src_for:
+                logger.info(f"[hybrid] 维普真实相似来源命中 {len(real_src_for)} 段")
+        except Exception as e:
+            logger.warning(f"[hybrid] 维普真实来源富化失败,沿用AI来源: {e}")
+
         # 收集 plus 确认的来源信息，去重建立 sources 列表
         source_map: Dict[str, SourceItem] = {}  # source_ref -> SourceItem
         confirmed_ranges = set()
@@ -250,17 +266,24 @@ class HybridChecker(BaseChecker):
             confirmed_ranges.add((start, end))
             if final_sim < 0.4:
                 continue
-            # 来源去重
-            if source_ref not in source_map:
-                src_id = f"src-{len(source_map)+1}"
-                source_map[source_ref] = SourceItem(
-                    id=src_id,
-                    title=source_ref,
-                    author="",
-                    year=None,
-                    url=None,
-                )
-            src_id = source_map[source_ref].id
+            # 优先用维普真实相似来源；否则回退 AI 来源
+            real = real_src_for.get((start, end))
+            if real:
+                key = real.get("url") or real["title"]
+                if key not in source_map:
+                    src_id = f"src-{len(source_map)+1}"
+                    source_map[key] = SourceItem(
+                        id=src_id, title=real["title"], author=real.get("author") or "",
+                        year=real.get("year"), url=real.get("url"),
+                    )
+                src_id = source_map[key].id
+            else:
+                if source_ref not in source_map:
+                    src_id = f"src-{len(source_map)+1}"
+                    source_map[source_ref] = SourceItem(
+                        id=src_id, title=source_ref, author="", year=None, url=None,
+                    )
+                src_id = source_map[source_ref].id
             highlights.append(HighlightItem(
                 id=h_id,
                 text=chunk,
