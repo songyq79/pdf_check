@@ -130,6 +130,9 @@ class Settings(BaseSettings):
     # 首次启动创建的默认管理员密码（仅在 admin 账号不存在时使用一次）
     ADMIN_INITIAL_PASSWORD: str = "admin123"
 
+    # 限流计数存储：留空用进程内存；生产多进程建议 redis://... 让各进程共享计数
+    RATE_LIMIT_STORAGE_URI: str = ""
+
     # ── 微信支付（Native） ────────────────────────────────
     WECHAT_MCH_ID: str = ""
     WECHAT_APP_ID: str = ""

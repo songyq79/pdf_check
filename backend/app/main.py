@@ -63,6 +63,14 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# ── 限流器注册（登录/短信/AI 等敏感接口用 @limiter.limit 装饰）──────────
+from slowapi.errors import RateLimitExceeded  # noqa: E402
+from slowapi import _rate_limit_exceeded_handler  # noqa: E402
+from app.core.rate_limit import limiter  # noqa: E402
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
