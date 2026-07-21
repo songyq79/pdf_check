@@ -12,8 +12,12 @@ from app.config import settings
 _url = settings.DATABASE_URL
 
 if _url.startswith("sqlite"):
-    # 本地开发：固定用绝对路径，不依赖 CWD
-    _db_file = Path(__file__).parent.parent.parent / "storage" / "app.db"
+    # 本地开发：把 DATABASE_URL 中的相对路径解析成绝对路径，不依赖 CWD，
+    # 但保留 DATABASE_URL 里配置的实际文件名（此前曾被写死成 app.db，
+    # 导致 DATABASE_URL=sqlite:///./storage/xxx.db 这类自定义文件名被忽略）。
+    _raw_path = _url.split("sqlite:///", 1)[-1] if "sqlite:///" in _url else "storage/app.db"
+    _candidate = Path(_raw_path)
+    _db_file = _candidate if _candidate.is_absolute() else (Path(__file__).parent.parent.parent / _candidate)
     _db_file.parent.mkdir(parents=True, exist_ok=True)
     engine = create_engine(
         f"sqlite:///{_db_file}",

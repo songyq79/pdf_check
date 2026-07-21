@@ -48,14 +48,18 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./storage/app.db"
 
     # ── Redis ─────────────────────────────────────────────
+    # 字段默认值只做本地开发兜底，绝不能是真实密码/生产地址——
+    # 之前这里硬编码过泄露的生产 Redis 密码，任何地方(含未继承自定义
+    # 环境变量的子进程)读到默认值都会连去生产实例。生产环境请务必
+    # 在 .env.production 中显式设置这几项。
     REDIS_HOST: str = "localhost"
-    REDIS_PORT: int = 26301
-    REDIS_DB: int = 15
-    REDIS_PASSWORD: Optional[str] = "jzmNDJAF7b"
+    REDIS_PORT: int = 6379
+    REDIS_DB: int = 0
+    REDIS_PASSWORD: Optional[str] = ""
 
     # ── Celery ────────────────────────────────────────────
-    CELERY_BROKER_URL: str = "redis://:jzmNDJAF7b@localhost:26301/15"
-    CELERY_RESULT_BACKEND: str = "redis://:jzmNDJAF7b@localhost:26301/15"
+    CELERY_BROKER_URL: str = "redis://localhost:6379/0"
+    CELERY_RESULT_BACKEND: str = "redis://localhost:6379/0"
 
     # ── 文件存储 ──────────────────────────────────────────
     STORAGE_PATH: Path = Path(__file__).parent.parent / "storage"
@@ -216,14 +220,9 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-# 生产环境强制覆盖 Redis 配置（绕过 pydantic-settings 字段缓存问题）
-if "mysql" in settings.DATABASE_URL.lower():
-    import sys
-    _PROD_BROKER = "redis://:jzmNDJAF7b@localhost:26301/15"
-    object.__setattr__(settings, "CELERY_BROKER_URL", _PROD_BROKER)
-    object.__setattr__(settings, "CELERY_RESULT_BACKEND", _PROD_BROKER)
-    object.__setattr__(settings, "REDIS_HOST", "localhost")
-    object.__setattr__(settings, "REDIS_PORT", 26301)
-    object.__setattr__(settings, "REDIS_DB", 15)
-    object.__setattr__(settings, "REDIS_PASSWORD", "jzmNDJAF7b")
-    print(f"[CONFIG] 生产环境已覆盖 CELERY_BROKER_URL={settings.CELERY_BROKER_URL}", file=sys.stderr)
+# 注：此前这里有一段"生产环境强制覆盖 Redis 配置"的兜底代码，只要
+# DATABASE_URL 含 mysql 就无条件把 CELERY_BROKER_URL/REDIS_* 重写成硬编码
+# 的旧密码——代价是即使运维在 .env.production 里改了/轮换了 Redis 密码，
+# 这段代码也会在启动时把配置悄悄换回旧值，等于让密码轮换失效，且把真实
+# 密码硬编码进源码（第 4 处泄露点）。已删除；请始终以 .env / .env.production
+# 中配置的 REDIS_*/CELERY_* 为准，不要再引入变量名之外的隐藏覆盖。

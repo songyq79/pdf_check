@@ -18,7 +18,11 @@ else:
     _env_path = Path(__file__).parent.parent.parent / ".env"
 
 if _env_path.exists():
-    load_dotenv(_env_path, override=True)
+    # override=False（默认）：只补全未设置的环境变量，绝不覆盖部署时已注入的值
+    # (systemd Environment=/Docker -e/K8s secret 等)。此前用 override=True 会
+    # 用仓库里的 .env 文件把已经生效的环境变量强制换回旧值——包括密码轮换后
+    # 仍会被换回旧密码，是一个真实的生产隐患。
+    load_dotenv(_env_path, override=False)
 
 from loguru import logger
 from app.workers.celery_app import celery_app
