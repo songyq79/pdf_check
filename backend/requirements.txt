@@ -1,53 +1,66 @@
+# ─────────────────────────────────────────────────────────────
+# 依赖已钉版本以保证可复现构建（避免某天 pip 拉到破坏性新版本）。
+# 版本为 2026-07-21 在开发机(Python 3.12)验证通过的实际安装版本。
+# 生产部署机建议在干净虚拟环境安装后执行:
+#     pip freeze > requirements.lock
+# 以锁定完整依赖树（含传递依赖）。
+# ─────────────────────────────────────────────────────────────
+
 # Web 框架
-fastapi>=0.110.0
-uvicorn[standard]>=0.27.0
-python-multipart>=0.0.9
+fastapi==0.133.1
+uvicorn[standard]==0.41.0
+python-multipart==0.0.22
 
 # 配置管理
-pydantic>=2.6.0
-pydantic-settings>=2.2.0
+pydantic==2.12.5
+pydantic-settings==2.13.1
 
 # 异步任务队列
-celery>=5.3.6
-redis>=5.0.1
-kombu>=5.3.4
+celery==5.6.2
+redis==7.2.1
+kombu==5.6.2
 
 # AI SDK
-dashscope>=1.19.0          # 百炼/通义千问
-openai>=1.14.0             # DeepSeek（兼容 OpenAI 接口）
+dashscope==1.25.12         # 百炼/通义千问
+openai==2.24.0             # DeepSeek（兼容 OpenAI 接口）
 
 # Word 文档处理
-python-docx>=1.1.0
+python-docx==1.2.0
 
 # PDF 文档处理
-pdfplumber>=0.10.0
+pdfplumber==0.11.9
 
 # 图表生成
-matplotlib>=3.8.0
-numpy>=1.26.0
+matplotlib==3.10.8
+numpy==2.4.2
 
 # 日志
-loguru>=0.7.2
+loguru==0.7.3
 
 # 工具
-python-dateutil>=2.8.2
+python-dateutil==2.9.0.post0
 
 # 认证
-python-jose[cryptography]>=3.3.0
-passlib[bcrypt]>=1.7.4
+python-jose[cryptography]==3.5.0
+passlib[bcrypt]==1.7.4
 bcrypt==4.0.1              # bcrypt 4.x+ 与 passlib 不兼容，锁定此版本
-sqlalchemy>=2.0.0
-pymysql>=1.1.0             # MySQL 数据库驱动（用于 SQLAlchemy）
+sqlalchemy==2.0.48
+pymysql==1.2.0            # MySQL 数据库驱动（用于 SQLAlchemy）
+
+# 限流
+slowapi==0.1.10
 
 # 查重模块
-scikit-learn>=1.4.0
-simhash>=2.1.0
-opencc-python-reimplemented>=0.1.7
+scikit-learn==1.8.0
+simhash==2.1.2
+opencc-python-reimplemented==0.1.7
 
 # 外文查重:语言识别 + HTTP + 重试 + 语义 Embedding
-langdetect>=1.0.9
-httpx>=0.25.0
-tenacity>=8.2.0
-sentence-transformers>=3.0.0
-gunicorn>=21.2.0
-faiss-cpu>=1.7.4
+langdetect==1.0.9
+httpx==0.28.1
+tenacity==9.1.4
+# 以下三项为重型 ML/部署依赖，开发机未安装、无法读取确切版本，
+# 暂用带上界的范围（防破坏性大版本），生产构建后请用 pip freeze 锁死。
+sentence-transformers>=3.0.0,<6.0.0
+gunicorn>=21.2.0,<24.0.0
+faiss-cpu>=1.7.4,<2.0.0

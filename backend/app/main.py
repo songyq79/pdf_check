@@ -56,10 +56,20 @@ app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     description="论文格式化 / 错别字检查 / AI评价 一体化系统",
-    docs_url="/docs",
-    redoc_url="/redoc",
+    # 生产环境(DEBUG=False)关闭 API 文档，避免暴露接口结构
+    docs_url="/docs" if settings.DEBUG else None,
+    redoc_url="/redoc" if settings.DEBUG else None,
+    openapi_url="/openapi.json" if settings.DEBUG else None,
     lifespan=lifespan,
 )
+
+# ── 限流器注册（登录/短信/AI 等敏感接口用 @limiter.limit 装饰）──────────
+from slowapi.errors import RateLimitExceeded  # noqa: E402
+from slowapi import _rate_limit_exceeded_handler  # noqa: E402
+from app.core.rate_limit import limiter  # noqa: E402
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,

@@ -5,8 +5,10 @@
 from datetime import datetime, timedelta
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+
+from app.core.rate_limit import limiter
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel
@@ -122,7 +124,8 @@ def require_admin(user: User = Depends(require_approved)) -> User:
 # ── 接口 ──────────────────────────────────────────────────
 
 @router.post("/login", response_model=TokenOut)
-def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def login(request: Request, form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     from loguru import logger
     user = db.query(User).filter(User.username == form.username).first()
     if not user:
@@ -144,7 +147,8 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
 
 
 @router.post("/register", status_code=201)
-def register(req: RegisterRequest, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def register(request: Request, req: RegisterRequest, db: Session = Depends(get_db)):
     if len(req.username) < 4 or len(req.username) > 20:
         raise HTTPException(status_code=400, detail="用户名长度需在4-20位之间")
     if len(req.password) < 6:
@@ -266,7 +270,8 @@ def _post_register(db: Session, user_id: int, invite_code: Optional[str] = None)
 
 
 @router.post("/sms/send", summary="发送短信验证码")
-def send_sms_code(req: SmsCodeRequest):
+@limiter.limit("1/minute;5/hour")
+def send_sms_code(request: Request, req: SmsCodeRequest):
     import re
     if not re.match(r"^1[3-9]\d{9}$", req.phone):
         raise HTTPException(status_code=400, detail="手机号格式错误")
@@ -278,7 +283,8 @@ def send_sms_code(req: SmsCodeRequest):
 
 
 @router.post("/sms/login", response_model=TokenOut, summary="手机号验证码登录/注册")
-def sms_login(req: SmsLoginRequest, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def sms_login(request: Request, req: SmsLoginRequest, db: Session = Depends(get_db)):
     import re
     if not re.match(r"^1[3-9]\d{9}$", req.phone):
         raise HTTPException(status_code=400, detail="手机号格式错误")
