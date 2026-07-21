@@ -65,11 +65,13 @@ def init_db():
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
-        # 默认管理员
+        # 默认管理员：仅在首次(账号不存在时)创建，之后绝不覆盖已有密码。
+        # 初始密码取自 settings.ADMIN_INITIAL_PASSWORD（生产环境务必在 .env 中设置）。
         admin = db.query(User).filter(User.username == "admin").first()
         if not admin:
             import bcrypt as _bcrypt
-            hashed = _bcrypt.hashpw(b"admin123", _bcrypt.gensalt()).decode()
+            _pw = (settings.ADMIN_INITIAL_PASSWORD or "admin123").encode()
+            hashed = _bcrypt.hashpw(_pw, _bcrypt.gensalt()).decode()
             db.add(User(
                 username="admin",
                 hashed_password=hashed,
@@ -77,11 +79,6 @@ def init_db():
                 is_approved=True,
                 is_admin=True,
             ))
-            db.commit()
-        else:
-            # 每次启动强制用当前 bcrypt 重新生成 admin 密码，避免版本不兼容
-            import bcrypt as _bcrypt
-            admin.hashed_password = _bcrypt.hashpw(b"admin123", _bcrypt.gensalt()).decode()
             db.commit()
 
         # 增量迁移：orders 表新增 refund_amount_cents 列（旧库升级）

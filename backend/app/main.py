@@ -56,8 +56,10 @@ app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     description="论文格式化 / 错别字检查 / AI评价 一体化系统",
-    docs_url="/docs",
-    redoc_url="/redoc",
+    # 生产环境(DEBUG=False)关闭 API 文档，避免暴露接口结构
+    docs_url="/docs" if settings.DEBUG else None,
+    redoc_url="/redoc" if settings.DEBUG else None,
+    openapi_url="/openapi.json" if settings.DEBUG else None,
     lifespan=lifespan,
 )
 

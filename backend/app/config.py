@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     # ── 基础 ─────────────────────────────────────────────
     APP_NAME: str = "论文助手系统"
     APP_VERSION: str = "2.0.0"
+    APP_ENV: str = "development"
     DEBUG: bool = False
     USE_AI: bool = False
 
@@ -90,6 +91,21 @@ class Settings(BaseSettings):
 
         return self
 
+    @model_validator(mode="after")
+    def _enforce_production_safety(self) -> "Settings":
+        """生产环境(APP_ENV=production)启动前做安全校验，拒绝不安全的默认凭证。"""
+        if self.APP_ENV.lower() == "production":
+            problems = []
+            if self.SECRET_KEY in ("", "change-me-in-production"):
+                problems.append("SECRET_KEY 仍为默认值，请在 .env.production 设置一个长随机串")
+            if self.ADMIN_INITIAL_PASSWORD in ("", "admin123"):
+                problems.append("ADMIN_INITIAL_PASSWORD 仍为默认弱口令，请在 .env.production 设置强密码")
+            if problems:
+                raise ValueError(
+                    "生产环境配置不安全，拒绝启动：\n  - " + "\n  - ".join(problems)
+                )
+        return self
+
     # ── 文件限制 ──────────────────────────────────────────
     MAX_FILE_SIZE: int = 20          # MB
     FILE_RETENTION_HOURS: int = 24
@@ -110,6 +126,9 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "change-me-in-production"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 10080  # 7天
+
+    # 首次启动创建的默认管理员密码（仅在 admin 账号不存在时使用一次）
+    ADMIN_INITIAL_PASSWORD: str = "admin123"
 
     # ── 微信支付（Native） ────────────────────────────────
     WECHAT_MCH_ID: str = ""
